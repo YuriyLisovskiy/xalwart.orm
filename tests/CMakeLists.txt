@@ -1,0 +1,65 @@
+#set(LIB_DIRECTORY ${PROJECT_SOURCE_DIR}/src)
+#file(GLOB_RECURSE LIB_SOURCES LIST_DIRECTORIES true ${LIB_DIRECTORY}/*.h ${LIB_DIRECTORY}/*.cpp)
+#remove_dirs(SOURCES)
+#
+#set(CMAKE_CXX_FLAGS "-pthread")
+#
+#set(BINARY unittests)
+#
+#function(add_tests SUB_DIR SUB_NAME)
+#    set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests/${SUB_DIR})
+#    file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true ${TESTS_DIR}*.cpp)
+#    remove_dirs(SOURCES)
+#    list(FILTER SOURCES EXCLUDE REGEX ".*main.cpp$")
+#    set(FULL_BIN ${BINARY}-${SUB_NAME})
+#    add_executable(${FULL_BIN} ${LIB_SOURCES} ${SOURCES} ${TESTS_DIR}/main.cpp)
+#    target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs sqlite3)
+#endfunction()
+#
+#function(add_sub_tests SUB_NAME)
+#    add_tests(${SUB_NAME}/ ${SUB_NAME})
+#endfunction(add_sub_tests)
+#
+#add_tests("" all)
+
+set(LIB_DIRECTORY ${PROJECT_SOURCE_DIR}/src)
+file(GLOB_RECURSE LIB_SOURCES LIST_DIRECTORIES true ${LIB_DIRECTORY}/*.h ${LIB_DIRECTORY}/*.cpp)
+foreach(entry ${SOURCES})
+    if (IS_DIRECTORY ${entry})
+        list(REMOVE_ITEM SOURCES ${entry})
+    endif()
+endforeach()
+
+set(CMAKE_CXX_FLAGS "-pthread")
+
+set(BINARY unittests)
+
+function(add_tests SUB_DIR SUB_NAME)
+    # Use sqlite3 driver.
+    add_compile_definitions(USE_SQLITE3)
+
+    set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests/${SUB_DIR})
+    file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true ${TESTS_DIR}*.cpp)
+    foreach(entry ${SOURCES})
+        if (IS_DIRECTORY ${entry})
+            list(REMOVE_ITEM SOURCES ${entry})
+        endif()
+    endforeach()
+    list(FILTER SOURCES EXCLUDE REGEX ".*main.cpp$")
+    set(FULL_BIN ${BINARY}-${SUB_NAME})
+    add_executable(${FULL_BIN} ${LIB_SOURCES} ${SOURCES} ${TESTS_DIR}/main.cpp)
+    target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs sqlite3)
+    target_link_libraries(${FULL_BIN} PUBLIC gtest ${FRAMEWORK_NAME}.core-0.0.1)
+endfunction()
+
+function(add_sub_tests SUB_NAME)
+    add_tests(${SUB_NAME}/ ${SUB_NAME})
+endfunction(add_sub_tests)
+
+add_tests("" all)
+if (NOT DEFINED CMAKE_TEST_ALL_ONLY)
+    set(CMAKE_TEST_ALL_ONLY no)
+endif()
+if (${CMAKE_TEST_ALL_ONLY} STREQUAL "no")
+    # TODO: add tests
+endif()
