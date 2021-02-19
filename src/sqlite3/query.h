@@ -26,7 +26,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../operators.h"
+#include "../q.h"
 #include "../exceptions.h"
 
 
@@ -88,7 +88,7 @@ public:
 		}
 	};
 
-	inline SelectQuery& where(const operator_base& op)
+	inline SelectQuery& where(const q::operator_base& op)
 	{
 		if (this->is_limited)
 		{

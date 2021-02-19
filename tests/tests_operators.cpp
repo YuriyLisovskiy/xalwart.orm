@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/operators.h"
+#include "../src/q.h"
 
 using namespace xw;
 
@@ -14,125 +14,125 @@ using namespace xw;
 TEST(TestCase_equals, fundamental)
 {
 	std::string expected = "id = 1";
-	auto actual = (std::string)orm::equals("id", 1);
+	auto actual = (std::string)orm::q::equals("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_equals, string)
 {
 	std::string expected = "name = 'John'";
-	auto actual = (std::string)orm::equals("name", std::string("John"));
+	auto actual = (std::string)orm::q::equals("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_equals, c_string)
 {
 	std::string expected = "name = 'John'";
-	auto actual = (std::string)orm::equals("name", "John");
+	auto actual = (std::string)orm::q::equals("name", "John");
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_not_equals, fundamental)
 {
 	std::string expected = "id != 1";
-	auto actual = (std::string)orm::not_equals("id", 1);
+	auto actual = (std::string)orm::q::not_equals("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_not_equals, string)
 {
 	std::string expected = "name != 'John'";
-	auto actual = (std::string)orm::not_equals("name", std::string("John"));
+	auto actual = (std::string)orm::q::not_equals("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_not_equals, c_string)
 {
 	std::string expected = "name != 'John'";
-	auto actual = (std::string)orm::not_equals("name", "John");
+	auto actual = (std::string)orm::q::not_equals("name", "John");
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less, fundamental)
 {
 	std::string expected = "id < 1";
-	auto actual = (std::string)orm::less("id", 1);
+	auto actual = (std::string)orm::q::less("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less, string)
 {
 	std::string expected = "name < 'John'";
-	auto actual = (std::string)orm::less("name", std::string("John"));
+	auto actual = (std::string)orm::q::less("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less, c_string)
 {
 	std::string expected = "name < 'John'";
-	auto actual = (std::string)orm::less("name", "John");
+	auto actual = (std::string)orm::q::less("name", "John");
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater, fundamental)
 {
 	std::string expected = "id > 1";
-	auto actual = (std::string)orm::greater("id", 1);
+	auto actual = (std::string)orm::q::greater("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater, string)
 {
 	std::string expected = "name > 'John'";
-	auto actual = (std::string)orm::greater("name", std::string("John"));
+	auto actual = (std::string)orm::q::greater("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater, c_string)
 {
 	std::string expected = "name > 'John'";
-	auto actual = (std::string)orm::greater("name", "John");
+	auto actual = (std::string)orm::q::greater("name", "John");
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less_or_equals, fundamental)
 {
 	std::string expected = "id <= 1";
-	auto actual = (std::string)orm::less_or_equals("id", 1);
+	auto actual = (std::string)orm::q::less_or_equals("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less_or_equals, string)
 {
 	std::string expected = "name <= 'John'";
-	auto actual = (std::string)orm::less_or_equals("name", std::string("John"));
+	auto actual = (std::string)orm::q::less_or_equals("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_less_or_equals, c_string)
 {
 	std::string expected = "name <= 'John'";
-	auto actual = (std::string)orm::less_or_equals("name", "John");
+	auto actual = (std::string)orm::q::less_or_equals("name", "John");
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater_or_equals, fundamental)
 {
 	std::string expected = "id >= 1";
-	auto actual = (std::string)orm::greater_or_equals("id", 1);
+	auto actual = (std::string)orm::q::greater_or_equals("id", 1);
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater_or_equals, string)
 {
 	std::string expected = "name >= 'John'";
-	auto actual = (std::string)orm::greater_or_equals("name", std::string("John"));
+	auto actual = (std::string)orm::q::greater_or_equals("name", std::string("John"));
 	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_greater_or_equals, c_string)
 {
 	std::string expected = "name >= 'John'";
-	auto actual = (std::string)orm::greater_or_equals("name", "John");
+	auto actual = (std::string)orm::q::greater_or_equals("name", "John");
 	ASSERT_EQ(expected, actual);
 }
