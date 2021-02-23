@@ -17,71 +17,119 @@
 
 __Q_BEGIN__
 
-struct operator_base
+struct ordering
 {
 protected:
-	std::string condition;
+	std::string value;
 
 public:
-	inline operator_base() = default;
+	inline ordering() = default;
 
-	inline operator_base(std::string condition) : condition(std::move(condition))
+	inline ordering(const std::string& column, const std::string& order)
+	{
+		this->value = column + " " + order;
+	}
+
+	inline ordering(const std::string& column)
+	{
+		this->value = column;
+	}
+
+	inline ordering(const char* column) : ordering(std::string(column))
 	{
 	}
 
 	virtual inline explicit operator std::string() const
 	{
-		return this->condition;
+		return this->value;
+	}
+};
+
+inline ordering ascending(const std::string& column)
+{
+	return ordering(column, "ASC");
+}
+
+inline ordering asc(const std::string& column)
+{
+	return ascending(column);
+}
+
+inline ordering descending(const std::string& column)
+{
+	return ordering(column, "DESC");
+}
+
+inline ordering desc(const std::string& column)
+{
+	return descending(column);
+}
+
+struct condition
+{
+protected:
+	std::string str;
+
+public:
+	inline condition() = default;
+
+	inline condition(std::string str) : str(std::move(str))
+	{
+	}
+
+	virtual inline explicit operator std::string() const
+	{
+		return this->str;
 	};
 };
 
 template <OperatorValueType T>
-struct comparison_operator : public operator_base
+struct comparison_operator : public condition
 {
 protected:
 	inline void make(const std::string& column_name, const std::string& op, T value)
 	{
-		this->condition = column_name + " " + op + " " + std::to_string(value);
+		this->str = column_name + " " + op + " " + std::to_string(value);
 	}
 
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string condition) : operator_base(std::move(condition))
+	inline comparison_operator(std::string str) : condition(std::move(str))
 	{
 	}
 };
 
 template <>
-struct comparison_operator<std::string> : public operator_base
+struct comparison_operator<std::string> : public condition
 {
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const std::string& value)
 	{
-		this->condition = column_name + " " + op + " '" + value + "'";
+		this->str = column_name + " " + op + " '" + value + "'";
 	}
 
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string condition) : operator_base(std::move(condition))
+	inline comparison_operator(std::string str) : condition(std::move(str))
 	{
 	}
 };
 
 template <>
-struct comparison_operator<const char*> : public operator_base
+struct comparison_operator<const char*> : public condition
 {
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const char* value)
 	{
-		this->condition = column_name + " " + op + " '" + std::string(value) + "'";
+		this->str = column_name + " " + op + " '" + std::string(value) + "'";
 	}
 
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string condition) : operator_base(std::move(condition))
+	inline comparison_operator(std::string str) : condition(std::move(str))
 	{
 	}
 };
@@ -196,59 +244,45 @@ struct ge : public greater_or_equals<T>
 };
 
 // SQLite logical operators.
-template <OperatorValueType L, OperatorValueType R>
-struct logical_operator : public operator_base
+inline condition operator& (const condition& left, const condition& right)
 {
-protected:
-	inline void make(
-		const comparison_operator<L>& left,
-		const std::string& op,
-		const comparison_operator<R>& right
-	)
-	{
-		this->condition = "(" + (std::string)left + " " + op + " " + (std::string)right + ")";
-	}
-};
-
-inline operator_base operator& (const operator_base& left, const operator_base& right)
-{
-	return operator_base("(" + (std::string)left + " AND " + (std::string)right + ")");
+	return condition("(" + (std::string)left + " AND " + (std::string)right + ")");
 }
 
-inline operator_base operator| (const operator_base& left, const operator_base& right)
+inline condition operator| (const condition& left, const condition& right)
 {
-	return operator_base("(" + (std::string)left + " OR " + (std::string)right + ")");
+	return condition("(" + (std::string)left + " OR " + (std::string)right + ")");
 }
 
-inline operator_base operator! (const operator_base& condition)
+inline condition operator! (const condition& cond)
 {
-	return operator_base("NOT (" + (std::string)condition + ")");
+	return condition("NOT (" + (std::string)cond + ")");
 }
 
 template <OperatorValueType T>
-struct between : public operator_base
+struct between : public condition
 {
 	inline explicit between(const std::string& column, T lower, T upper)
 	{
-		this->condition = column + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
+		this->str = column + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
 	}
 };
 
 template <>
-struct between<std::string> : public operator_base
+struct between<std::string> : public condition
 {
 	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
 	{
-		this->condition = column + " BETWEEN '" + lower + "' AND '" + upper + '\'';
+		this->str = column + " BETWEEN '" + lower + "' AND '" + upper + '\'';
 	}
 };
 
 template <>
-struct between<const char*> : public operator_base
+struct between<const char*> : public condition
 {
 	inline explicit between(const std::string& column, const char* lower, const char* upper)
 	{
-		this->condition = column + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
+		this->str = column + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
 	}
 };
 

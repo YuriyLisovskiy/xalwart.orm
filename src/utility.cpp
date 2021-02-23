@@ -33,4 +33,6 @@ std::string as<std::string>(const void* data)
 	return std::string((const char*)data);
 }
 
+// TODO: add more types
+
 __ORM_END__

@@ -11,7 +11,6 @@
 #ifdef USE_SQLITE3
 
 // C++ libraries.
-#include <vector>
 #include <string>
 #include <iostream>
 
@@ -19,7 +18,6 @@
 #include <sqlite3.h>
 
 // Core libraries.
-#include <xalwart.core/string_utils.h>
 #include <xalwart.core/utility.h>
 
 // Module definitions.
@@ -27,6 +25,7 @@
 
 // Orm libraries.
 #include "../q.h"
+#include "../model.h"
 #include "../exceptions.h"
 
 
@@ -38,16 +37,29 @@ struct has_meta_table_name : std::false_type { };
 template <typename T>
 struct has_meta_table_name <T, decltype((void) T::Meta::table_name, 0)> : std::true_type { };
 
-template <typename ModelT>
+template <ModelBasedType ModelT>
 class SelectQuery
 {
 protected:
+	// Database connection, TODO: replace it with connection interface.
 	::sqlite3* db;
 
 	std::string query;
+
 	std::string table_name;
-	bool distinct;
-	bool is_limited;
+
+	bool distinct = false;
+
+	uint8_t masks[5] = {
+		0b00000001, // disables method 'where'
+		0b00000011, // disables method 'order_by' and all above
+		0b00000111, // disables method 'limit' and all above
+		0b00001111, // disables method 'group_by' and all above
+		0b00011111  // disables method 'having' and all above
+	};
+
+	// Holds value to indicate what methods is disabled.
+	uint8_t disabled = 0x00;
 
 protected:
 	inline void prepare_query()
@@ -74,8 +86,13 @@ protected:
 		return result;
 	}
 
+	inline bool is_disabled(uint item)
+	{
+		return (this->disabled >> item) & 1UL;
+	}
+
 public:
-	inline explicit SelectQuery(::sqlite3* db) : db(db), distinct(false), is_limited(false)
+	inline explicit SelectQuery(::sqlite3* db) : db(db)
 	{
 		if constexpr (has_meta_table_name<ModelT>::value)
 		{
@@ -88,61 +105,42 @@ public:
 		}
 	};
 
-	inline SelectQuery& where(const q::operator_base& op)
+	inline SelectQuery& where(const q::condition& op)
 	{
-		if (this->is_limited)
+		if (this->is_disabled(0))
 		{
-			throw SQLError("method 'limit' must be called last", _ERROR_DETAILS_);
+			throw QueryError(
+				"unable to set 'WHERE' condition, check method call sequence", _ERROR_DETAILS_
+			);
 		}
 
 		this->query += " WHERE " + (std::string)op;
+		this->disabled |= this->masks[0];
 		return *this;
 	}
 
-	inline SelectQuery& having()
+	inline SelectQuery& order_by(const std::initializer_list<q::ordering>& columns)
 	{
-		if (this->is_limited)
+		if (this->is_disabled(1))
 		{
-			throw SQLError("method 'limit' must be called last", _ERROR_DETAILS_);
-		}
-
-		// TODO: having
-		return *this;
-	}
-
-	inline SelectQuery& order_by(const std::initializer_list<std::string>& columns)
-	{
-		if (this->is_limited)
-		{
-			throw SQLError("method 'limit' must be called last", _ERROR_DETAILS_);
+			throw QueryError(
+				"unable to set 'ORDER BY' columns, check method call sequence", _ERROR_DETAILS_
+			);
 		}
 
 		if (columns.size())
 		{
-			auto result = this->join_list(columns);
-			if (!result.empty())
+			this->query += " ORDER BY ";
+			for (auto it = columns.begin(); it != columns.end(); it++)
 			{
-				this->query += " ORDER BY " + result;
+				this->query += (std::string)*it;
+				if (std::next(it) != columns.end())
+				{
+					this->query += ", ";
+				}
 			}
-		}
 
-		return *this;
-	}
-
-	inline SelectQuery& group_by(const std::initializer_list<std::string>& columns)
-	{
-		if (this->is_limited)
-		{
-			throw SQLError("method 'limit' must be called last", _ERROR_DETAILS_);
-		}
-
-		if (columns.size())
-		{
-			auto result = this->join_list(columns);
-			if (!result.empty())
-			{
-				this->query += " GROUP BY " + result;
-			}
+			this->disabled |= this->masks[1];
 		}
 
 		return *this;
@@ -150,18 +148,55 @@ public:
 
 	inline SelectQuery& limit(size_t limit)
 	{
-		if (!this->is_limited)
+		if (this->is_disabled(2))
 		{
-			this->query += " LIMIT " + std::to_string(limit);
-			this->is_limited = true;
+			throw QueryError(
+				"unable to set 'LIMIT' value, check method call sequence", _ERROR_DETAILS_
+			);
 		}
 
+		this->query += " LIMIT " + std::to_string(limit);
+		this->disabled |= this->masks[2];
+		return *this;
+	}
+
+	inline SelectQuery& group_by(const std::initializer_list<std::string>& columns)
+	{
+		if (this->is_disabled(3))
+		{
+			throw QueryError(
+				"unable to set 'GROUP BY' columns, check method call sequence", _ERROR_DETAILS_
+			);
+		}
+
+		if (columns.size())
+		{
+			this->query += " GROUP BY " + this->join_list(columns);
+			this->disabled |= this->masks[3];
+		}
+
+		return *this;
+	}
+
+	inline SelectQuery& having(const q::condition& op)
+	{
+		if (this->is_disabled(4))
+		{
+			throw QueryError(
+				"unable to set 'HAVING' condition, check method call sequence", _ERROR_DETAILS_
+			);
+		}
+
+		this->query += " HAVING " + (std::string)op;
+		this->disabled |= this->masks[4];
 		return *this;
 	}
 
 	inline std::vector<std::shared_ptr<ModelT>> exec()
 	{
 		this->prepare_query();
+
+		// TODO: remove
 		std::cerr << this->query << '\n';
 
 		char* message_error;
