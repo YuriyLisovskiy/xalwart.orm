@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <iostream>
+
 // Core libraries.
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
@@ -20,6 +22,13 @@ __ORM_BEGIN__
 
 class Model : public object::Object
 {
+public:
+	static constexpr const char* meta_table_name = nullptr;
+	static constexpr const char* meta_pk_name = "id";
+
+	// Omit primary key when inserting new models.
+	static constexpr bool meta_omit_pk = true;
+
 public:
 	[[nodiscard]]
 	inline short __cmp__(const Object* other) const override

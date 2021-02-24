@@ -13,6 +13,7 @@
 
 // Core libraries.
 #include <xalwart.core/utility.h>
+#include <xalwart.core/types/string.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -25,12 +26,6 @@
 
 
 __Q_BEGIN__
-
-template <typename T, typename = int>
-struct has_meta_table_name : std::false_type { };
-
-template <typename T>
-struct has_meta_table_name <T, decltype((void) T::Meta::table_name, 0)> : std::true_type { };
 
 template <ModelBasedType ModelT>
 class select
@@ -94,9 +89,9 @@ protected:
 public:
 	inline explicit select()
 	{
-		if constexpr (has_meta_table_name<ModelT>::value)
+		if constexpr (ModelT::meta_table_name == nullptr)
 		{
-			this->table_name = ModelT::Meta::table_name;
+			this->table_name = ModelT::meta_table_name;
 		}
 		else
 		{
@@ -105,12 +100,12 @@ public:
 		}
 	};
 
-	inline explicit select(DbDriver* db) : select()
+	inline explicit select(DbDriver* driver) : select()
 	{
-		this->db = db;
+		this->db = driver;
 	};
 
-	inline virtual select& where(const q::condition& op)
+	inline virtual select& where(const q::condition& cond)
 	{
 		if (this->is_disabled(0))
 		{
@@ -119,7 +114,7 @@ public:
 			);
 		}
 
-		this->query += " WHERE " + (std::string)op;
+		this->query += " WHERE " + (std::string)cond;
 		this->disabled |= this->masks[0];
 		return *this;
 	}
@@ -183,7 +178,7 @@ public:
 		return *this;
 	}
 
-	inline virtual select& having(const q::condition& op)
+	inline virtual select& having(const q::condition& cond)
 	{
 		if (this->is_disabled(4))
 		{
@@ -192,7 +187,7 @@ public:
 			);
 		}
 
-		this->query += " HAVING " + (std::string)op;
+		this->query += " HAVING " + (std::string)cond;
 		this->disabled |= this->masks[4];
 		return *this;
 	}
@@ -201,6 +196,18 @@ public:
 	{
 		this->db = database;
 		return *this;
+	}
+
+	inline virtual std::shared_ptr<ModelT> first()
+	{
+		// check if `limit(...)` was not called
+		if (!this->is_disabled(2))
+		{
+			this->limit(1);
+		}
+
+		auto values = this->exec();
+		return values.empty() ? nullptr : values[0];
 	}
 
 	inline virtual std::vector<std::shared_ptr<ModelT>> exec()
@@ -224,7 +231,9 @@ public:
 				if (column.second)
 				{
 					auto len = std::strlen(column.second);
-					model->__set_attr__(column.first, {column.second, column.second + len + 1});
+					model->__set_attr__(column.first, std::make_shared<types::String>(
+						std::string(column.second, len + 1)
+					));
 				}
 			}
 

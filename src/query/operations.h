@@ -30,12 +30,12 @@ public:
 		this->value = column + " " + order;
 	}
 
-	inline ordering(const std::string& column)
+	inline explicit ordering(const std::string& column)
 	{
 		this->value = column;
 	}
 
-	inline ordering(const char* column) : ordering(std::string(column))
+	inline explicit ordering(const char* column) : ordering(std::string(column))
 	{
 	}
 
@@ -73,7 +73,7 @@ protected:
 public:
 	inline condition() = default;
 
-	inline condition(std::string str) : str(std::move(str))
+	inline explicit condition(std::string str) : str(std::move(str))
 	{
 	}
 
@@ -95,7 +95,7 @@ protected:
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string str) : condition(std::move(str))
+	inline explicit comparison_operator(const std::string& str) : condition(str)
 	{
 	}
 };
@@ -112,7 +112,7 @@ protected:
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string str) : condition(std::move(str))
+	inline explicit comparison_operator(std::string str) : condition(std::move(str))
 	{
 	}
 };
@@ -129,7 +129,7 @@ protected:
 public:
 	inline comparison_operator() = default;
 
-	inline comparison_operator(std::string str) : condition(std::move(str))
+	inline explicit comparison_operator(std::string str) : condition(std::move(str))
 	{
 	}
 };
@@ -148,7 +148,7 @@ template <OperatorValueType T>
 struct eq : public equals<T>
 {
 	inline explicit eq(const std::string& column, T value)
-			: equals<T>(column, value)
+		: equals<T>(column, value)
 	{
 	}
 };
@@ -166,7 +166,7 @@ template <OperatorValueType T>
 struct ne : public not_equals<T>
 {
 	inline explicit ne(const std::string& column, T value)
-			: not_equals<T>(column, value)
+		: not_equals<T>(column, value)
 	{
 	}
 };
@@ -184,7 +184,7 @@ template <OperatorValueType T>
 struct lt : public less<T>
 {
 	inline explicit lt(const std::string& column, T value)
-			: less<T>(column, value)
+		: less<T>(column, value)
 	{
 	}
 };
@@ -202,7 +202,7 @@ template <OperatorValueType T>
 struct gt : public greater<T>
 {
 	inline explicit gt(const std::string& column, T value)
-			: greater<T>(column, value)
+		: greater<T>(column, value)
 	{
 	}
 };
@@ -220,7 +220,7 @@ template <OperatorValueType T>
 struct le : public less_or_equals<T>
 {
 	inline explicit le(const std::string& column, T value)
-			: less_or_equals<T>(column, value)
+		: less_or_equals<T>(column, value)
 	{
 	}
 };
@@ -238,7 +238,7 @@ template <OperatorValueType T>
 struct ge : public greater_or_equals<T>
 {
 	inline explicit ge(const std::string& column, T value)
-			: greater_or_equals<T>(column, ">=", value)
+		: greater_or_equals<T>(column, ">=", value)
 	{
 	}
 };

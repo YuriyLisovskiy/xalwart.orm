@@ -43,6 +43,18 @@ public:
 	{
 		return q::select<ModelT>(this->driver.get());
 	}
+
+	template <ModelBasedType ModelT>
+	inline q::select<ModelT> filter(const q::condition& cond) const
+	{
+		return q::select<ModelT>(this->driver.get()).where(cond);
+	}
+
+	template <ModelBasedType ModelT>
+	inline std::shared_ptr<ModelT> get(const q::condition& cond) const
+	{
+		return q::select<ModelT>(this->driver.get()).where(cond).first();
+	}
 };
 
 __ORM_END__
