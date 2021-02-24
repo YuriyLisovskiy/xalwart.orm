@@ -41,7 +41,7 @@ public:
 	template <ModelBasedType ModelT>
 	inline q::select<ModelT> select() const
 	{
-		return q::select<ModelT>(this->driver);
+		return q::select<ModelT>(this->driver.get());
 	}
 };
 
