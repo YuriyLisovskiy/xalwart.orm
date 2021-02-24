@@ -8,9 +8,6 @@
 
 #pragma once
 
-// C++ libraries.
-// TODO
-
 // Core libraries.
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
@@ -18,8 +15,6 @@
 // Module definitions.
 #include "./_def_.h"
 
-// Orm libraries.
-// TODO
 
 __ORM_BEGIN__
 
@@ -29,7 +24,7 @@ public:
 	[[nodiscard]]
 	inline short __cmp__(const Object* other) const override
 	{
-		throw xw::core::NotImplementedException(
+		throw core::NotImplementedException(
 			"'__cmp__' is not implemented", _ERROR_DETAILS_
 		);
 	}

@@ -1,10 +1,10 @@
 /**
- * model.cpp
+ * client.cpp
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
-#include "./model.h"
+#include "./client.h"
 
 // C++ libraries.
 // TODO

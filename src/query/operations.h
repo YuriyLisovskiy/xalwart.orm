@@ -1,9 +1,9 @@
 /**
- * q.h
+ * query/operations.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: set of SQL arithmetic and logical operators.
+ * Purpose: set of SQL arithmetic and logical operations.
  */
 
 #pragma once
@@ -134,7 +134,7 @@ public:
 	}
 };
 
-// SQLite comparison operators.
+// SQL comparison operators.
 template <OperatorValueType T>
 struct equals : public comparison_operator<T>
 {
@@ -148,7 +148,7 @@ template <OperatorValueType T>
 struct eq : public equals<T>
 {
 	inline explicit eq(const std::string& column, T value)
-		: equals<T>(column, value)
+			: equals<T>(column, value)
 	{
 	}
 };
@@ -166,7 +166,7 @@ template <OperatorValueType T>
 struct ne : public not_equals<T>
 {
 	inline explicit ne(const std::string& column, T value)
-		: not_equals<T>(column, value)
+			: not_equals<T>(column, value)
 	{
 	}
 };
@@ -184,7 +184,7 @@ template <OperatorValueType T>
 struct lt : public less<T>
 {
 	inline explicit lt(const std::string& column, T value)
-		: less<T>(column, value)
+			: less<T>(column, value)
 	{
 	}
 };
@@ -202,7 +202,7 @@ template <OperatorValueType T>
 struct gt : public greater<T>
 {
 	inline explicit gt(const std::string& column, T value)
-		: greater<T>(column, value)
+			: greater<T>(column, value)
 	{
 	}
 };
@@ -220,7 +220,7 @@ template <OperatorValueType T>
 struct le : public less_or_equals<T>
 {
 	inline explicit le(const std::string& column, T value)
-		: less_or_equals<T>(column, value)
+			: less_or_equals<T>(column, value)
 	{
 	}
 };
@@ -238,12 +238,12 @@ template <OperatorValueType T>
 struct ge : public greater_or_equals<T>
 {
 	inline explicit ge(const std::string& column, T value)
-		: greater_or_equals<T>(column, ">=", value)
+			: greater_or_equals<T>(column, ">=", value)
 	{
 	}
 };
 
-// SQLite logical operators.
+// SQL logical operators.
 inline condition operator& (const condition& left, const condition& right)
 {
 	return condition("(" + (std::string)left + " AND " + (std::string)right + ")");

@@ -1,5 +1,5 @@
 /**
- * sqlite3/query.h
+ * query/select.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -8,14 +8,8 @@
 
 #pragma once
 
-#ifdef USE_SQLITE3
-
 // C++ libraries.
 #include <string>
-#include <iostream>
-
-// SQLite
-#include <sqlite3.h>
 
 // Core libraries.
 #include <xalwart.core/utility.h>
@@ -24,12 +18,13 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../q.h"
+#include "./operations.h"
 #include "../model.h"
 #include "../exceptions.h"
+#include "../driver.h"
 
 
-__SQLITE3_BEGIN__
+__Q_BEGIN__
 
 template <typename T, typename = int>
 struct has_meta_table_name : std::false_type { };
@@ -38,14 +33,13 @@ template <typename T>
 struct has_meta_table_name <T, decltype((void) T::Meta::table_name, 0)> : std::true_type { };
 
 template <ModelBasedType ModelT>
-class SelectQuery
+class select
 {
 protected:
-	// Database connection, TODO: replace it with connection interface.
-	::sqlite3* db;
+	DbDriver* db = nullptr;
 
+	bool prepared = false;
 	std::string query;
-
 	std::string table_name;
 
 	bool distinct = false;
@@ -62,12 +56,18 @@ protected:
 	uint8_t disabled = 0x00;
 
 protected:
-	inline void prepare_query()
+	inline virtual void prepare_query()
 	{
-		this->query = std::string("SELECT") + (this->distinct ? " DISTINCT" : "") + " * FROM " + this->table_name + this->query + ';';
+		if (!this->prepared)
+		{
+			this->query = std::string("SELECT") + (
+				this->distinct ? " DISTINCT" : ""
+			) + " * FROM " + this->table_name + this->query + ';';
+			this->prepared = true;
+		}
 	}
 
-	inline std::string join_list(const std::initializer_list<std::string>& columns)
+	inline virtual std::string join_list(const std::initializer_list<std::string>& columns)
 	{
 		std::string result;
 		for (auto it = columns.begin(); it != columns.end(); it++)
@@ -86,13 +86,13 @@ protected:
 		return result;
 	}
 
-	inline bool is_disabled(uint item)
+	inline virtual bool is_disabled(uint item)
 	{
 		return (this->disabled >> item) & 1UL;
 	}
 
 public:
-	inline explicit SelectQuery(::sqlite3* db) : db(db)
+	inline explicit select()
 	{
 		if constexpr (has_meta_table_name<ModelT>::value)
 		{
@@ -105,7 +105,12 @@ public:
 		}
 	};
 
-	inline SelectQuery& where(const q::condition& op)
+	inline explicit select(DbDriver* db) : select()
+	{
+		this->db = db;
+	};
+
+	inline virtual select& where(const q::condition& op)
 	{
 		if (this->is_disabled(0))
 		{
@@ -119,7 +124,7 @@ public:
 		return *this;
 	}
 
-	inline SelectQuery& order_by(const std::initializer_list<q::ordering>& columns)
+	inline virtual select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
 		if (this->is_disabled(1))
 		{
@@ -146,7 +151,7 @@ public:
 		return *this;
 	}
 
-	inline SelectQuery& limit(size_t limit)
+	inline virtual select& limit(size_t limit)
 	{
 		if (this->is_disabled(2))
 		{
@@ -160,7 +165,7 @@ public:
 		return *this;
 	}
 
-	inline SelectQuery& group_by(const std::initializer_list<std::string>& columns)
+	inline virtual select& group_by(const std::initializer_list<std::string>& columns)
 	{
 		if (this->is_disabled(3))
 		{
@@ -178,7 +183,7 @@ public:
 		return *this;
 	}
 
-	inline SelectQuery& having(const q::condition& op)
+	inline virtual select& having(const q::condition& op)
 	{
 		if (this->is_disabled(4))
 		{
@@ -192,49 +197,49 @@ public:
 		return *this;
 	}
 
-	inline std::vector<std::shared_ptr<ModelT>> exec()
+	inline virtual select& using_(DbDriver* database)
 	{
-		this->prepare_query();
+		this->db = database;
+		return *this;
+	}
 
-		// TODO: remove
-		std::cerr << this->query << '\n';
-
-		char* message_error;
-		using data_t = std::vector<std::shared_ptr<ModelT>>;
-		data_t models;
-		auto res = sqlite3_exec(
-			this->db,
-			this->query.c_str(),
-			[](void* data, int argc, char** argv, char** column_names) -> int {
-				auto& container = *(data_t*)data;
-				auto model = std::make_shared<ModelT>();
-				for (int i = 0; i < argc; i++)
-				{
-					auto len = std::strlen(argv[i]);
-					if (argv[i])
-					{
-						model->__set_attr__(column_names[i], {argv[i], argv[i] + len + 1});
-					}
-				}
-
-				container.push_back(model);
-				return 0;
-			},
-			&models,
-			&message_error
-		);
-
-		if (res != SQLITE_OK)
+	inline virtual std::vector<std::shared_ptr<ModelT>> exec()
+	{
+		if (!this->db)
 		{
-			auto message = std::string(message_error);
-			sqlite3_free(message_error);
-			throw core::RuntimeError(message, _ERROR_DETAILS_);
+			throw QueryError("select: database client not set", _ERROR_DETAILS_);
 		}
 
-		return models;
+		this->prepare_query();
+
+		using row_t = std::map<const char*, char*>;
+		using data_t = std::vector<std::shared_ptr<ModelT>>;
+		data_t collection;
+		this->db->run_select(this->query, &collection, [](void* container_ptr, void* row_ptr) -> void {
+			auto& container = *(data_t *)container_ptr;
+			auto& row = *(row_t *)row_ptr;
+			auto model = std::make_shared<ModelT>();
+			for (const auto& column : row)
+			{
+				if (column.second)
+				{
+					auto len = std::strlen(column.second);
+					model->__set_attr__(column.first, {column.second, column.second + len + 1});
+				}
+			}
+
+			container.push_back(model);
+		});
+
+		return collection;
+	}
+
+	[[nodiscard]]
+	inline virtual std::string as_string()
+	{
+		this->prepare_query();
+		return this->query;
 	}
 };
 
-__SQLITE3_END__
-
-#endif // USE_SQLITE3
+__Q_END__
