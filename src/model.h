@@ -55,12 +55,7 @@ public:
 	[[nodiscard]]
 	inline std::string __repr__() const override
 	{
-		if (this->_is_null_model)
-		{
-			return "Model{null}";
-		}
-
-		return object::Object::__repr__();
+		return this->__str__();
 	}
 
 	inline void mark_as_null()

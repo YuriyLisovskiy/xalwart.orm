@@ -33,15 +33,13 @@ class select
 protected:
 	DbDriver* db = nullptr;
 
-	bool prepared = false;
-	std::string query_;
-
 	std::string table_name;
 
 	bool distinct_ = false;
 	q::condition where_cond_;
 	std::initializer_list<q::ordering> order_by_cols_;
 	long int limit_ = -1;
+	long int offset_ = -1;
 	std::initializer_list<std::string> group_by_cols_;
 	q::condition having_cond_;
 
@@ -71,6 +69,7 @@ protected:
 			this->where_cond_,
 			this->order_by_cols_,
 			this->limit_,
+			this->offset_,
 			this->group_by_cols_,
 			this->having_cond_
 		);
@@ -139,7 +138,7 @@ public:
 		return *this;
 	}
 
-	inline virtual select& limit(size_t limit)
+	inline virtual select& limit(size_t limit, size_t offset)
 	{
 		if (this->is_disabled(2))
 		{
@@ -149,8 +148,18 @@ public:
 		}
 
 		this->limit_ = limit;
+		if (offset > 0)
+		{
+			this->offset_ = offset;
+		}
+
 		this->disabled |= this->masks[2];
 		return *this;
+	}
+
+	inline select& limit(size_t limit)
+	{
+		return this->limit(limit, 0);
 	}
 
 	inline virtual select& group_by(const std::initializer_list<std::string>& columns)

@@ -78,6 +78,7 @@ std::string SQLite3Driver::make_select_query(
 	const q::condition& where_cond,
 	const std::initializer_list<q::ordering>& order_by_cols,
 	long int limit,
+	long int offset,
 	const std::initializer_list<std::string>& group_by_cols,
 	const q::condition& having_cond
 ) const
@@ -106,6 +107,10 @@ std::string SQLite3Driver::make_select_query(
 	if (limit > -1)
 	{
 		query += " LIMIT " + std::to_string(limit);
+		if (offset > 0)
+		{
+			query += " OFFSET " + std::to_string(offset);
+		}
 	}
 
 	if (group_by_cols.size())

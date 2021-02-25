@@ -43,6 +43,7 @@ public:
 		const q::condition& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,
+		long int offset,
 		const std::initializer_list<std::string>& group_by_cols,
 		const q::condition& having_cond
 	) const = 0;
