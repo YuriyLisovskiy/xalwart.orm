@@ -56,26 +56,6 @@ protected:
 
 protected:
 	[[nodiscard]]
-	inline virtual std::string prepare_query() const
-	{
-		if (!this->db)
-		{
-			throw QueryError("select: database client not set", _ERROR_DETAILS_);
-		}
-
-		return this->db->make_select_query(
-			this->table_name,
-			this->distinct_,
-			this->where_cond_,
-			this->order_by_cols_,
-			this->limit_,
-			this->offset_,
-			this->group_by_cols_,
-			this->having_cond_
-		);
-	}
-
-	[[nodiscard]]
 	inline virtual bool is_disabled(uint item) const
 	{
 		return (this->disabled >> item) & 1UL;
@@ -84,7 +64,7 @@ protected:
 public:
 	inline explicit select()
 	{
-		if constexpr (ModelT::meta_table_name == nullptr)
+		if constexpr (ModelT::meta_table_name != nullptr)
 		{
 			this->table_name = ModelT::meta_table_name;
 		}
@@ -225,7 +205,7 @@ public:
 
 	inline virtual std::vector<ModelT> to_vector() const
 	{
-		auto query = this->prepare_query();
+		auto query = this->query();
 		using row_t = std::map<const char*, char*>;
 		using data_t = std::vector<ModelT>;
 		data_t collection;
@@ -251,9 +231,23 @@ public:
 	}
 
 	[[nodiscard]]
-	inline std::string query() const
+	inline virtual std::string query() const
 	{
-		return this->prepare_query();
+		if (!this->db)
+		{
+			throw QueryError("select: database client not set", _ERROR_DETAILS_);
+		}
+
+		return this->db->make_select_query(
+			this->table_name,
+			this->distinct_,
+			this->where_cond_,
+			this->order_by_cols_,
+			this->limit_,
+			this->offset_,
+			this->group_by_cols_,
+			this->having_cond_
+		);
 	}
 };
 

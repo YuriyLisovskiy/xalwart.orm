@@ -48,3 +48,7 @@ lib/
 Dockerfile*
 .dockerignore
 Makefile
+
+# Manual testing stuff
+tests/tests.cpp
+tests/benchmark*

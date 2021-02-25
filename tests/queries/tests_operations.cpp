@@ -1,5 +1,5 @@
 /**
- * query/tests_operators.cpp
+ * queries/tests_operations.cpp
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  */

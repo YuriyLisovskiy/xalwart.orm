@@ -80,7 +80,7 @@ protected:
 public:
 	inline explicit insert(const ModelT& model)
 	{
-		if constexpr (ModelT::meta_table_name == nullptr)
+		if constexpr (ModelT::meta_table_name != nullptr)
 		{
 			this->table_name += std::string(ModelT::meta_table_name);
 		}
@@ -126,7 +126,8 @@ public:
 			);
 		}
 
-		return this->db->run_insert(this->query(), false);
+		auto query = this->query();
+		return this->db->run_insert(query, false);
 	}
 
 	template <typename T>
@@ -137,7 +138,8 @@ public:
 
 	inline virtual void bulk()
 	{
-		this->db->run_insert(this->query(), true);
+		auto query = this->query();
+		this->db->run_insert(query, true);
 	}
 
 	[[nodiscard]]

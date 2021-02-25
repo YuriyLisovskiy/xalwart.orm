@@ -12,16 +12,31 @@
 #include <xalwart.core/exceptions.h>
 #include <xalwart.core/string_utils.h>
 
+// Orm libraries.
+#include "../exceptions.h"
+
 
 __SQLITE3_BEGIN__
 
+void SQLite3Driver::throw_empty_arg(
+	const std::string& arg, int line, const char* function, const char* file
+) const
+{
+	throw QueryError("sqlite3: non-empty '" + arg + "' is required", line, function, file);
+}
+
 SQLite3Driver::SQLite3Driver(const char* filename)
 {
+	if (!filename)
+	{
+		this->throw_empty_arg("filename", _ERROR_DETAILS_);
+	}
+
 	::sqlite3* driver;
 	if (sqlite3_open(filename, &driver))
 	{
 		throw core::RuntimeError(
-			"Error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
+			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
 			_ERROR_DETAILS_
 		);
 	}
@@ -35,13 +50,32 @@ std::string SQLite3Driver::make_insert_query(
 	const std::vector<std::string>& rows
 ) const
 {
-	return "INSERT INTO " + table_name + " (" + columns + ") VALUES (" + str::join(
-		rows.begin(), rows.end(), "), ("
-	) + ");";
+	if (table_name.empty())
+	{
+		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+	}
+
+	if (columns.empty())
+	{
+		this->throw_empty_arg("columns", _ERROR_DETAILS_);
+	}
+
+	auto values = str::join(rows.begin(), rows.end(), "), (");
+	if (values.empty())
+	{
+		this->throw_empty_arg("rows", _ERROR_DETAILS_);
+	}
+
+	return "INSERT INTO " + table_name + " (" + columns + ") VALUES (" + values + ");";
 }
 
 std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
 {
+	if (query.empty())
+	{
+		this->throw_empty_arg("query", _ERROR_DETAILS_);
+	}
+
 	char* message_error;
 	using data_t = std::pair<bool, std::string>;
 	data_t data(bulk, "");
@@ -85,6 +119,11 @@ std::string SQLite3Driver::make_select_query(
 	const q::condition& having_cond
 ) const
 {
+	if (table_name.empty())
+	{
+		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+	}
+
 	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " * FROM " + table_name;
 
 	auto where_str = (std::string)where_cond;
@@ -133,20 +172,29 @@ void SQLite3Driver::run_select(
 	const std::string& query, void* container, void(*handle_row)(void*, void*)
 ) const
 {
+	if (query.empty())
+	{
+		this->throw_empty_arg("query", _ERROR_DETAILS_);
+	}
+
 	char* message_error;
 	std::pair<void*, void(*)(void*, void*)> data(container, handle_row);
 	auto ret_val = sqlite3_exec(
 		this->db,
 		query.c_str(),
 		[](void* data, int argc, char** argv, char** column_names) -> int {
-			std::map<const char*, char*> row;
-			for (int i = 0; i < argc; i++)
+			auto& pair = *(std::pair<void*, void(*)(void*, void*)>*)data;
+			if (pair.second)
 			{
-				row[column_names[i]] = argv[i];
+				std::map<const char*, char*> row;
+				for (int i = 0; i < argc; i++)
+				{
+					row[column_names[i]] = argv[i];
+				}
+
+				pair.second(pair.first, &row);
 			}
 
-			auto& pair = *(std::pair<void*, void(*)(void*, void*)>*)data;
-			pair.second(pair.first, &row);
 			return 0;
 		},
 		&data,

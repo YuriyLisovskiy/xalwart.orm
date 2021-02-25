@@ -29,6 +29,11 @@ class SQLite3Driver : public DbDriver
 protected:
 	::sqlite3* db = nullptr;
 
+protected:
+	void throw_empty_arg(
+		const std::string& arg, int line, const char* function, const char* file
+	) const;
+
 public:
 	explicit SQLite3Driver(const char* filename);
 
