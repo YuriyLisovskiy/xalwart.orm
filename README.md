@@ -10,11 +10,8 @@ C++ compiler minimum version:
     ```bash
     sudo apt-get install sqlite3 libsqlite3-dev
     ```
-  To enable this driver, add the next line into `CMakeLists.txt`
-  before building an application:
-  ```cmake
-  add_compile_definitions(USE_SQLITE3)
-  ```
+  To enable this driver, add `-DUSE_SQLITE3=yes` argument when
+  configuring build with `cmake`.
 
 ### Testing
 
