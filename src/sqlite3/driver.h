@@ -8,6 +8,8 @@
 
 #pragma once
 
+#ifdef USE_SQLITE3
+
 // C++ libraries.
 // TODO
 
@@ -68,3 +70,5 @@ public:
 };
 
 __SQLITE3_END__
+
+#endif // USE_SQLITE3

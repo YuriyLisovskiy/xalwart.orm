@@ -36,7 +36,11 @@ set(BINARY unittests)
 
 function(add_tests SUB_DIR SUB_NAME)
     # Use sqlite3 driver.
-    add_compile_definitions(USE_SQLITE3)
+    if (DEFINED USE_SQLITE3)
+        add_compile_definitions(USE_SQLITE3)
+    elseif(DEFINED USE_POSTGRESQL)
+        add_compile_definitions(USE_POSTGRESQL)
+    endif()
 
     set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests/${SUB_DIR})
     file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true ${TESTS_DIR}*.cpp)
@@ -61,5 +65,5 @@ if (NOT DEFINED CMAKE_TEST_ALL_ONLY)
     set(CMAKE_TEST_ALL_ONLY no)
 endif()
 if (${CMAKE_TEST_ALL_ONLY} STREQUAL "no")
-    # TODO: add tests
+    add_sub_tests(queries)
 endif()

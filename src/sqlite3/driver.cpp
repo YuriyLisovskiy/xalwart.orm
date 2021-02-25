@@ -4,6 +4,8 @@
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
+#ifdef USE_SQLITE3
+
 #include "./driver.h"
 
 // Core libraries.
@@ -160,3 +162,5 @@ void SQLite3Driver::run_select(
 }
 
 __SQLITE3_END__
+
+#endif // USE_SQLITE3
