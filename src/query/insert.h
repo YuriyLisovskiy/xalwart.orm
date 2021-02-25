@@ -8,11 +8,9 @@
 
 #pragma once
 
-// C++ libraries.
-// TODO
-
 // Core libraries.
 #include <xalwart.core/types/string.h>
+#include <xalwart.core/object/utility.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -20,6 +18,7 @@
 // Orm libraries.
 #include "../model.h"
 #include "../driver.h"
+#include "../exceptions.h"
 
 __Q_BEGIN__
 
@@ -27,16 +26,18 @@ template <ModelBasedType ModelT>
 class insert
 {
 protected:
-	std::string columns_str;
-	std::string query;
-	std::string rows;
-
 	DbDriver* db = nullptr;
+
+	std::string table_name;
+	std::string columns_str;
+	std::vector<std::string> rows;
+
+	bool is_bulk = false;
 
 protected:
 	virtual inline void append_model(const ModelT& model, bool is_first)
 	{
-		this->rows += is_first ? "(" : ", (";
+		std::string row;
 		for (auto attr = model.attrs_begin(); attr != model.attrs_end(); attr++)
 		{
 			if constexpr (ModelT::meta_omit_pk)
@@ -55,11 +56,11 @@ protected:
 			auto value = attr->second.get();
 			if (dynamic_cast<types::String*>(value.get()))
 			{
-				this->rows += value->__repr__();
+				row += value->__repr__();
 			}
 			else
 			{
-				this->rows += value->__str__();
+				row += value->__str__();
 			}
 
 			if (std::next(attr) != model.attrs_end())
@@ -69,29 +70,27 @@ protected:
 					this->columns_str += ", ";
 				}
 
-				this->rows += ", ";
+				row += ", ";
 			}
 		}
 
-		this->rows += ")";
+		this->rows.push_back(row);
 	}
 
 public:
 	inline explicit insert(const ModelT& model)
 	{
-		this->query = "INSERT INTO ";
 		if constexpr (ModelT::meta_table_name == nullptr)
 		{
-			this->query += std::string(ModelT::meta_table_name);
+			this->table_name += std::string(ModelT::meta_table_name);
 		}
 		else
 		{
-			auto table_name = utility::demangle(typeid(ModelT).name());
-			this->query += table_name.substr(table_name.rfind(':') + 1);
+			this->table_name = utility::demangle(typeid(ModelT).name());
+			this->table_name = this->table_name.substr(this->table_name.rfind(':') + 1);
 		}
 
 		this->append_model(model, true);
-		this->query += " (" + this->columns_str + ") VALUES";
 	};
 
 	inline explicit insert(DbDriver* driver, const ModelT& model) : insert(model)
@@ -99,28 +98,59 @@ public:
 		this->db = driver;
 	};
 
-	virtual inline insert& values(const ModelT& model)
+	virtual inline insert& model(const ModelT& model)
 	{
+		this->is_bulk = true;
 		this->append_model(model, false);
 		return *this;
 	}
 
-	inline virtual void exec()
+	inline virtual insert& using_(DbDriver* database)
+	{
+		if (database)
+		{
+			this->db = database;
+		}
+
+		return *this;
+	}
+
+	[[nodiscard]]
+	inline virtual std::string one() const
+	{
+		if (this->is_bulk)
+		{
+			throw QueryError(
+				"insert: unable to return inserted model, trying to insert multiple models",
+				_ERROR_DETAILS_
+			);
+		}
+
+		return this->db->run_insert(this->query(), false);
+	}
+
+	template <typename T>
+	inline void one(T& pk) const
+	{
+		pk = object::as<T>(this->one().c_str());
+	}
+
+	inline virtual void bulk()
+	{
+		this->db->run_insert(this->query(), true);
+	}
+
+	[[nodiscard]]
+	virtual inline std::string query() const
 	{
 		if (!this->db)
 		{
 			throw QueryError("insert: database client not set", _ERROR_DETAILS_);
 		}
 
-		auto full_query = this->query + " " + this->rows;
-
-		// TODO: perform insert
-	}
-
-	[[nodiscard]]
-	virtual inline std::string as_string() const
-	{
-		return this->query + " " + this->rows;
+		return this->db->make_insert_query(
+			this->table_name, this->columns_str, this->rows
+		);
 	}
 };
 

@@ -36,6 +36,18 @@ public:
 		DbDriver::~DbDriver();
 	}
 
+	// insert row(s)
+	[[nodiscard]]
+	std::string make_insert_query(
+		const std::string& table_name,
+		const std::string& columns,
+		const std::vector<std::string>& rows
+	) const override;
+
+	[[nodiscard]]
+	std::string run_insert(const std::string& query, bool bulk) const override;
+
+	// select rows
 	[[nodiscard]]
 	std::string make_select_query(
 		const std::string& table_name,
@@ -47,14 +59,10 @@ public:
 		const q::condition& having_cond
 	) const override;
 
-	// In function 'handler_row(void*, void*)':
-	//
-	// - first parameter is initial container which is passed here as
-	//   the second parameter;
-	// - second parameter is row of type std::map<std::string, char*>
-	//   which contains pairs (column_name, column_value).
 	void run_select(
-		const std::string& query, void* container, void(*handle_row)(void*, void*)
+		const std::string& query,
+		void* container,
+		void(*handle_row)(void* container, void* row_map)
 	) const override;
 };
 

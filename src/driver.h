@@ -1,5 +1,5 @@
 /**
- * db.h
+ * driver.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -19,6 +19,7 @@
 // Orm libraries.
 #include "./query/operations.h"
 
+
 __ORM_BEGIN__
 
 class DbDriver
@@ -27,7 +28,13 @@ public:
 	virtual ~DbDriver() = default;
 
 	// insert row(s)
-	// TODO: insert row(s)
+	virtual std::string make_insert_query(
+		const std::string& table_name,
+		const std::string& columns,
+		const std::vector<std::string>& rows
+	) const = 0;
+
+	virtual std::string run_insert(const std::string& query, bool bulk) const = 0;
 
 	// select rows
 	virtual std::string make_select_query(
@@ -40,8 +47,16 @@ public:
 		const q::condition& having_cond
 	) const = 0;
 
+	// In function 'handler_row(void*, void*)':
+	//
+	// - first parameter is initial container which is passed here as
+	//   the second parameter;
+	// - second parameter is row of type std::map<std::string, char*>
+	//   which contains pairs (column_name, column_value).
 	virtual void run_select(
-		const std::string& query, void* container, void(*handle_row)(void*, void*)
+		const std::string& query,
+		void* container,
+		void(*handle_row)(void* container, void* row_map)
 	) const = 0;
 
 	// update row(s)
