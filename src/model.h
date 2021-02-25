@@ -22,6 +22,9 @@ __ORM_BEGIN__
 
 class Model : public object::Object
 {
+private:
+	bool _is_null_model = false;
+
 public:
 	static constexpr const char* meta_table_name = nullptr;
 	static constexpr const char* meta_pk_name = "id";
@@ -36,6 +39,39 @@ public:
 		throw core::NotImplementedException(
 			"'__cmp__' is not implemented", _ERROR_DETAILS_
 		);
+	}
+
+	[[nodiscard]]
+	inline std::string __str__() const override
+	{
+		if (this->_is_null_model)
+		{
+			return "Model{null}";
+		}
+
+		return object::Object::__str__();
+	}
+
+	[[nodiscard]]
+	inline std::string __repr__() const override
+	{
+		if (this->_is_null_model)
+		{
+			return "Model{null}";
+		}
+
+		return object::Object::__repr__();
+	}
+
+	inline void mark_as_null()
+	{
+		this->_is_null_model = true;
+	}
+
+	[[nodiscard]]
+	inline bool is_null() const
+	{
+		return this->_is_null_model;
 	}
 };
 

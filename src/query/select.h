@@ -34,10 +34,16 @@ protected:
 	DbDriver* db = nullptr;
 
 	bool prepared = false;
-	std::string query;
+	std::string query_;
+
 	std::string table_name;
 
-	bool distinct = false;
+	bool distinct_ = false;
+	q::condition where_cond_;
+	std::initializer_list<q::ordering> order_by_cols_;
+	long int limit_ = -1;
+	std::initializer_list<std::string> group_by_cols_;
+	q::condition having_cond_;
 
 	uint8_t masks[5] = {
 		0b00000001, // disables method 'where'
@@ -51,37 +57,27 @@ protected:
 	uint8_t disabled = 0x00;
 
 protected:
-	inline virtual void prepare_query()
+	[[nodiscard]]
+	inline virtual std::string prepare_query() const
 	{
-		if (!this->prepared)
+		if (!this->db)
 		{
-			this->query = std::string("SELECT") + (
-				this->distinct ? " DISTINCT" : ""
-			) + " * FROM " + this->table_name + this->query + ';';
-			this->prepared = true;
-		}
-	}
-
-	inline virtual std::string join_list(const std::initializer_list<std::string>& columns)
-	{
-		std::string result;
-		for (auto it = columns.begin(); it != columns.end(); it++)
-		{
-			auto item = *it;
-			if (!item.empty())
-			{
-				result += item;
-				if (std::next(it) != columns.end())
-				{
-					result += ", ";
-				}
-			}
+			throw QueryError("select: database client not set", _ERROR_DETAILS_);
 		}
 
-		return result;
+		return this->db->make_select_query(
+			this->table_name,
+			this->distinct_,
+			this->where_cond_,
+			this->order_by_cols_,
+			this->limit_,
+			this->group_by_cols_,
+			this->having_cond_
+		);
 	}
 
-	inline virtual bool is_disabled(uint item)
+	[[nodiscard]]
+	inline virtual bool is_disabled(uint item) const
 	{
 		return (this->disabled >> item) & 1UL;
 	}
@@ -105,6 +101,12 @@ public:
 		this->db = driver;
 	};
 
+	inline select& distinct(bool distinct=true)
+	{
+		this->distinct_ = distinct;
+		return *this;
+	}
+
 	inline virtual select& where(const q::condition& cond)
 	{
 		if (this->is_disabled(0))
@@ -114,7 +116,7 @@ public:
 			);
 		}
 
-		this->query += " WHERE " + (std::string)cond;
+		this->where_cond_ = cond;
 		this->disabled |= this->masks[0];
 		return *this;
 	}
@@ -130,16 +132,7 @@ public:
 
 		if (columns.size())
 		{
-			this->query += " ORDER BY ";
-			for (auto it = columns.begin(); it != columns.end(); it++)
-			{
-				this->query += (std::string)*it;
-				if (std::next(it) != columns.end())
-				{
-					this->query += ", ";
-				}
-			}
-
+			this->order_by_cols_ = columns;
 			this->disabled |= this->masks[1];
 		}
 
@@ -155,7 +148,7 @@ public:
 			);
 		}
 
-		this->query += " LIMIT " + std::to_string(limit);
+		this->limit_ = limit;
 		this->disabled |= this->masks[2];
 		return *this;
 	}
@@ -171,7 +164,7 @@ public:
 
 		if (columns.size())
 		{
-			this->query += " GROUP BY " + this->join_list(columns);
+			this->group_by_cols_ = columns;
 			this->disabled |= this->masks[3];
 		}
 
@@ -187,18 +180,22 @@ public:
 			);
 		}
 
-		this->query += " HAVING " + (std::string)cond;
+		this->having_cond_ = cond;
 		this->disabled |= this->masks[4];
 		return *this;
 	}
 
 	inline virtual select& using_(DbDriver* database)
 	{
-		this->db = database;
+		if (database)
+		{
+			this->db = database;
+		}
+
 		return *this;
 	}
 
-	inline virtual std::shared_ptr<ModelT> first()
+	inline virtual ModelT first()
 	{
 		// check if `limit(...)` was not called
 		if (!this->is_disabled(2))
@@ -206,32 +203,33 @@ public:
 			this->limit(1);
 		}
 
-		auto values = this->exec();
-		return values.empty() ? nullptr : values[0];
-	}
-
-	inline virtual std::vector<std::shared_ptr<ModelT>> exec()
-	{
-		if (!this->db)
+		auto values = this->to_vector();
+		if (values.empty())
 		{
-			throw QueryError("select: database client not set", _ERROR_DETAILS_);
+			ModelT model;
+			model.mark_as_null();
+			return model;
 		}
 
-		this->prepare_query();
+		return values[0];
+	}
 
+	inline virtual std::vector<ModelT> to_vector() const
+	{
+		auto query = this->prepare_query();
 		using row_t = std::map<const char*, char*>;
-		using data_t = std::vector<std::shared_ptr<ModelT>>;
+		using data_t = std::vector<ModelT>;
 		data_t collection;
-		this->db->run_select(this->query, &collection, [](void* container_ptr, void* row_ptr) -> void {
+		this->db->run_select(query, &collection, [](void* container_ptr, void* row_ptr) -> void {
 			auto& container = *(data_t *)container_ptr;
 			auto& row = *(row_t *)row_ptr;
-			auto model = std::make_shared<ModelT>();
+			ModelT model;
 			for (const auto& column : row)
 			{
 				if (column.second)
 				{
 					auto len = std::strlen(column.second);
-					model->__set_attr__(column.first, std::make_shared<types::String>(
+					model.__set_attr__(column.first, std::make_shared<types::String>(
 						std::string(column.second, len + 1)
 					));
 				}
@@ -244,10 +242,9 @@ public:
 	}
 
 	[[nodiscard]]
-	inline virtual std::string as_string()
+	inline std::string query() const
 	{
-		this->prepare_query();
-		return this->query;
+		return this->prepare_query();
 	}
 };
 
