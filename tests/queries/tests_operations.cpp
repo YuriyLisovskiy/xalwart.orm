@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/query/operations.h"
+#include "../../src/queries/operations.h"
 
 using namespace xw;
 

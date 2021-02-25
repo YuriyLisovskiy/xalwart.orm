@@ -17,7 +17,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./query/operations.h"
+#include "./queries/operations.h"
 
 
 __ORM_BEGIN__

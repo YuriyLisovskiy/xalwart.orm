@@ -19,8 +19,8 @@
 
 // Orm libraries.
 #include "./driver.h"
-#include "./query/insert.h"
-#include "./query/select.h"
+#include "./queries/insert.h"
+#include "./queries/select.h"
 
 __ORM_BEGIN__
 
