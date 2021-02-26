@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: TODO
+ * Purpose: wrapper for SQL 'SELECT' statement.
  */
 
 #pragma once
@@ -31,37 +31,56 @@ template <ModelBasedType ModelT>
 class select
 {
 protected:
+
+	// Driver to perform an access to the database.
 	abc::ISQLDriver* db = nullptr;
 
+	// Retrieves automatically, check the default constructor.
 	std::string table_name;
 
-	bool distinct_ = false;
-	q::condition where_cond_;
-	std::initializer_list<q::ordering> order_by_cols_;
-	long int limit_ = -1;
-	long int offset_ = -1;
-	std::initializer_list<std::string> group_by_cols_;
-	q::condition having_cond_;
+	// Holds pair {value, is_set}:
+	//  - value: actual value which will be forwarded to query generator;
+	//  - is_set: indicates if the value is set or not.
+	template <typename T>
+	struct pair
+	{
+		T value;
+		bool is_set = false;
 
-	uint8_t masks[5] = {
-		0b00000001, // disables method 'where'
-		0b00000011, // disables method 'order_by' and all above
-		0b00000111, // disables method 'limit' and all above
-		0b00001111, // disables method 'group_by' and all above
-		0b00011111  // disables method 'having' and all above
+		inline void set(T v)
+		{
+			this->value = std::move(v);
+			this->is_set = true;
+		}
 	};
 
-	// Holds value to indicate what methods is disabled.
-	uint8_t disabled = 0x00;
+	// Indicates whether to use distinction or not in SQL statement.
+	// The default is false.
+	pair<bool> distinct_;
 
-protected:
-	[[nodiscard]]
-	inline virtual bool is_disabled(uint item) const
-	{
-		return (this->disabled >> item) & 1UL;
-	}
+	// Holds boolean condition for SQL 'WHERE' statement.
+	pair<q::condition> where_cond_;
+
+	// Holds columns list for SQL 'ORDER BY' statement.
+	pair<std::initializer_list<q::ordering>> order_by_cols_;
+
+	// Holds value for SQL 'LIMIT'. The default is -1.
+	pair<long int> limit_;
+
+	// Holds value for SQL 'OFFSET'. The default is -1.
+	pair<long int> offset_;
+
+	// Holds columns list for SQL 'GROUP BY' statement.
+	pair<std::initializer_list<std::string>> group_by_cols_;
+
+	// Holds boolean condition for SQL 'HAVING' statement.
+	pair<q::condition> having_cond_;
 
 public:
+
+	// Retrieves table name of 'ModelT'. If ModelT::meta_table_name
+	// is nullptr, uses 'utility::demangle(...)' method to complete
+	// the operation.
 	inline explicit select()
 	{
 		if constexpr (ModelT::meta_table_name != nullptr)
@@ -73,107 +92,146 @@ public:
 			this->table_name = utility::demangle(typeid(ModelT).name());
 			this->table_name = this->table_name.substr(this->table_name.rfind(':') + 1);
 		}
+
+		this->distinct_.value = false;
+		this->limit_.value = -1;
+		this->offset_.value = -1;
 	};
 
+	// Sets SQL driver and calls the default constructor.
 	inline explicit select(abc::ISQLDriver* driver) : select()
 	{
 		this->db = driver;
 	};
 
-	inline select& distinct(bool distinct=true)
+	// Sets the distinct value.
+	//
+	// Throws 'QueryError' if this method is called more than once.
+	inline virtual select& distinct()
 	{
-		this->distinct_ = distinct;
+		if (this->distinct_.is_set)
+		{
+			throw QueryError(
+				"'distinct' value is already set, check method call sequence", _ERROR_DETAILS_
+			);
+		}
+
+		this->distinct_.set(true);
 		return *this;
 	}
 
+	// Sets the condition for 'where' filtering.
+	//
+	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& where(const q::condition& cond)
 	{
-		if (this->is_disabled(0))
+		if (this->where_cond_.is_set)
 		{
 			throw QueryError(
-				"unable to set 'WHERE' condition, check method call sequence", _ERROR_DETAILS_
+				"'where' condition is already set, check method call sequence", _ERROR_DETAILS_
 			);
 		}
 
-		this->where_cond_ = cond;
-		this->disabled |= this->masks[0];
+		this->where_cond_.set(cond);
 		return *this;
 	}
 
+	// Sets columns for ordering.
+	//
+	// Throws 'QueryError' if this method is called
+	// more than once with non-empty columns list.
 	inline virtual select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
-		if (this->is_disabled(1))
+		if (this->order_by_cols_.is_set)
 		{
 			throw QueryError(
-				"unable to set 'ORDER BY' columns, check method call sequence", _ERROR_DETAILS_
+				"columns for ordering is already set, check method call sequence", _ERROR_DETAILS_
 			);
 		}
 
 		if (columns.size())
 		{
-			this->order_by_cols_ = columns;
-			this->disabled |= this->masks[1];
+			this->order_by_cols_.set(columns);
 		}
 
 		return *this;
 	}
 
-	inline virtual select& limit(size_t limit, size_t offset)
+	// Sets the limit value.
+	//
+	// Throws 'QueryError' if this method is called more than once.
+	inline virtual select& limit(size_t limit)
 	{
-		if (this->is_disabled(2))
+		if (this->limit_.is_set)
 		{
 			throw QueryError(
-				"unable to set 'LIMIT' value, check method call sequence", _ERROR_DETAILS_
+				"'limit' value is already set, check method call sequence", _ERROR_DETAILS_
 			);
 		}
 
-		this->limit_ = limit;
+		this->limit_.set(limit);
+		return *this;
+	}
+
+	// Sets the offset value.
+	//
+	// Throws 'QueryError' if this method is called
+	// more than once with positive value.
+	inline virtual select& offset(size_t offset)
+	{
+		if (this->offset_.is_set)
+		{
+			throw QueryError(
+				"'offset' value is already set, check method call sequence", _ERROR_DETAILS_
+			);
+		}
+
 		if (offset > 0)
 		{
-			this->offset_ = offset;
+			this->offset_.set(offset);
 		}
 
-		this->disabled |= this->masks[2];
 		return *this;
 	}
 
-	inline select& limit(size_t limit)
-	{
-		return this->limit(limit, 0);
-	}
-
+	// Sets columns for grouping.
+	//
+	// Throws 'QueryError' if this method is called
+	// more than once with non-empty columns list.
 	inline virtual select& group_by(const std::initializer_list<std::string>& columns)
 	{
-		if (this->is_disabled(3))
+		if (this->group_by_cols_.is_set)
 		{
 			throw QueryError(
-				"unable to set 'GROUP BY' columns, check method call sequence", _ERROR_DETAILS_
+				"columns for grouping is already set, check method call sequence", _ERROR_DETAILS_
 			);
 		}
 
 		if (columns.size())
 		{
-			this->group_by_cols_ = columns;
-			this->disabled |= this->masks[3];
+			this->group_by_cols_.set(columns);
 		}
 
 		return *this;
 	}
 
+	// Sets the condition for 'having' filtering.
+	//
+	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& having(const q::condition& cond)
 	{
-		if (this->is_disabled(4))
+		if (this->having_cond_.is_set)
 		{
 			throw QueryError(
-				"unable to set 'HAVING' condition, check method call sequence", _ERROR_DETAILS_
+				"'having' condition is already set, check method call sequence", _ERROR_DETAILS_
 			);
 		}
 
-		this->having_cond_ = cond;
-		this->disabled |= this->masks[4];
+		this->having_cond_.set(cond);
 		return *this;
 	}
 
+	// Sets SQL driver.
 	inline virtual select& using_(abc::ISQLDriver* driver)
 	{
 		if (driver)
@@ -184,10 +242,16 @@ public:
 		return *this;
 	}
 
+	// Set limit value to 1, if it was not already set
+	// and retrieves the first item of 'to_vector()'
+	// result. In case if 'to_vector()' returns an empty
+	// vector, returns null-model.
+	//
+	// Throws 'QueryError' when driver is not set.
 	inline virtual ModelT first()
 	{
 		// check if `limit(...)` was not called
-		if (!this->is_disabled(2))
+		if (!this->limit_.is_set)
 		{
 			this->limit(1);
 		}
@@ -203,6 +267,10 @@ public:
 		return values[0];
 	}
 
+	// Performs an access to database. Runs SQL 'SELECT'
+	// query and returns its result.
+	//
+	// Throws 'QueryError' when driver is not set.
 	inline virtual std::vector<ModelT> to_vector() const
 	{
 		auto query = this->query();
@@ -230,6 +298,9 @@ public:
 		return collection;
 	}
 
+	// Generates query using SQL driver.
+	//
+	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
 	inline virtual std::string query() const
 	{
@@ -240,13 +311,13 @@ public:
 
 		return this->db->make_select_query(
 			this->table_name,
-			this->distinct_,
-			this->where_cond_,
-			this->order_by_cols_,
-			this->limit_,
-			this->offset_,
-			this->group_by_cols_,
-			this->having_cond_
+			this->distinct_.value,
+			this->where_cond_.value,
+			this->order_by_cols_.value,
+			this->limit_.value,
+			this->offset_.value,
+			this->group_by_cols_.value,
+			this->having_cond_.value
 		);
 	}
 };
