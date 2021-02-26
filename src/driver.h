@@ -3,41 +3,40 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: TODO
+ * Purpose: base driver implements generation of common SQL queries
+ * 	which can be overwritten.
  */
 
 #pragma once
-
-// C++ libraries.
-#include <string>
-#include <map>
-#include <functional>
 
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./queries/operations.h"
+#include "./abc.h"
 
 
 __ORM_BEGIN__
 
-class DbDriver
+class SQLDriverBase : public abc::ISQLDriver
 {
-public:
-	virtual ~DbDriver() = default;
+protected:
+	void throw_empty_arg(
+		const std::string& arg, int line, const char* function, const char* file
+	) const;
 
+public:
 	// insert row(s)
-	virtual std::string make_insert_query(
+	[[nodiscard]]
+	std::string make_insert_query(
 		const std::string& table_name,
 		const std::string& columns,
 		const std::vector<std::string>& rows
-	) const = 0;
-
-	virtual std::string run_insert(const std::string& query, bool bulk) const = 0;
+	) const override;
 
 	// select rows
-	virtual std::string make_select_query(
+	[[nodiscard]]
+	std::string make_select_query(
 		const std::string& table_name,
 		bool distinct,
 		const q::condition& where_cond,
@@ -46,25 +45,7 @@ public:
 		long int offset,
 		const std::initializer_list<std::string>& group_by_cols,
 		const q::condition& having_cond
-	) const = 0;
-
-	// In function 'handler_row(void*, void*)':
-	//
-	// - first parameter is initial container which is passed here as
-	//   the second parameter;
-	// - second parameter is row of type std::map<std::string, char*>
-	//   which contains pairs (column_name, column_value).
-	virtual void run_select(
-		const std::string& query,
-		void* container,
-		void(*handle_row)(void* container, void* row_map)
-	) const = 0;
-
-	// update row(s)
-	// TODO: update row(s)
-
-	// delete row(s)
-	// TODO: delete row(s)
+	) const override;
 };
 
 __ORM_END__

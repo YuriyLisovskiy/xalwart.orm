@@ -8,9 +8,6 @@
 
 #pragma once
 
-// C++ libraries.
-// TODO
-
 // Core libraries.
 #include <xalwart.core/object/utility.h>
 
@@ -18,21 +15,22 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./driver.h"
+#include "./abc.h"
 #include "./queries/insert.h"
 #include "./queries/select.h"
 
+
 __ORM_BEGIN__
 
-class DbClient
+class Client
 {
 protected:
-	std::shared_ptr<DbDriver> driver_;
+	std::shared_ptr<abc::ISQLDriver> db;
 
 public:
-	inline explicit DbClient(std::shared_ptr<DbDriver> driver) : driver_(std::move(driver))
+	inline explicit Client(std::shared_ptr<abc::ISQLDriver> driver) : db(std::move(driver))
 	{
-		if (!this->driver_)
+		if (!this->db)
 		{
 			throw core::NullPointerException(
 				"DbClient: driver must be instantiated", _ERROR_DETAILS_
@@ -41,22 +39,22 @@ public:
 	}
 
 	[[nodiscard]]
-	inline DbDriver* driver() const
+	inline abc::ISQLDriver* driver() const
 	{
-		return this->driver_.get();
+		return this->db.get();
 	}
 
 	// Insert into database.
 	template <ModelBasedType ModelT>
 	inline void insert_one(const ModelT& model) const
 	{
-		q::insert<ModelT>(this->driver_.get(), model).one();
+		q::insert<ModelT>(this->db.get(), model).one();
 	}
 
 	template <ModelBasedType ModelT, typename PkT>
 	inline void insert_one(const ModelT& model, PkT* pk) const
 	{
-		auto pk_str = q::insert<ModelT>(this->driver_.get(), model).one();
+		auto pk_str = q::insert<ModelT>(this->db.get(), model).one();
 		if (pk != nullptr)
 		{
 			*pk = xw::object::as<PkT>((const void*)pk_str.c_str());
@@ -66,13 +64,13 @@ public:
 	template <ModelBasedType ModelT>
 	inline q::insert<ModelT> insert(const ModelT& model) const
 	{
-		return q::insert<ModelT>(this->driver_.get(), model);
+		return q::insert<ModelT>(this->db.get(), model);
 	}
 
 	template <ModelBasedType ModelT, typename IteratorBegin, typename IteratorEnd>
 	inline void insert_bulk(IteratorBegin begin, IteratorEnd end) const
 	{
-		auto query = q::insert<ModelT>(this->driver_.get(), *begin++);
+		auto query = q::insert<ModelT>(this->db.get(), *begin++);
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {
 			query.model(model);
 		});
@@ -83,19 +81,19 @@ public:
 	template <ModelBasedType ModelT>
 	inline ModelT get(const q::condition& cond) const
 	{
-		return q::select<ModelT>(this->driver_.get()).where(cond).first();
+		return q::select<ModelT>(this->db.get()).where(cond).first();
 	}
 
 	template <ModelBasedType ModelT>
 	inline q::select<ModelT> select() const
 	{
-		return q::select<ModelT>(this->driver_.get());
+		return q::select<ModelT>(this->db.get());
 	}
 
 	template <ModelBasedType ModelT>
 	inline q::select<ModelT> filter(const q::condition& cond) const
 	{
-		return q::select<ModelT>(this->driver_.get()).where(cond);
+		return q::select<ModelT>(this->db.get()).where(cond);
 	}
 };
 

@@ -17,8 +17,9 @@
 
 // Orm libraries.
 #include "../model.h"
-#include "../driver.h"
+#include "../abc.h"
 #include "../exceptions.h"
+
 
 __Q_BEGIN__
 
@@ -26,7 +27,7 @@ template <ModelBasedType ModelT>
 class insert
 {
 protected:
-	DbDriver* db = nullptr;
+	abc::ISQLDriver* db = nullptr;
 
 	std::string table_name;
 	std::string columns_str;
@@ -93,7 +94,7 @@ public:
 		this->append_model(model, true);
 	};
 
-	inline explicit insert(DbDriver* driver, const ModelT& model) : insert(model)
+	inline explicit insert(abc::ISQLDriver* driver, const ModelT& model) : insert(model)
 	{
 		this->db = driver;
 	};
@@ -105,11 +106,11 @@ public:
 		return *this;
 	}
 
-	inline virtual insert& using_(DbDriver* database)
+	inline virtual insert& using_(abc::ISQLDriver* driver)
 	{
-		if (database)
+		if (driver)
 		{
-			this->db = database;
+			this->db = driver;
 		}
 
 		return *this;

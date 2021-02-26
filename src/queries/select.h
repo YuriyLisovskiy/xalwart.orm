@@ -22,7 +22,7 @@
 #include "./operations.h"
 #include "../model.h"
 #include "../exceptions.h"
-#include "../driver.h"
+#include "../abc.h"
 
 
 __Q_BEGIN__
@@ -31,7 +31,7 @@ template <ModelBasedType ModelT>
 class select
 {
 protected:
-	DbDriver* db = nullptr;
+	abc::ISQLDriver* db = nullptr;
 
 	std::string table_name;
 
@@ -75,7 +75,7 @@ public:
 		}
 	};
 
-	inline explicit select(DbDriver* driver) : select()
+	inline explicit select(abc::ISQLDriver* driver) : select()
 	{
 		this->db = driver;
 	};
@@ -174,11 +174,11 @@ public:
 		return *this;
 	}
 
-	inline virtual select& using_(DbDriver* database)
+	inline virtual select& using_(abc::ISQLDriver* driver)
 	{
-		if (database)
+		if (driver)
 		{
-			this->db = database;
+			this->db = driver;
 		}
 
 		return *this;

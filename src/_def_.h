@@ -15,3 +15,7 @@
 // xw::orm
 #define __ORM_BEGIN__ __MAIN_NAMESPACE_BEGIN__ namespace orm {
 #define __ORM_END__ } __MAIN_NAMESPACE_END__
+
+// xw::orm::abc
+#define __ABC_BEGIN__ __ORM_BEGIN__ namespace abc {
+#define __ABC_END__ } __ORM_END__
