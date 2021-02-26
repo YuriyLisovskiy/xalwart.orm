@@ -6,9 +6,6 @@
 
 #include "./driver.h"
 
-// C++ libraries.
-// TODO
-
 // Core libraries.
 #include <xalwart.core/string_utils.h>
 

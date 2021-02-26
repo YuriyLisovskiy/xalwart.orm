@@ -27,6 +27,7 @@ class ISQLDriver
 public:
 	virtual ~ISQLDriver() = default;
 
+	// Returns the name of SQL driver.
 	[[nodiscard]]
 	virtual std::string name() const = 0;
 

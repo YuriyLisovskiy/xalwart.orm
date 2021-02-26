@@ -3,7 +3,8 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: TODO
+ * Purpose: database client which uses SQL driver for
+ * 	accessing the database.
  */
 
 #pragma once
@@ -25,9 +26,15 @@ __ORM_BEGIN__
 class Client
 {
 protected:
+
+	// SQL driver for accessing the database.
 	std::shared_ptr<abc::ISQLDriver> db;
 
 public:
+
+	// Sets driver.
+	//
+	// Throws 'NullPointerException' if the driver was not initialized.
 	inline explicit Client(std::shared_ptr<abc::ISQLDriver> driver) : db(std::move(driver))
 	{
 		if (!this->db)
@@ -38,19 +45,22 @@ public:
 		}
 	}
 
+	// Returns pointer to the SQL driver.
 	[[nodiscard]]
 	inline abc::ISQLDriver* driver() const
 	{
 		return this->db.get();
 	}
 
-	// Insert into database.
+	// Inserts one model to the database.
 	template <ModelBasedType ModelT>
 	inline void insert_one(const ModelT& model) const
 	{
 		q::insert<ModelT>(this->db.get(), model).one();
 	}
 
+	// Inserts one model to the database and writes
+	// last inserted primary key to 'pk' out argument.
 	template <ModelBasedType ModelT, typename PkT>
 	inline void insert_one(const ModelT& model, PkT* pk) const
 	{
@@ -61,12 +71,14 @@ public:
 		}
 	}
 
+	// Creates 'insert' statement object with initialized driver.
 	template <ModelBasedType ModelT>
 	inline q::insert<ModelT> insert(const ModelT& model) const
 	{
 		return q::insert<ModelT>(this->db.get(), model);
 	}
 
+	// Inserts the list of models to the database.
 	template <ModelBasedType ModelT, typename IteratorBegin, typename IteratorEnd>
 	inline void insert_bulk(IteratorBegin begin, IteratorEnd end) const
 	{
@@ -77,19 +89,22 @@ public:
 		query.bulk();
 	}
 
-	// Retrieve from database.
+	// Retrieve first row from database.
 	template <ModelBasedType ModelT>
 	inline ModelT get(const q::condition& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond).first();
 	}
 
+	// Creates 'select' statement object with initialized driver.
 	template <ModelBasedType ModelT>
 	inline q::select<ModelT> select() const
 	{
 		return q::select<ModelT>(this->db.get());
 	}
 
+	// Creates 'select' statement object with called 'where' method.
+	// So, 'WHERE' condition is set and can not be changed.
 	template <ModelBasedType ModelT>
 	inline q::select<ModelT> filter(const q::condition& cond) const
 	{

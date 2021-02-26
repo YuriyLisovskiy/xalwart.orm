@@ -34,7 +34,7 @@ TEST(TestCase_Model, __str___NullModel)
 {
 	orm::Model model;
 	model.mark_as_null();
-	ASSERT_EQ(model.__str__(), "Model{null}");
+	ASSERT_EQ(model.__str__(), "null");
 }
 
 TEST(TestCase_Model, __repr___NullModel)

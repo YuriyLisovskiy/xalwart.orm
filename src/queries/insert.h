@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: TODO
+ * Purpose: wrapper for SQL 'INSERT' statement.
  */
 
 #pragma once
@@ -16,9 +16,9 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../model.h"
 #include "../abc.h"
 #include "../exceptions.h"
+#include "./utility.h"
 
 
 __Q_BEGIN__
@@ -81,16 +81,7 @@ protected:
 public:
 	inline explicit insert(const ModelT& model)
 	{
-		if constexpr (ModelT::meta_table_name != nullptr)
-		{
-			this->table_name += std::string(ModelT::meta_table_name);
-		}
-		else
-		{
-			this->table_name = utility::demangle(typeid(ModelT).name());
-			this->table_name = this->table_name.substr(this->table_name.rfind(':') + 1);
-		}
-
+		this->table_name = utility::get_table_name<ModelT>();
 		this->append_model(model, true);
 	};
 

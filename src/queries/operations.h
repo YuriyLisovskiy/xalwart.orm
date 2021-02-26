@@ -17,6 +17,10 @@
 
 __Q_BEGIN__
 
+template <typename T>
+concept OperatorValueType = std::is_fundamental_v<T> ||
+	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
+
 struct ordering
 {
 protected:

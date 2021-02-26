@@ -8,21 +8,17 @@
 
 #pragma once
 
-// C++ libraries.
-#include <string>
-
 // Core libraries.
-#include <xalwart.core/utility.h>
 #include <xalwart.core/types/string.h>
 
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./operations.h"
-#include "../model.h"
-#include "../exceptions.h"
 #include "../abc.h"
+#include "../exceptions.h"
+#include "./operations.h"
+#include "./utility.h"
 
 
 __Q_BEGIN__
@@ -78,21 +74,10 @@ protected:
 
 public:
 
-	// Retrieves table name of 'ModelT'. If ModelT::meta_table_name
-	// is nullptr, uses 'utility::demangle(...)' method to complete
-	// the operation.
+	// Retrieves table name and sets the default values.
 	inline explicit select()
 	{
-		if constexpr (ModelT::meta_table_name != nullptr)
-		{
-			this->table_name = ModelT::meta_table_name;
-		}
-		else
-		{
-			this->table_name = utility::demangle(typeid(ModelT).name());
-			this->table_name = this->table_name.substr(this->table_name.rfind(':') + 1);
-		}
-
+		this->table_name = utility::get_table_name<ModelT>();
 		this->distinct_.value = false;
 		this->limit_.value = -1;
 		this->offset_.value = -1;

@@ -3,12 +3,10 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: TODO
+ * Purpose: base class for representing the database model.
  */
 
 #pragma once
-
-#include <iostream>
 
 // Core libraries.
 #include <xalwart.core/object/object.h>
@@ -23,16 +21,30 @@ __ORM_BEGIN__
 class Model : public object::Object
 {
 private:
+
+	// Null model indicator.
+	// Used in queries when selecting one row and
+	// 'SELECT' statement returns nothing.
 	bool _is_null_model = false;
 
 public:
+
+	// Must be overwritten in child class.
 	static constexpr const char* meta_table_name = nullptr;
+
+	// Can be overwritten in child class.
 	static constexpr const char* meta_pk_name = "id";
 
 	// Omit primary key when inserting new models.
+	//
+	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
 
 public:
+
+	// By default throws 'NotImplementedException'.
+	// Overwriting is recommended in child classes
+	// for models' comparison.
 	[[nodiscard]]
 	inline short __cmp__(const Object* other) const override
 	{
@@ -46,7 +58,7 @@ public:
 	{
 		if (this->_is_null_model)
 		{
-			return "Model{null}";
+			return "null";
 		}
 
 		return object::Object::__str__();
@@ -55,14 +67,21 @@ public:
 	[[nodiscard]]
 	inline std::string __repr__() const override
 	{
-		return this->__str__();
+		if (this->_is_null_model)
+		{
+			return "Model{null}";
+		}
+
+		return object::Object::__repr__();
 	}
 
+	// Marks model as null-model. This action can not be undone.
 	inline void mark_as_null()
 	{
 		this->_is_null_model = true;
 	}
 
+	// Returns whether model is null or not.
 	[[nodiscard]]
 	inline bool is_null() const
 	{
@@ -70,6 +89,7 @@ public:
 	}
 };
 
+// Used in templates where Model-based class is required.
 template <typename T>
 concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
 
