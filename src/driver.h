@@ -28,6 +28,12 @@ protected:
 		const std::string& arg, int line, const char* function, const char* file
 	) const;
 
+	[[nodiscard]]
+	inline std::string quote_str(const std::string& s) const
+	{
+		return '"' + s + '"';
+	}
+
 public:
 
 	// Generates 'INSERT' query as string.
@@ -47,7 +53,9 @@ public:
 	[[nodiscard]]
 	std::string make_select_query(
 		const std::string& table_name,
+		const std::initializer_list<const char*>& columns,
 		bool distinct,
+		const std::vector<q::join>& joins,
 		const q::condition& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,

@@ -11,6 +11,8 @@
 // Core libraries.
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
+#include <xalwart.core/types/string.h>
+#include <xalwart.core/string_utils.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -39,6 +41,9 @@ public:
 	//
 	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
+
+	// TODO: !experimental feature!
+	static constexpr std::initializer_list<const char*> meta_fields = {};
 
 public:
 
@@ -86,6 +91,18 @@ public:
 	inline bool is_null() const
 	{
 		return this->_is_null_model;
+	}
+
+	inline void from_map(const std::map<std::string, char*>& fields)
+	{
+		std::map<std::string, std::map<std::string, char*>> sub_models;
+		for (const auto& field : fields)
+		{
+			if (field.second)
+			{
+				this->__set_attr__(field.first.c_str(), field.second);
+			}
+		}
 	}
 };
 

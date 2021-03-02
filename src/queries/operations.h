@@ -14,6 +14,9 @@
 // Module definitions.
 #include "./_def_.h"
 
+// Orm libraries.
+#include "./utility.h"
+
 
 __Q_BEGIN__
 
@@ -23,20 +26,21 @@ concept OperatorValueType = std::is_fundamental_v<T> ||
 
 struct ordering
 {
-protected:
-	std::string value;
+public:
+	std::string column;
+	bool ascending = true;
 
 public:
 	inline ordering() = default;
 
-	inline ordering(const std::string& column, const std::string& order)
+	inline ordering(
+		std::string column, bool ascending
+	) : column(std::move(column)), ascending(ascending)
 	{
-		this->value = column + " " + order;
 	}
 
-	inline explicit ordering(const std::string& column)
+	inline explicit ordering(std::string column) : column(std::move(column))
 	{
-		this->value = column;
 	}
 
 	inline explicit ordering(const char* column) : ordering(std::string(column))
@@ -45,28 +49,18 @@ public:
 
 	virtual inline explicit operator std::string() const
 	{
-		return this->value;
+		return utility::quote_str(this->column) + (this->ascending ? " ASC" : " DESC");
 	}
 };
 
 inline ordering ascending(const std::string& column)
 {
-	return ordering(column, "ASC");
-}
-
-inline ordering asc(const std::string& column)
-{
-	return ascending(column);
+	return ordering(column, true);
 }
 
 inline ordering descending(const std::string& column)
 {
-	return ordering(column, "DESC");
-}
-
-inline ordering desc(const std::string& column)
-{
-	return descending(column);
+	return ordering(column, false);
 }
 
 struct condition
@@ -93,7 +87,7 @@ struct comparison_operator : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, T value)
 	{
-		this->str = column_name + " " + op + " " + std::to_string(value);
+		this->str = utility::quote_str(column_name) + " " + op + " " + std::to_string(value);
 	}
 
 public:
@@ -110,7 +104,7 @@ struct comparison_operator<std::string> : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const std::string& value)
 	{
-		this->str = column_name + " " + op + " '" + value + "'";
+		this->str = utility::quote_str(column_name) + " " + op + " '" + value + "'";
 	}
 
 public:
@@ -127,7 +121,7 @@ struct comparison_operator<const char*> : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const char* value)
 	{
-		this->str = column_name + " " + op + " '" + std::string(value) + "'";
+		this->str = utility::quote_str(column_name) + " " + op + " '" + std::string(value) + "'";
 	}
 
 public:
@@ -149,29 +143,11 @@ struct equals : public comparison_operator<T>
 };
 
 template <OperatorValueType T>
-struct eq : public equals<T>
-{
-	inline explicit eq(const std::string& column, T value)
-		: equals<T>(column, value)
-	{
-	}
-};
-
-template <OperatorValueType T>
 struct not_equals : public comparison_operator<T>
 {
 	inline explicit not_equals(const std::string& column, T value)
 	{
 		this->make(column, "!=", value);
-	}
-};
-
-template <OperatorValueType T>
-struct ne : public not_equals<T>
-{
-	inline explicit ne(const std::string& column, T value)
-		: not_equals<T>(column, value)
-	{
 	}
 };
 
@@ -185,29 +161,11 @@ struct less : public comparison_operator<T>
 };
 
 template <OperatorValueType T>
-struct lt : public less<T>
-{
-	inline explicit lt(const std::string& column, T value)
-		: less<T>(column, value)
-	{
-	}
-};
-
-template <OperatorValueType T>
 struct greater : public comparison_operator<T>
 {
 	inline explicit greater(const std::string& column, T value)
 	{
 		this->make(column, ">", value);
-	}
-};
-
-template <OperatorValueType T>
-struct gt : public greater<T>
-{
-	inline explicit gt(const std::string& column, T value)
-		: greater<T>(column, value)
-	{
 	}
 };
 
@@ -221,29 +179,11 @@ struct less_or_equals : public comparison_operator<T>
 };
 
 template <OperatorValueType T>
-struct le : public less_or_equals<T>
-{
-	inline explicit le(const std::string& column, T value)
-		: less_or_equals<T>(column, value)
-	{
-	}
-};
-
-template <OperatorValueType T>
 struct greater_or_equals : public comparison_operator<T>
 {
 	inline explicit greater_or_equals(const std::string& column, T value)
 	{
 		this->make(column, ">=", value);
-	}
-};
-
-template <OperatorValueType T>
-struct ge : public greater_or_equals<T>
-{
-	inline explicit ge(const std::string& column, T value)
-		: greater_or_equals<T>(column, ">=", value)
-	{
 	}
 };
 
@@ -268,7 +208,7 @@ struct between : public condition
 {
 	inline explicit between(const std::string& column, T lower, T upper)
 	{
-		this->str = column + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
+		this->str = utility::quote_str(column) + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
 	}
 };
 
@@ -277,7 +217,7 @@ struct between<std::string> : public condition
 {
 	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
 	{
-		this->str = column + " BETWEEN '" + lower + "' AND '" + upper + '\'';
+		this->str = utility::quote_str(column) + " BETWEEN '" + lower + "' AND '" + upper + '\'';
 	}
 };
 
@@ -286,10 +226,34 @@ struct between<const char*> : public condition
 {
 	inline explicit between(const std::string& column, const char* lower, const char* upper)
 	{
-		this->str = column + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
+		this->str = utility::quote_str(column) + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
 	}
 };
 
 // TODO: implement ALL, ANY, EXISTS, IN, and LIKE operators.
+
+struct join
+{
+	std::string type;
+	std::string table_name;
+	q::condition condition;
+
+	inline explicit operator std::string() const
+	{
+		return type + " JOIN \"" + table_name + "\" ON " + (std::string)condition;
+	}
+};
+
+template <typename LeftT, typename RightT>
+join left(const std::string& join_pk)
+{
+	std::string left_table_name = LeftT::meta_table_name;
+	const auto& table_name = RightT::meta_table_name;
+	return {"LEFT", table_name, q::condition(
+		utility::quote_str(left_table_name) + "." + utility::quote_str(LeftT::meta_pk_name)
+		+ " = " +
+		utility::quote_str(table_name) + "." + utility::quote_str(join_pk)
+	)};
+}
 
 __Q_END__

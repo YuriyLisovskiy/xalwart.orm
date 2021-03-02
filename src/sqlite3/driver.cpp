@@ -8,6 +8,9 @@
 
 #include "./driver.h"
 
+// Core libraries.
+#include <xalwart.core/string_utils.h>
+
 // Orm libraries.
 #include "../exceptions.h"
 
@@ -90,10 +93,16 @@ void SQLite3Driver::run_select(
 			auto& pair = *(std::pair<void*, void(*)(void*, void*)>*)data;
 			if (pair.second)
 			{
-				std::map<const char*, char*> row;
+				std::map<std::string, char*> row;
 				for (int i = 0; i < argc; i++)
 				{
-					row[column_names[i]] = argv[i];
+					auto column = str::lsplit_one(column_names[i], '.');
+					if (column.second.empty())
+					{
+						column.second = column.first;
+					}
+
+					row[column.second] = argv[i];
 				}
 
 				pair.second(pair.first, &row);

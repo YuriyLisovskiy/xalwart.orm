@@ -46,7 +46,9 @@ public:
 	[[nodiscard]]
 	virtual std::string make_select_query(
 		const std::string& table_name,
+		const std::initializer_list<const char*>& columns,
 		bool distinct,
+		const std::vector<q::join>& joins,
 		const q::condition& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,

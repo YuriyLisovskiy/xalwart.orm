@@ -51,7 +51,9 @@ std::string SQLDriverBase::make_insert_query(
 
 std::string SQLDriverBase::make_select_query(
 	const std::string& table_name,
+	const std::initializer_list<const char*>& columns,
 	bool distinct,
+	const std::vector<q::join>& joins,
 	const q::condition& where_cond,
 	const std::initializer_list<q::ordering>& order_by_cols,
 	long int limit,
@@ -65,7 +67,26 @@ std::string SQLDriverBase::make_select_query(
 		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
-	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " * FROM " + table_name;
+	auto raw_prefix = table_name + ".";
+	auto prefix = this->quote_str(table_name) + ".";
+	std::string columns_str;
+	for (auto column = columns.begin(); column != columns.end(); column++)
+	{
+		auto column_str = std::string(*column);
+		columns_str += prefix + this->quote_str(column_str);
+		columns_str += " AS " + this->quote_str(raw_prefix + column_str);
+		if (std::next(column) != columns.end())
+		{
+			columns_str += ", ";
+		}
+	}
+
+	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns_str + " FROM " + table_name;
+
+	for (const auto& join_row : joins)
+	{
+		query += " " + (std::string)join_row;
+	}
 
 	auto where_str = (std::string)where_cond;
 	if (!where_str.empty())
@@ -78,7 +99,13 @@ std::string SQLDriverBase::make_select_query(
 		query += " ORDER BY ";
 		for (auto it = order_by_cols.begin(); it != order_by_cols.end(); it++)
 		{
-			query += (std::string)*it;
+			auto ob_column = *it;
+			if (ob_column.column.find('.') == std::string::npos)
+			{
+				ob_column.column = prefix + this->quote_str(ob_column.column);
+			}
+
+			query += (std::string)ob_column;
 			if (std::next(it) != order_by_cols.end())
 			{
 				query += ", ";
@@ -98,6 +125,23 @@ std::string SQLDriverBase::make_select_query(
 	if (group_by_cols.size())
 	{
 		query += " GROUP BY " + str::join(group_by_cols.begin(), group_by_cols.end(), ", ");
+		for (auto it = group_by_cols.begin(); it != group_by_cols.end(); it++)
+		{
+			auto gb_col = *it;
+			if (gb_col.find('.') == std::string::npos)
+			{
+				query += prefix + this->quote_str(gb_col);
+			}
+			else
+			{
+				query += gb_col;
+			}
+
+			if (std::next(it) != group_by_cols.end())
+			{
+				query += ", ";
+			}
+		}
 	}
 
 	auto having_str = (std::string)having_cond;

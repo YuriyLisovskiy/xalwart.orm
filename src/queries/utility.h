@@ -37,4 +37,14 @@ inline std::string get_table_name()
 	}
 }
 
+inline std::string quote_str(const std::string& s)
+{
+	if (!s.starts_with('"'))
+	{
+		return '"' + s + '"';
+	}
+
+	return s;
+}
+
 __Q_UTILITY_END__

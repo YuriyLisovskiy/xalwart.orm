@@ -10,6 +10,7 @@
 
 // Core libraries.
 #include <xalwart.core/types/string.h>
+#include <xalwart.core/object/utility.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -72,6 +73,11 @@ protected:
 	// Holds boolean condition for SQL 'HAVING' statement.
 	pair<q::condition> having_cond_;
 
+	std::vector<q::join> joins_;
+
+	typedef std::function<void(ModelT& model)> include_lambda;
+	std::vector<include_lambda> included_relations;
+
 public:
 
 	// Retrieves table name and sets the default values.
@@ -102,6 +108,98 @@ public:
 		}
 
 		this->distinct_.set(true);
+		return *this;
+	}
+
+	// TODO: !experimental feature!
+	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	inline select& one_to_many(
+		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
+		std::string select_pk=""
+	)
+	{
+		if (select_pk.empty())
+		{
+			select_pk = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
+		}
+
+		this->included_relations.push_back([&](ModelT& model) -> void {
+			lambda(model, select<OtherModelT>().using_(this->db)
+				.where(q::equals(
+					select_pk, object::as<PrimaryKeyT>(model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str())
+				))
+				.to_vector()
+			);
+		});
+		return *this;
+	}
+
+	// TODO: !experimental feature!
+	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	inline select& many_to_one(
+		std::function<void(ModelT&, const OtherModelT&)> lambda,
+		std::string select_pk=""
+	)
+	{
+		if (select_pk.empty())
+		{
+			std::string other_table_name = OtherModelT::meta_table_name;
+			select_pk = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
+		}
+
+		this->included_relations.push_back([&](ModelT& model) -> void {
+			auto model_pk = object::as<PrimaryKeyT>(model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str());
+			lambda(model, select<OtherModelT>().using_(this->db)
+				.join(q::left<OtherModelT, ModelT>(select_pk))
+				.where(q::equals(this->table_name + "\".\"" + ModelT::meta_pk_name, model_pk))
+				.first()
+			);
+		});
+		return *this;
+	}
+
+	// TODO: !experimental feature!
+	template <ModelBasedType OtherModelT>
+	inline select& many_to_many(
+		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
+		std::string select_pk=""
+	)
+	{
+		std::string left_prefix = std::string(OtherModelT::meta_table_name);
+		std::string left_pk_name = std::string(OtherModelT::meta_pk_name);
+		std::string middle_table;
+		if (this->table_name < left_prefix)
+		{
+			middle_table = this->table_name + "_" + left_prefix;
+		}
+		else
+		{
+			middle_table = left_prefix + "_" + this->table_name;
+		}
+
+		if (select_pk.empty())
+		{
+			select_pk = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
+		}
+
+		this->included_relations.push_back(
+			[this, left_prefix, left_pk_name, middle_table, select_pk, lambda](ModelT& model) -> void {
+				lambda(model, select<OtherModelT>().using_(this->db)
+					.distinct()
+					.join({"LEFT", middle_table, q::condition(
+						'"' + left_prefix + "\".\"" + left_pk_name + "\" = \"" + middle_table + "\".\"" + select_pk + '"'
+					)})
+					.to_vector()
+				);
+			}
+		);
+		return *this;
+	}
+
+	// TODO: !experimental feature!
+	inline select& join(q::join join_row)
+	{
+		this->joins_.push_back(std::move(join_row));
 		return *this;
 	}
 
@@ -259,28 +357,25 @@ public:
 	inline virtual std::vector<ModelT> to_vector() const
 	{
 		auto query = this->query();
-		using row_t = std::map<const char*, char*>;
-		using data_t = std::vector<ModelT>;
-		data_t collection;
+		using row_t = std::map<std::string, char*>;
+		using data_t = std::pair<std::vector<ModelT>, std::vector<include_lambda>>;
+		data_t collection{{}, this->included_relations};
 		this->db->run_select(query, &collection, [](void* container_ptr, void* row_ptr) -> void {
 			auto& container = *(data_t *)container_ptr;
 			auto& row = *(row_t *)row_ptr;
+
 			ModelT model;
-			for (const auto& column : row)
+			model.from_map(row);
+
+			for (auto& lambda : container.second)
 			{
-				if (column.second)
-				{
-					auto len = std::strlen(column.second);
-					model.__set_attr__(column.first, std::make_shared<types::String>(
-						std::string(column.second, len + 1)
-					));
-				}
+				lambda(model);
 			}
 
-			container.push_back(model);
+			container.first.push_back(model);
 		});
 
-		return collection;
+		return collection.first;
 	}
 
 	// Generates query using SQL driver.
@@ -296,7 +391,9 @@ public:
 
 		return this->db->make_select_query(
 			this->table_name,
+			ModelT::meta_fields,
 			this->distinct_.value,
+			this->joins_,
 			this->where_cond_.value,
 			this->order_by_cols_.value,
 			this->limit_.value,

@@ -37,17 +37,17 @@ TEST_F(TestCase_Q_select, distinct_NotThrow)
 
 TEST_F(TestCase_Q_select, where_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->where(orm::q::eq("id", 1)));
+	ASSERT_NO_THROW(this->query->where(orm::q::equals("id", 1)));
 }
 
 TEST_F(TestCase_Q_select, order_by_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->order_by({orm::q::asc("id")}));
+	ASSERT_NO_THROW(this->query->order_by({orm::q::ascending("id")}));
 }
 
 TEST_F(TestCase_Q_select, order_by_MultipleCalls_NotThrow_WhenFirstCallArgsIsEmpty)
 {
-	ASSERT_NO_THROW(this->query->order_by({}).order_by({orm::q::asc("id")}));
+	ASSERT_NO_THROW(this->query->order_by({}).order_by({orm::q::ascending("id")}));
 }
 
 TEST_F(TestCase_Q_select, limit_NotThrow)
@@ -77,7 +77,7 @@ TEST_F(TestCase_Q_select, group_by_MultipleCalls_NotThrow_WhenFirstCallArgsIsEmp
 
 TEST_F(TestCase_Q_select, having_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->having(orm::q::eq("id", 1)));
+	ASSERT_NO_THROW(this->query->having(orm::q::equals("id", 1)));
 }
 
 TEST_F(TestCase_Q_select, first_ThrowsClientNotSet)
@@ -103,7 +103,7 @@ TEST_F(TestCase_Q_select, distinct_Throws_MultipleCallsException)
 TEST_F(TestCase_Q_select, where_Throws_MultipleCallsException)
 {
 	ASSERT_THROW(
-		this->query->where(orm::q::eq("id", 1)).where(orm::q::eq("name", "John")),
+		this->query->where(orm::q::equals("id", 1)).where(orm::q::equals("name", "John")),
 		orm::QueryError
 	);
 }
@@ -111,7 +111,7 @@ TEST_F(TestCase_Q_select, where_Throws_MultipleCallsException)
 TEST_F(TestCase_Q_select, order_by_Throws_MultipleCallsException)
 {
 	ASSERT_THROW(
-		this->query->order_by({orm::q::asc("id")}).order_by({orm::q::desc("name")}),
+		this->query->order_by({orm::q::ascending("id")}).order_by({orm::q::descending("name")}),
 		orm::QueryError
 	);
 }
@@ -134,7 +134,7 @@ TEST_F(TestCase_Q_select, group_by_Throws_MultipleCallsException)
 TEST_F(TestCase_Q_select, having_Throws_MultipleCallsException)
 {
 	ASSERT_THROW(
-		this->query->having(orm::q::eq("id", 1)).having(orm::q::eq("name", "John")),
+		this->query->having(orm::q::equals("id", 1)).having(orm::q::equals("name", "John")),
 		orm::QueryError
 	);
 }
