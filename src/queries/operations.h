@@ -245,15 +245,20 @@ struct join
 };
 
 template <typename LeftT, typename RightT>
-join left(const std::string& join_pk)
+join left(const std::string& join_pk, const q::condition& extra_condition={})
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
-	return {"LEFT", table_name, q::condition(
-		utility::quote_str(left_table_name) + "." + utility::quote_str(LeftT::meta_pk_name)
+	auto condition_str = utility::quote_str(left_table_name) + "." + utility::quote_str(LeftT::meta_pk_name)
 		+ " = " +
-		utility::quote_str(table_name) + "." + utility::quote_str(join_pk)
-	)};
+	    utility::quote_str(table_name) + "." + utility::quote_str(join_pk);
+	auto extra_cond_str = (std::string)extra_condition;
+	if (!extra_cond_str.empty())
+	{
+		condition_str += " AND " + extra_cond_str;
+	}
+
+	return {"LEFT", table_name, q::condition(condition_str)};
 }
 
 __Q_END__

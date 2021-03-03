@@ -35,6 +35,10 @@ protected:
 	// Retrieves automatically, check the default constructor.
 	std::string table_name;
 
+	// Retrieves automatically from Model meta,
+	// check the default constructor.
+	std::string pk_name;
+
 	// Holds pair {value, is_set}:
 	//  - value: actual value which will be forwarded to query generator;
 	//  - is_set: indicates if the value is set or not.
@@ -73,8 +77,12 @@ protected:
 	// Holds boolean condition for SQL 'HAVING' statement.
 	pair<q::condition> having_cond_;
 
+	// Holds a list of conditions for SQL 'JOIN' statement.
 	std::vector<q::join> joins_;
 
+	// TODO: write clear docs!
+	// Holds a list of lambda-functions which must be
+	// called for each selected object.
 	typedef std::function<void(ModelT& model)> include_lambda;
 	std::vector<include_lambda> included_relations;
 
@@ -84,6 +92,7 @@ public:
 	inline explicit select()
 	{
 		this->table_name = utility::get_table_name<ModelT>();
+		this->pk_name = utility::get_pk_name<ModelT>();
 		this->distinct_.value = false;
 		this->limit_.value = -1;
 		this->offset_.value = -1;
@@ -126,7 +135,9 @@ public:
 		this->included_relations.push_back([&](ModelT& model) -> void {
 			lambda(model, select<OtherModelT>().using_(this->db)
 				.where(q::equals(
-					select_pk, object::as<PrimaryKeyT>(model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str())
+					select_pk, object::as<PrimaryKeyT>(
+						model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
+					)
 				))
 				.to_vector()
 			);
@@ -148,7 +159,9 @@ public:
 		}
 
 		this->included_relations.push_back([&](ModelT& model) -> void {
-			auto model_pk = object::as<PrimaryKeyT>(model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str());
+			auto model_pk = object::as<PrimaryKeyT>(model.__get_attr__(
+				ModelT::meta_pk_name)->__str__().c_str()
+			);
 			lambda(model, select<OtherModelT>().using_(this->db)
 				.join(q::left<OtherModelT, ModelT>(select_pk))
 				.where(q::equals(this->table_name + "\".\"" + ModelT::meta_pk_name, model_pk))
@@ -158,15 +171,34 @@ public:
 		return *this;
 	}
 
-	// TODO: !experimental feature!
+	// Retrieves a list of models connected with `Many To Many`
+	// relationship into std::vector<OtherModelT>.
+	//
+	// First argument, a lambda function, is used to set the vector
+	// to each of the selected `ModelT` objects via an address to
+	// class field.
+	//
+	// The second argument is `select_pk` which is used for joining
+	// of `ModelT` with `OtherModelT`. Generally, it is foreign key
+	// in `OtherModelT` to `ModelT` table. If `select_pk` is empty
+	// it will be generated automatically using
+	// `ModelT::meta_table_name` without last char (usually 's')
+	// and '_id' suffix. For example:
+	//   `ModelT::meta_table_name` equals to 'persons', so, the result
+	//   will be 'person_id'.
+	//
+	// Middle table is created using `ModelT::meta_table_name` and
+	// `OtherModelT::meta_table_name` in alphabetical order separated
+	// by underscore ('_'). For example:
+	//   `ModelT::meta_table_name` is 'persons' and `OtherModelT::meta_table_name`
+	//   is 'cars', so, the result will be 'cars_persons'.
 	template <ModelBasedType OtherModelT>
 	inline select& many_to_many(
 		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
 		std::string select_pk=""
 	)
 	{
-		std::string left_prefix = std::string(OtherModelT::meta_table_name);
-		std::string left_pk_name = std::string(OtherModelT::meta_pk_name);
+		std::string left_prefix = OtherModelT::meta_table_name;
 		std::string middle_table;
 		if (this->table_name < left_prefix)
 		{
@@ -183,11 +215,11 @@ public:
 		}
 
 		this->included_relations.push_back(
-			[this, left_prefix, left_pk_name, middle_table, select_pk, lambda](ModelT& model) -> void {
+			[this, left_prefix, middle_table, select_pk, lambda](ModelT& model) -> void {
 				lambda(model, select<OtherModelT>().using_(this->db)
 					.distinct()
 					.join({"LEFT", middle_table, q::condition(
-						'"' + left_prefix + "\".\"" + left_pk_name + "\" = \"" + middle_table + "\".\"" + select_pk + '"'
+						'"' + left_prefix + "\".\"" + this->pk_name + "\" = \"" + middle_table + "\".\"" + select_pk + '"'
 					)})
 					.to_vector()
 				);
@@ -196,7 +228,8 @@ public:
 		return *this;
 	}
 
-	// TODO: !experimental feature!
+	// Sets SQL `join` condition of two tables. For more info,
+	// check the `xw::q::join` class and related functions.
 	inline select& join(q::join join_row)
 	{
 		this->joins_.push_back(std::move(join_row));

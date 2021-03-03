@@ -39,12 +39,13 @@ inline std::string get_table_name()
 
 inline std::string quote_str(const std::string& s)
 {
-	if (!s.starts_with('"'))
-	{
-		return '"' + s + '"';
-	}
+	return s.starts_with('"') ? s : '"' + s + '"';
+}
 
-	return s;
+template <ModelBasedType ModelT>
+inline std::string get_pk_name()
+{
+	return ModelT::meta_pk_name;
 }
 
 __Q_UTILITY_END__
