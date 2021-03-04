@@ -10,7 +10,6 @@
 
 // Core libraries.
 #include <xalwart.core/types/string.h>
-#include <xalwart.core/object/utility.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -19,7 +18,7 @@
 #include "../abc.h"
 #include "../exceptions.h"
 #include "./operations.h"
-#include "./utility.h"
+#include "../utility.h"
 
 
 __Q_BEGIN__
@@ -91,8 +90,8 @@ public:
 	// Retrieves table name and sets the default values.
 	inline explicit select()
 	{
-		this->table_name = utility::get_table_name<ModelT>();
-		this->pk_name = utility::get_pk_name<ModelT>();
+		this->table_name = util::get_table_name<ModelT>();
+		this->pk_name = util::get_pk_name<ModelT>();
 		this->distinct_.value = false;
 		this->limit_.value = -1;
 		this->offset_.value = -1;
@@ -120,7 +119,21 @@ public:
 		return *this;
 	}
 
-	// TODO: !experimental feature!
+	// Retrieves a list of models connected with `One To Many`
+	// relationship into std::vector<OtherModelT>.
+	//
+	// First argument, a lambda function, is used to set the vector
+	// to each of the selected `ModelT` objects via an address to
+	// class field.
+	//
+	// The second argument is `select_pk` which is used for joining
+	// of `ModelT` with `OtherModelT`. Generally, it is foreign key
+	// in `OtherModelT` to `ModelT` table. If `select_pk` is empty
+	// it will be generated automatically using
+	// `ModelT::meta_table_name` without last char (usually 's')
+	// and '_id' suffix. For example:
+	//   `ModelT::meta_table_name` equals to 'persons', so, the result
+	//   will be 'person_id'.
 	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
 	inline select& one_to_many(
 		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
@@ -135,7 +148,7 @@ public:
 		this->included_relations.push_back([&](ModelT& model) -> void {
 			lambda(model, select<OtherModelT>().using_(this->db)
 				.where(q::equals(
-					select_pk, object::as<PrimaryKeyT>(
+					select_pk, util::as<PrimaryKeyT>(
 						model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
 					)
 				))
@@ -159,7 +172,7 @@ public:
 		}
 
 		this->included_relations.push_back([&](ModelT& model) -> void {
-			auto model_pk = object::as<PrimaryKeyT>(model.__get_attr__(
+			auto model_pk = util::as<PrimaryKeyT>(model.__get_attr__(
 				ModelT::meta_pk_name)->__str__().c_str()
 			);
 			lambda(model, select<OtherModelT>().using_(this->db)
@@ -179,10 +192,10 @@ public:
 	// class field.
 	//
 	// The second argument is `select_pk` which is used for joining
-	// of `ModelT` with `OtherModelT`. Generally, it is foreign key
-	// in `OtherModelT` to `ModelT` table. If `select_pk` is empty
-	// it will be generated automatically using
-	// `ModelT::meta_table_name` without last char (usually 's')
+	// of `ModelT` with middle table and `OtherModelT`. Generally,
+	// it is foreign key in middle table to `ModelT` table.
+	// If `select_pk` is empty it will be generated automatically
+	// using `ModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.

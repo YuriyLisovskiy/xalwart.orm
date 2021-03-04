@@ -15,7 +15,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./utility.h"
+#include "../utility.h"
 
 
 __Q_BEGIN__
@@ -49,7 +49,7 @@ public:
 
 	virtual inline explicit operator std::string() const
 	{
-		return utility::quote_str(this->column) + (this->ascending ? " ASC" : " DESC");
+		return util::quote_str(this->column) + (this->ascending ? " ASC" : " DESC");
 	}
 };
 
@@ -87,7 +87,7 @@ struct comparison_operator : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, T value)
 	{
-		this->str = utility::quote_str(column_name) + " " + op + " " + std::to_string(value);
+		this->str = util::quote_str(column_name) + " " + op + " " + std::to_string(value);
 	}
 
 public:
@@ -104,7 +104,7 @@ struct comparison_operator<std::string> : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const std::string& value)
 	{
-		this->str = utility::quote_str(column_name) + " " + op + " '" + value + "'";
+		this->str = util::quote_str(column_name) + " " + op + " '" + value + "'";
 	}
 
 public:
@@ -121,7 +121,7 @@ struct comparison_operator<const char*> : public condition
 protected:
 	inline void make(const std::string& column_name, const std::string& op, const char* value)
 	{
-		this->str = utility::quote_str(column_name) + " " + op + " '" + std::string(value) + "'";
+		this->str = util::quote_str(column_name) + " " + op + " '" + std::string(value) + "'";
 	}
 
 public:
@@ -208,7 +208,7 @@ struct between : public condition
 {
 	inline explicit between(const std::string& column, T lower, T upper)
 	{
-		this->str = utility::quote_str(column) + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
+		this->str = util::quote_str(column) + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
 	}
 };
 
@@ -217,7 +217,7 @@ struct between<std::string> : public condition
 {
 	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
 	{
-		this->str = utility::quote_str(column) + " BETWEEN '" + lower + "' AND '" + upper + '\'';
+		this->str = util::quote_str(column) + " BETWEEN '" + lower + "' AND '" + upper + '\'';
 	}
 };
 
@@ -226,7 +226,7 @@ struct between<const char*> : public condition
 {
 	inline explicit between(const std::string& column, const char* lower, const char* upper)
 	{
-		this->str = utility::quote_str(column) + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
+		this->str = util::quote_str(column) + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
 	}
 };
 
@@ -249,9 +249,9 @@ join left(const std::string& join_pk, const q::condition& extra_condition={})
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
-	auto condition_str = utility::quote_str(left_table_name) + "." + utility::quote_str(LeftT::meta_pk_name)
+	auto condition_str = util::quote_str(left_table_name) + "." + util::quote_str(LeftT::meta_pk_name)
 		+ " = " +
-	    utility::quote_str(table_name) + "." + utility::quote_str(join_pk);
+		util::quote_str(table_name) + "." + util::quote_str(join_pk);
 	auto extra_cond_str = (std::string)extra_condition;
 	if (!extra_cond_str.empty())
 	{

@@ -10,7 +10,6 @@
 
 // Core libraries.
 #include <xalwart.core/types/string.h>
-#include <xalwart.core/object/utility.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -18,7 +17,7 @@
 // Orm libraries.
 #include "../abc.h"
 #include "../exceptions.h"
-#include "./utility.h"
+#include "../utility.h"
 
 
 __Q_BEGIN__
@@ -81,7 +80,7 @@ protected:
 public:
 	inline explicit insert(const ModelT& model)
 	{
-		this->table_name = utility::get_table_name<ModelT>();
+		this->table_name = util::get_table_name<ModelT>();
 		this->append_model(model, true);
 	};
 
@@ -125,7 +124,7 @@ public:
 	template <typename T>
 	inline void one(T& pk) const
 	{
-		pk = object::as<T>(this->one().c_str());
+		pk = util::as<T>(this->one().c_str());
 	}
 
 	inline virtual void bulk()

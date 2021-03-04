@@ -19,3 +19,7 @@
 // xw::orm::abc
 #define __ABC_BEGIN__ __ORM_BEGIN__ namespace abc {
 #define __ABC_END__ } __ORM_END__
+
+// xw::orm::util
+#define __ORM_UTIL_BEGIN__ __ORM_BEGIN__ namespace util {
+#define __ORM_UTIL_END__ } __ORM_END__
