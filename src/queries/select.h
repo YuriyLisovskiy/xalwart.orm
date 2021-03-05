@@ -78,13 +78,13 @@ protected:
 	pair<q::condition> having_cond_;
 
 	// Holds a list of conditions for SQL 'JOIN' statement.
-	std::vector<q::join> joins_;
+	std::vector<q::join> joins;
 
-	// TODO: write clear docs!
 	// Holds a list of lambda-functions which must be
-	// called for each selected object.
-	typedef std::function<void(ModelT& model)> include_lambda;
-	std::vector<include_lambda> included_relations;
+	// called for each selected object to set lazy
+	// initializers.
+	typedef std::function<void(ModelT& model)> relation_callable;
+	std::vector<relation_callable> relations;
 
 public:
 
@@ -120,24 +120,28 @@ public:
 		return *this;
 	}
 
-	// Retrieves a list of models connected with `One To Many`
-	// relationship into std::vector<OtherModelT>.
+	// Retrieves models with lazy initialization connected
+	// with one to many relationship.
 	//
-	// First argument, a lambda function, is used to set the vector
+	// `first`: a lambda function, is used to set the vector
 	// to each of the selected `ModelT` objects via an address to
-	// class field.
+	// class field of `OtherModelT`.
 	//
-	// The second argument is `select_pk` which is used for joining
-	// of `ModelT` with `OtherModelT`. Generally, it is foreign key
-	// in `OtherModelT` to `ModelT` table. If `select_pk` is empty
-	// it will be generated automatically using
+	// `second`: a lambda function, is used to set an object
+	// to each of the selected `OtherModelT` objects via an address to
+	// class field of `ModelT`.
+	//
+	// `select_pk`: is used for joining of `ModelT` with `OtherModelT`.
+	// It is foreign key in `OtherModelT` to `ModelT` table.
+	// If `select_pk` is empty it will be generated automatically using
 	// `ModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
 	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
 	inline select& one_to_many(
-		std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)> lambda,
+		const std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)>& first,
+		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
 		std::string select_pk=""
 	)
 	{
@@ -147,14 +151,14 @@ public:
 		}
 
 		abc::ISQLDriver* driver = this->db;
-		this->included_relations.push_back([driver, select_pk, lambda](ModelT& model) -> void {
+		this->relations.push_back([driver, select_pk, first, second](ModelT& model) -> void {
 			auto pk_val = util::as<PrimaryKeyT>(
 				model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
 			);
-			lambda(model, xw::Lazy<std::vector<OtherModelT>>(
-				[driver, select_pk, model, pk_val]() -> std::vector<OtherModelT> {
+			first(model, xw::Lazy<std::vector<OtherModelT>>(
+				[driver, select_pk, pk_val, first, second]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().using_(driver)
-//						TODO: .template many_to_one<ModelT>()
+						.template many_to_one<ModelT, PrimaryKeyT>(second, first, select_pk)
 						.where(q::equals(select_pk, pk_val))
 						.to_vector();
 				}
@@ -163,50 +167,86 @@ public:
 		return *this;
 	}
 
-	// TODO: !experimental feature!
+	// Retrieves models with lazy initialization connected
+	// with one to many relationship.
+	//
+	// `first`: a lambda function, is used to set an object
+	// to each of the selected `ModelT` objects via an address to
+	// class field of `OtherModelT`.
+	//
+	// `second`: a lambda function, is used to set the vector
+	// to each of the selected `OtherModelT` objects via an address to
+	// class field of `ModelT`.
+	//
+	// `select_pk`: is used for joining of `ModelT` with `OtherModelT`.
+	// It is foreign key in `ModelT` to `OtherModelT` table.
+	// If `select_pk` is empty it will be generated automatically using
+	// `OtherModelT::meta_table_name` without last char (usually 's')
+	// and '_id' suffix. For example:
+	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
+	//   will be 'person_id'.
 	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
 	inline select& many_to_one(
-		std::function<void(ModelT&, const OtherModelT&)> lambda,
-		std::string select_pk=""
+		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
+		const std::function<void(OtherModelT&, const xw::Lazy<std::vector<ModelT>>&)>& second,
+		std::string other_pk=""
 	)
 	{
-		if (select_pk.empty())
+		if (other_pk.empty())
 		{
 			std::string other_table_name = OtherModelT::meta_table_name;
-			select_pk = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
+			other_pk = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
 		}
 
-		this->included_relations.push_back([&](ModelT& model) -> void {
-			auto model_pk = util::as<PrimaryKeyT>(model.__get_attr__(
+		abc::ISQLDriver* driver = this->db;
+		auto t_name = this->table_name;
+		this->relations.push_back([driver, first, second, t_name, other_pk](ModelT& model) -> void {
+			auto model_pk_val = util::as<PrimaryKeyT>(model.__get_attr__(
 				ModelT::meta_pk_name)->__str__().c_str()
 			);
-			lambda(model, select<OtherModelT>().using_(this->db)
-				.join(q::left<OtherModelT, ModelT>(select_pk))
-				.where(q::equals(this->table_name + "\".\"" + ModelT::meta_pk_name, model_pk))
-				.first()
-			);
+			first(model, xw::Lazy<OtherModelT>(
+				[driver, first, second, t_name, other_pk, model_pk_val]() -> OtherModelT {
+					return select<OtherModelT>().using_(driver)
+						.join(q::left<OtherModelT, ModelT>(other_pk))
+						.template one_to_many<ModelT, PrimaryKeyT>(second, first, other_pk)
+						.where(q::equals(t_name + "\".\"" + ModelT::meta_pk_name, model_pk_val))
+						.first();
+				}
+			));
 		});
 		return *this;
 	}
 
-	// Retrieves a list of models connected with `Many To Many`
-	// relationship into std::vector<OtherModelT>.
+	// Retrieves lists of models with lazy initialization
+	// connected with many to many relationship.
 	//
-	// First argument, a lambda function, is used to set the vector
+	// `first`: a lambda function which is used to set the vector
 	// to each of the selected `ModelT` objects via an address to
-	// class field.
+	// class field of `OtherModelT`.
 	//
-	// The second argument is `select_pk` which is used for joining
-	// of `ModelT` with middle table and `OtherModelT`. Generally,
-	// it is foreign key in middle table to `ModelT` table.
+	// `second`: a lambda function which is used to set the vector
+	// to each of the selected `OtherModelT` objects via an address to
+	// class field of `ModelT`.
+	//
+	// `select_pk`: is used for joining of `ModelT` with intermediate
+	// table. It is foreign key in middle table to `ModelT` table.
 	// If `select_pk` is empty it will be generated automatically
 	// using `ModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
 	//
-	// Middle table is created using `ModelT::meta_table_name` and
-	// `OtherModelT::meta_table_name` in alphabetical order separated
+	// `other_pk`: is used for joining of `OtherModelT` with intermediate
+	// table. It is foreign key in middle table to `OtherModelT` table.
+	// If `other_pk` is empty it will be generated automatically
+	// using `OtherModelT::meta_table_name` without last char
+	// (usually 's') and '_id' suffix. For example:
+	//   `OtherModelT::meta_table_name` equals to 'cars', so, the result
+	//   will be 'car_id'.
+	//
+	// `mid_table`: an intermediate table for many to many relationship.
+	// If it is empty, it will be created using `ModelT::meta_table_name`
+	// and `OtherModelT::meta_table_name` in an alphabetical order separated
 	// by underscore ('_'). For example:
 	//   `ModelT::meta_table_name` is 'persons' and `OtherModelT::meta_table_name`
 	//   is 'cars', so, the result will be 'cars_persons'.
@@ -220,7 +260,7 @@ public:
 		abc::ISQLDriver* driver = this->db;
 		auto first_t_name = this->table_name;
 		auto first_pk_name = this->pk_name;
-		this->included_relations.push_back(
+		this->relations.push_back(
 			[
 				driver, first_t_name, first_pk_name, select_pk, other_pk, first, second, mid_table
 			](ModelT& model) -> void {
@@ -273,7 +313,7 @@ public:
 	// check the `xw::q::join` class and related functions.
 	inline select& join(q::join join_row)
 	{
-		this->joins_.push_back(std::move(join_row));
+		this->joins.push_back(std::move(join_row));
 		return *this;
 	}
 
@@ -432,8 +472,8 @@ public:
 	{
 		auto query = this->query();
 		using row_t = std::map<std::string, char*>;
-		using data_t = std::pair<std::vector<ModelT>, std::vector<include_lambda>>;
-		data_t collection{{}, this->included_relations};
+		using data_t = std::pair<std::vector<ModelT>, std::vector<relation_callable>>;
+		data_t collection{{}, this->relations};
 		this->db->run_select(query, &collection, [](void* container_ptr, void* row_ptr) -> void {
 			auto& container = *(data_t *)container_ptr;
 			auto& row = *(row_t *)row_ptr;
@@ -441,9 +481,9 @@ public:
 			ModelT model;
 			model.from_map(row);
 
-			for (auto& lambda : container.second)
+			for (auto& callable : container.second)
 			{
-				lambda(model);
+				callable(model);
 			}
 
 			container.first.push_back(model);
@@ -467,7 +507,7 @@ public:
 			this->table_name,
 			ModelT::meta_fields,
 			this->distinct_.value,
-			this->joins_,
+			this->joins,
 			this->where_cond_.value,
 			this->order_by_cols_.value,
 			this->limit_.value,
