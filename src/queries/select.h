@@ -10,6 +10,7 @@
 
 // Core libraries.
 #include <xalwart.core/types/string.h>
+#include <xalwart.core/lazy.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -207,35 +208,53 @@ public:
 	//   is 'cars', so, the result will be 'cars_persons'.
 	template <ModelBasedType OtherModelT>
 	inline select& many_to_many(
-		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
-		std::string select_pk=""
+		const std::function<void(ModelT&, const Lazy<std::vector<OtherModelT>>&)>& first,
+		const std::function<void(OtherModelT&, const Lazy<std::vector<ModelT>>&)>& second,
+		std::string select_pk="", std::string other_pk=""
 	)
 	{
-		std::string left_prefix = OtherModelT::meta_table_name;
-		std::string middle_table;
-		if (this->table_name < left_prefix)
-		{
-			middle_table = this->table_name + "_" + left_prefix;
-		}
-		else
-		{
-			middle_table = left_prefix + "_" + this->table_name;
-		}
-
-		if (select_pk.empty())
-		{
-			select_pk = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
-		}
-
+		abc::ISQLDriver* driver = this->db;
+		auto first_t_name = this->table_name;
+		auto first_pk_name = this->pk_name;
 		this->included_relations.push_back(
-			[this, left_prefix, middle_table, select_pk, lambda](ModelT& model) -> void {
-				lambda(model, select<OtherModelT>().using_(this->db)
-					.distinct()
-					.join({"LEFT", middle_table, q::condition(
-						'"' + left_prefix + "\".\"" + this->pk_name + "\" = \"" + middle_table + "\".\"" + select_pk + '"'
-					)})
-					.to_vector()
-				);
+			[driver, first_t_name, first_pk_name, &select_pk, &other_pk, first, second](ModelT& model) -> void {
+				first(model, Lazy<std::vector<OtherModelT>>(
+					[
+						driver, first_t_name, first_pk_name, &select_pk, &other_pk, first, second
+					]() -> std::vector<OtherModelT> {
+						std::string second_t_name = OtherModelT::meta_table_name;
+						std::string middle_table;
+						if (first_t_name < second_t_name)
+						{
+							middle_table = first_t_name + "_" + second_t_name;
+						}
+						else
+						{
+							middle_table = second_t_name + "_" + first_t_name;
+						}
+
+						if (select_pk.empty())
+						{
+							select_pk = first_t_name.substr(0, first_t_name.size() - 1) + "_id";
+						}
+
+						if (other_pk.empty())
+						{
+							other_pk = second_t_name.substr(0, second_t_name.size() - 1) + "_id";
+						}
+
+						// TODO: error
+						auto cond_str = '"' + second_t_name + "\".\"" + first_pk_name
+							+ "\" = \"" +
+						    middle_table + "\".\"" + select_pk + '"';
+
+						return select<OtherModelT>().using_(driver)
+							.distinct()
+							.join({"LEFT", middle_table, q::condition(cond_str)})
+							.template many_to_many<ModelT>(second, first, other_pk, select_pk)
+							.to_vector();
+					}
+				));
 			}
 		);
 		return *this;
