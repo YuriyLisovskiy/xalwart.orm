@@ -137,7 +137,7 @@ public:
 	//   will be 'person_id'.
 	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
 	inline select& one_to_many(
-		std::function<void(ModelT&, const std::vector<OtherModelT>&)> lambda,
+		std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)> lambda,
 		std::string select_pk=""
 	)
 	{
@@ -146,15 +146,19 @@ public:
 			select_pk = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
 		}
 
-		this->included_relations.push_back([&](ModelT& model) -> void {
-			lambda(model, select<OtherModelT>().using_(this->db)
-				.where(q::equals(
-					select_pk, util::as<PrimaryKeyT>(
-						model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
-					)
-				))
-				.to_vector()
+		abc::ISQLDriver* driver = this->db;
+		this->included_relations.push_back([driver, select_pk, lambda](ModelT& model) -> void {
+			auto pk_val = util::as<PrimaryKeyT>(
+				model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
 			);
+			lambda(model, xw::Lazy<std::vector<OtherModelT>>(
+				[driver, select_pk, model, pk_val]() -> std::vector<OtherModelT> {
+					return select<OtherModelT>().using_(driver)
+//						TODO: .template many_to_one<ModelT>()
+						.where(q::equals(select_pk, pk_val))
+						.to_vector();
+				}
+			));
 		});
 		return *this;
 	}
@@ -210,48 +214,53 @@ public:
 	inline select& many_to_many(
 		const std::function<void(ModelT&, const Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const Lazy<std::vector<ModelT>>&)>& second,
-		std::string select_pk="", std::string other_pk=""
+		std::string select_pk="", std::string other_pk="", std::string mid_table=""
 	)
 	{
 		abc::ISQLDriver* driver = this->db;
 		auto first_t_name = this->table_name;
 		auto first_pk_name = this->pk_name;
 		this->included_relations.push_back(
-			[driver, first_t_name, first_pk_name, &select_pk, &other_pk, first, second](ModelT& model) -> void {
+			[
+				driver, first_t_name, first_pk_name, select_pk, other_pk, first, second, mid_table
+			](ModelT& model) -> void {
 				first(model, Lazy<std::vector<OtherModelT>>(
 					[
-						driver, first_t_name, first_pk_name, &select_pk, &other_pk, first, second
+						driver, first_t_name, first_pk_name, select_pk, other_pk, first, second, mid_table
 					]() -> std::vector<OtherModelT> {
 						std::string second_t_name = OtherModelT::meta_table_name;
-						std::string middle_table;
-						if (first_t_name < second_t_name)
+						std::string m_table = mid_table;
+						if (m_table.empty())
 						{
-							middle_table = first_t_name + "_" + second_t_name;
-						}
-						else
-						{
-							middle_table = second_t_name + "_" + first_t_name;
-						}
-
-						if (select_pk.empty())
-						{
-							select_pk = first_t_name.substr(0, first_t_name.size() - 1) + "_id";
+							if (first_t_name < second_t_name)
+							{
+								m_table = first_t_name + "_" + second_t_name;
+							}
+							else
+							{
+								m_table = second_t_name + "_" + first_t_name;
+							}
 						}
 
-						if (other_pk.empty())
+						std::string s_pk = select_pk;
+						if (s_pk.empty())
 						{
-							other_pk = second_t_name.substr(0, second_t_name.size() - 1) + "_id";
+							s_pk = first_t_name.substr(0, first_t_name.size() - 1) + "_id";
 						}
 
-						// TODO: error
+						std::string o_pk = other_pk;
+						if (o_pk.empty())
+						{
+							o_pk = second_t_name.substr(0, second_t_name.size() - 1) + "_id";
+						}
+
 						auto cond_str = '"' + second_t_name + "\".\"" + first_pk_name
-							+ "\" = \"" +
-						    middle_table + "\".\"" + select_pk + '"';
+							+ "\" = \"" + m_table + "\".\"" + s_pk + '"';
 
 						return select<OtherModelT>().using_(driver)
 							.distinct()
-							.join({"LEFT", middle_table, q::condition(cond_str)})
-							.template many_to_many<ModelT>(second, first, other_pk, select_pk)
+							.join({"LEFT", m_table, q::condition(cond_str)})
+							.template many_to_many<ModelT>(second, first, o_pk, s_pk, m_table)
 							.to_vector();
 					}
 				));
