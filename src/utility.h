@@ -10,6 +10,7 @@
 
 // Core libraries.
 #include <xalwart.core/utility.h>
+#include <xalwart.core/lazy.h>
 #include <xalwart.core/types/fundamental.h>
 
 // Module definitions.
@@ -66,7 +67,7 @@ inline object::Attribute field_accessor(T* field)
 		[field]() -> std::shared_ptr<object::Object> {
 			return std::make_shared<types::Fundamental<T>>(*field);
 		},
-			[field](const void* val) -> void {
+		[field](const void* val) -> void {
 			size_t len = std::strlen((char*)val);
 			std::string str_val = {(char*)val, (char*)val + len + 1};
 			*field = as<T>(str_val.c_str());
@@ -84,6 +85,16 @@ inline object::Attribute field_accessor<std::string>(std::string* field)
 		[field](const void* val) -> void {
 			size_t len = std::strlen((char*)val);
 			*field = {(char*)val, (char*)val + len + 1};
+		}
+	);
+}
+
+template <ModelBasedType ValueT, LazyType<ValueT> FieldT>
+inline object::Attribute field_getter_lazy(FieldT* field)
+{
+	return object::Attribute(
+		[field]() -> std::shared_ptr<object::Object> {
+			return std::make_shared<ValueT>(field->value());
 		}
 	);
 }
