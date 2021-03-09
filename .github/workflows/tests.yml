@@ -1,0 +1,69 @@
+name: "tests"
+on: [push]
+jobs:
+  build:
+    name: ${{ matrix.os }} [gcc-${{ matrix.compiler_version }}, g++-${{ matrix.compiler_version }}]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [Ubuntu]
+        os: [ubuntu-18.04]
+        compiler_version: [10]
+    env:
+      BUILD_TYPE: 'Debug'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Compiler and Check Version
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+          sudo apt update -y && \
+          sudo pip install --upgrade cmake && \
+          sudo apt install -y gcc-${{ matrix.compiler_version }} g++-${{ matrix.compiler_version }} valgrind && \
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.compiler_version }} 10 && \
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.compiler_version }} 10 && \
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30 && \
+          sudo update-alternatives --set cc /usr/bin/gcc && \
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30 && \
+          sudo update-alternatives --set c++ /usr/bin/g++ && \
+          gcc --version && \
+          g++ --version
+      - name: Build and Install Google Test Framework
+        run: |
+          git clone -q https://github.com/google/googletest.git && \
+          sudo mkdir -p ./googletest/build && \
+          cd ./googletest/build && \
+          sudo cmake -DCMAKE_CXX_COMPILER=g++-${{ matrix.compiler_version }} \
+                     -DCMAKE_C_COMPILER=gcc-${{ matrix.compiler_version }} .. && \
+          sudo make && \
+          sudo make install
+      - name: Install Core Library
+        run: |
+          cd /tmp && \
+          git clone https://${{secrets.GH_ACCESS_TOKEN}}@github.com/YuriyLisovskiy/xalwart.core.git && \
+          cd xalwart.core && \
+          git checkout dev && \
+          sudo mkdir build && \
+          cd build && \
+          sudo cmake -DCMAKE_BUILD_TYPE=Release \
+                     -DCMAKE_CXX_COMPILER=g++-${{ matrix.compiler_version }} \
+                     -DCMAKE_C_COMPILER=gcc-${{ matrix.compiler_version }} \
+                     .. && \
+          sudo make && \
+          sudo make install
+      - name: Update Links and Cache of Linker
+        run: |
+          sudo ldconfig
+      - name: Build Tests
+        run: |
+          sudo mkdir build && \
+          cd build/ && \
+          sudo cmake -DCMAKE_TEST_ALL_ONLY=yes \
+                     -DCMAKE_CXX_COMPILER=g++-${{ matrix.compiler_version }} \
+                     -DCMAKE_C_COMPILER=gcc-${{ matrix.compiler_version }} \
+                     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+                     .. && \
+          sudo make
+      - name: Run Tests
+        run: |
+          sudo valgrind --leak-check=full ./build/tests/unittests-all

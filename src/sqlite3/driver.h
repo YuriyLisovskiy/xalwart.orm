@@ -37,7 +37,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::string name() const override
+	inline std::string name() const override
 	{
 		return "sqlite3";
 	}
