@@ -1,5 +1,9 @@
 name: "gcc"
-on: [push]
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
 jobs:
   build:
     name: ${{ matrix.os }} [gcc-${{ matrix.compiler_version }}]
