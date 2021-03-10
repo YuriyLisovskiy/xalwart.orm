@@ -11,7 +11,7 @@
   - `clang`: v10 or later.
 - CMake: `2.4` or later.
 - Additional libraries:
-  - [xalwart.core](https://github.com/YuriyLisovskiy/xalwart.core)
+  - [xalwart.core](https://github.com/YuriyLisovskiy/xalwart.core) (required)
 
 ### Available drivers:
 * `sqlite3`:
