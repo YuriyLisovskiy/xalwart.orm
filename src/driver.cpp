@@ -46,7 +46,7 @@ std::string SQLDriverBase::make_insert_query(
 		this->throw_empty_arg("rows", _ERROR_DETAILS_);
 	}
 
-	return "INSERT INTO " + table_name + " (" + columns + ") VALUES (" + values + ");";
+	return "INSERT INTO " + util::quote_str(table_name) + " (" + columns + ") VALUES (" + values + ");";
 }
 
 std::string SQLDriverBase::make_select_query(
@@ -67,21 +67,26 @@ std::string SQLDriverBase::make_select_query(
 		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
+	if (!columns.size())
+	{
+		this->throw_empty_arg("columns", _ERROR_DETAILS_);
+	}
+
 	auto raw_prefix = table_name + ".";
-	auto prefix = this->quote_str(table_name) + ".";
+	auto prefix = util::quote_str(table_name) + ".";
 	std::string columns_str;
 	for (auto column = columns.begin(); column != columns.end(); column++)
 	{
 		auto column_str = std::string(*column);
-		columns_str += prefix + this->quote_str(column_str);
-		columns_str += " AS " + this->quote_str(raw_prefix + column_str);
+		columns_str += prefix + util::quote_str(column_str);
+		columns_str += " AS " + util::quote_str(raw_prefix + column_str);
 		if (std::next(column) != columns.end())
 		{
 			columns_str += ", ";
 		}
 	}
 
-	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns_str + " FROM " + table_name;
+	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns_str + " FROM " + util::quote_str(table_name);
 
 	for (const auto& join_row : joins)
 	{
@@ -102,7 +107,7 @@ std::string SQLDriverBase::make_select_query(
 			auto ob_column = *it;
 			if (ob_column.column.find('.') == std::string::npos)
 			{
-				ob_column.column = prefix + this->quote_str(ob_column.column);
+				ob_column.column = prefix + util::quote_str(ob_column.column);
 			}
 
 			query += (std::string)ob_column;
@@ -124,13 +129,13 @@ std::string SQLDriverBase::make_select_query(
 
 	if (group_by_cols.size())
 	{
-		query += " GROUP BY " + str::join(group_by_cols.begin(), group_by_cols.end(), ", ");
+		query += " GROUP BY ";
 		for (auto it = group_by_cols.begin(); it != group_by_cols.end(); it++)
 		{
 			auto gb_col = *it;
 			if (gb_col.find('.') == std::string::npos)
 			{
-				query += prefix + this->quote_str(gb_col);
+				query += prefix + util::quote_str(gb_col);
 			}
 			else
 			{

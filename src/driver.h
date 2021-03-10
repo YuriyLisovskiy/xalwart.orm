@@ -28,12 +28,6 @@ protected:
 		const std::string& arg, int line, const char* function, const char* file
 	) const;
 
-	[[nodiscard]]
-	inline std::string quote_str(const std::string& s) const
-	{
-		return '"' + s + '"';
-	}
-
 public:
 
 	// Generates 'INSERT' query as string.
