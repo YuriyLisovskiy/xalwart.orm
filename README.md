@@ -2,7 +2,7 @@
 
 | build | info |
 |---|---|
-| [![gcc](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc.yml) [![clang](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml) | [![c++](https://img.shields.io/badge/c%2B%2B-20-blue)](https://isocpp.org/) [![system](https://img.shields.io/badge/Ubuntu-OS-blue.svg?style=flat&logo=ubuntu)](https://ubuntu.com/) |
+| [![gcc](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc.yml) [![clang](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml) | [![c++](https://img.shields.io/badge/c%2B%2B-20-6c85cf)](https://isocpp.org/) [![system](https://img.shields.io/badge/Ubuntu-OS-ef4800.svg?style=flat&logo=ubuntu)](https://ubuntu.com/) |
 
 ### Requirements
 
