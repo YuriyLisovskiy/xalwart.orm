@@ -1,9 +1,16 @@
 ## xalwart.orm
 
+[![gcc/c++](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gnuc.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gnuc.yml)
+[![clang](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang.yml)
+
 ### Requirements
 
-C++ compiler minimum version:
-* Ubuntu: g++-10
+- C++ compiler:
+  - `g++`: v10 or later.
+  - `clang++`: v10 or later.
+- CMake: `2.4` or later.
+- Additional libraries:
+  - [xalwart.core](https://github.com/YuriyLisovskiy/xalwart.core)
 
 ### Available drivers:
 * `sqlite3`:
@@ -16,9 +23,18 @@ C++ compiler minimum version:
   add_compile_definitions(USE_SQLITE3)
   ```
 
+### Build and Install
+```bash
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make && sudo make install
+```
+
 ### Testing
 
 Use valgrind to check for memory leaks:
 ```bash
-valgrind --leak-check=full ./your-executable
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Debug .. && make
+valgrind --leak-check=full ./tests/unittests-all
 ```

@@ -39,6 +39,7 @@ CMakeSettings.json
 # CLion
 .idea/
 cmake-build-*
+build/
 
 # External libraries
 include/
