@@ -1,8 +1,8 @@
-name: "gcc/c++"
+name: "gcc"
 on: [push]
 jobs:
   build:
-    name: ${{ matrix.os }} [gcc-${{ matrix.compiler_version }}, g++-${{ matrix.compiler_version }}]
+    name: ${{ matrix.os }} [gcc-${{ matrix.compiler_version }}]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

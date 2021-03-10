@@ -2,7 +2,7 @@ name: "clang"
 on: [push]
 jobs:
   build:
-    name: ${{ matrix.os }} [clang++-${{ matrix.compiler_version }}]
+    name: ${{ matrix.os }} [clang-${{ matrix.compiler_version }}]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
