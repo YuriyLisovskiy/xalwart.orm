@@ -110,7 +110,142 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_DefaultSelect)
 	ASSERT_EQ(expected, actual);
 }
 
-//TEST_F(SQLDriverBase_TestCase, make_select_query_)
-//{
-//
-//}
+TEST_F(SQLDriverBase_TestCase, make_select_query_Distinct)
+{
+	std::string expected = R"(SELECT DISTINCT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test";)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, true, {}, {}, {}, -1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+class LeftTestModel : public orm::Model
+{
+public:
+	static constexpr const char* meta_table_name = "left_model";
+	static constexpr std::initializer_list<const char*> meta_fields = {
+		"id", "name"
+	};
+};
+
+class RightTestModel : public orm::Model
+{
+public:
+	static constexpr const char* meta_table_name = "right_model";
+	static constexpr std::initializer_list<const char*> meta_fields = {
+		"id", "name", "left_id"
+	};
+};
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_Join)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LEFT JOIN "right_model" ON "left_model"."id" = "right_model"."left_id";)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {
+			orm::q::left<LeftTestModel, RightTestModel>("left_id")
+		}, {}, {}, -1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_Where)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE "id" = 1;)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {
+			orm::q::equals("id", 1)
+		}, {}, -1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedWhere)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE ("id" = 1 AND "name" < 'John');)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {
+			orm::q::equals("id", 1) & orm::q::less("name", "John")
+		}, {}, -1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_OrderBy)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {
+			orm::q::ascending("id"), orm::q::descending("name")
+		}, -1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_Limit)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LIMIT 1;)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, 1, 0, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_ThrowsOffsetWithoutLimit)
+{
+	ASSERT_THROW(auto _ = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, -1, 1, {}, {}
+	), orm::QueryError);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_Offset)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LIMIT 1 OFFSET 1;)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, 1, 1, {}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_GroupBy)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id", "test"."name";)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, -1, 0, {
+			"id", "name"
+		}, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_ThrowsHavingWithoutGroupBy)
+{
+	ASSERT_THROW(auto _ = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, -1, 0, {}, {
+			orm::q::equals("id", 1)
+		}
+	), orm::QueryError);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_Having)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id" HAVING "id" = 1;)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, -1, 0, {
+			"id"
+		},
+		orm::q::equals("id", 1)
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedHaving)
+{
+	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id" HAVING ("id" = 1 AND "name" < 'John');)";
+	auto actual = this->driver->make_select_query(
+		"test", {"id", "name"}, false, {}, {}, {}, -1, 0, {
+			"id"
+		},
+		orm::q::equals("id", 1) & orm::q::less("name", "John")
+	);
+	ASSERT_EQ(expected, actual);
+}

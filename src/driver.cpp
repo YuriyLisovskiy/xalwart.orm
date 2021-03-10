@@ -20,7 +20,7 @@ void SQLDriverBase::throw_empty_arg(
 ) const
 {
 	throw QueryError(
-		this->name() + ": non-empty '" + arg + "' is required", line, function, file
+		this->name() + ": '" + arg + "' is required", line, function, file
 	);
 }
 
@@ -121,10 +121,18 @@ std::string SQLDriverBase::make_select_query(
 	if (limit > -1)
 	{
 		query += " LIMIT " + std::to_string(limit);
-		if (offset > 0)
+	}
+
+	if (offset > 0)
+	{
+		if (limit < 0)
 		{
-			query += " OFFSET " + std::to_string(offset);
+			throw QueryError(
+				this->name() + ": 'offset' is used without 'limit'", _ERROR_DETAILS_
+			);
 		}
+
+		query += " OFFSET " + std::to_string(offset);
 	}
 
 	if (group_by_cols.size())
@@ -152,6 +160,13 @@ std::string SQLDriverBase::make_select_query(
 	auto having_str = (std::string)having_cond;
 	if (!having_str.empty())
 	{
+		if (!group_by_cols.size())
+		{
+			throw QueryError(
+				this->name() + ": 'having' is used without 'group by'", _ERROR_DETAILS_
+			);
+		}
+
 		query += " HAVING " + having_str;
 	}
 
