@@ -12,6 +12,7 @@ using namespace xw;
 
 struct TestModel : public orm::Model
 {
+	static constexpr const char* meta_table_name = "test_model";
 };
 
 class TestCase_Q_select : public ::testing::Test
@@ -37,7 +38,7 @@ TEST_F(TestCase_Q_select, distinct_NotThrow)
 
 TEST_F(TestCase_Q_select, where_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->where(orm::q::equals("id", 1)));
+	ASSERT_NO_THROW(this->query->where(orm::q::c<TestModel>("id") == 1));
 }
 
 TEST_F(TestCase_Q_select, order_by_NotThrow)
@@ -77,7 +78,7 @@ TEST_F(TestCase_Q_select, group_by_MultipleCalls_NotThrow_WhenFirstCallArgsIsEmp
 
 TEST_F(TestCase_Q_select, having_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->having(orm::q::equals("id", 1)));
+	ASSERT_NO_THROW(this->query->having(orm::q::c<TestModel>("id") == 1));
 }
 
 TEST_F(TestCase_Q_select, first_ThrowsClientNotSet)
@@ -102,10 +103,8 @@ TEST_F(TestCase_Q_select, distinct_Throws_MultipleCallsException)
 
 TEST_F(TestCase_Q_select, where_Throws_MultipleCallsException)
 {
-	ASSERT_THROW(
-		this->query->where(orm::q::equals("id", 1)).where(orm::q::equals("name", "John")),
-		orm::QueryError
-	);
+	ASSERT_THROW(this->query->where(orm::q::c<TestModel>("id") == 1)
+		.where(orm::q::c<TestModel>("name") == "John"), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_select, order_by_Throws_MultipleCallsException)
@@ -128,13 +127,13 @@ TEST_F(TestCase_Q_select, offset_Throws_MultipleCallsException)
 
 TEST_F(TestCase_Q_select, group_by_Throws_MultipleCallsException)
 {
-	ASSERT_THROW(this->query->group_by({"id"}).group_by({"name"}), orm::QueryError);
+	ASSERT_THROW(
+		this->query->group_by({"id"}).group_by({"name"}), orm::QueryError
+	);
 }
 
 TEST_F(TestCase_Q_select, having_Throws_MultipleCallsException)
 {
-	ASSERT_THROW(
-		this->query->having(orm::q::equals("id", 1)).having(orm::q::equals("name", "John")),
-		orm::QueryError
-	);
+	ASSERT_THROW(this->query->having(orm::q::c<TestModel>("id") == 1)
+		.having(orm::q::c<TestModel>("name") == "John"), orm::QueryError);
 }

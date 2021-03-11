@@ -81,109 +81,98 @@ public:
 	};
 };
 
-template <OperatorValueType T>
+template <ModelBasedType ModelT, OperatorValueType T>
 struct comparison_operator : public condition
 {
-protected:
-	inline void make(const std::string& column_name, const std::string& op, T value)
-	{
-		this->str = util::quote_str(column_name) + " " + op + " " + std::to_string(value);
-	}
-
 public:
 	inline comparison_operator() = default;
 
-	inline explicit comparison_operator(const std::string& str) : condition(str)
+	inline explicit comparison_operator(
+		const std::string& column_name, const std::string& op, T value
+	)
 	{
+		auto table = util::quote_str(ModelT::meta_table_name);
+		auto column = util::quote_str(column_name);
+		this->str = table + "." + column + " " + op + " " + std::to_string(value);
 	}
 };
 
-template <>
-struct comparison_operator<std::string> : public condition
+template <ModelBasedType ModelT>
+struct comparison_operator<ModelT, std::string> : public condition
 {
-protected:
-	inline void make(const std::string& column_name, const std::string& op, const std::string& value)
-	{
-		this->str = util::quote_str(column_name) + " " + op + " '" + value + "'";
-	}
-
 public:
 	inline comparison_operator() = default;
 
-	inline explicit comparison_operator(std::string str) : condition(std::move(str))
+	inline explicit comparison_operator(
+		const std::string& column_name, const std::string& op, const std::string& value
+	)
 	{
+		auto table = util::quote_str(ModelT::meta_table_name);
+		auto column = util::quote_str(column_name);
+		this->str = table + "." + column + " " + op + " '" + value + "'";
 	}
 };
 
-template <>
-struct comparison_operator<const char*> : public condition
+template <ModelBasedType ModelT>
+struct comparison_operator<ModelT, const char*> : public condition
 {
-protected:
-	inline void make(const std::string& column_name, const std::string& op, const char* value)
-	{
-		this->str = util::quote_str(column_name) + " " + op + " '" + std::string(value) + "'";
-	}
-
 public:
 	inline comparison_operator() = default;
 
-	inline explicit comparison_operator(std::string str) : condition(std::move(str))
+	inline explicit comparison_operator(
+		const std::string& column_name, const std::string& op, const char* value
+	)
 	{
+		auto table = util::quote_str(ModelT::meta_table_name);
+		auto column = util::quote_str(column_name);
+		this->str = table + "." + column + " " + op + " '" + std::string(value) + "'";
 	}
 };
 
 // SQL comparison operators.
-template <OperatorValueType T>
-struct equals : public comparison_operator<T>
+template <ModelBasedType ModelT>
+struct c
 {
-	inline explicit equals(const std::string& column, T value)
-	{
-		this->make(column, "=", value);
-	}
-};
+	std::string column;
 
-template <OperatorValueType T>
-struct not_equals : public comparison_operator<T>
-{
-	inline explicit not_equals(const std::string& column, T value)
+	inline explicit c(std::string column) : column(std::move(column))
 	{
-		this->make(column, "!=", value);
 	}
-};
 
-template <OperatorValueType T>
-struct less : public comparison_operator<T>
-{
-	inline explicit less(const std::string& column, T value)
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator== (T val)
 	{
-		this->make(column, "<", value);
+		return comparison_operator<ModelT, T>(this->column, "=", val);
 	}
-};
 
-template <OperatorValueType T>
-struct greater : public comparison_operator<T>
-{
-	inline explicit greater(const std::string& column, T value)
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator!= (T val)
 	{
-		this->make(column, ">", value);
+		return comparison_operator<ModelT, T>(this->column, "!=", val);
 	}
-};
 
-template <OperatorValueType T>
-struct less_or_equals : public comparison_operator<T>
-{
-	inline explicit less_or_equals(const std::string& column, T value)
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator< (T val)
 	{
-		this->make(column, "<=", value);
+		return comparison_operator<ModelT, T>(this->column, "<", val);
 	}
-};
 
-template <OperatorValueType T>
-struct greater_or_equals : public comparison_operator<T>
-{
-	inline explicit greater_or_equals(const std::string& column, T value)
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator> (T val)
 	{
-		this->make(column, ">=", value);
+		return comparison_operator<ModelT, T>(this->column, ">", val);
+	}
+
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator<= (T val)
+	{
+		return comparison_operator<ModelT, T>(this->column, "<=", val);
+	}
+
+	template <OperatorValueType T>
+	comparison_operator<ModelT, T> operator>= (T val)
+	{
+		return comparison_operator<ModelT, T>(this->column, ">=", val);
 	}
 };
 
@@ -198,35 +187,38 @@ inline condition operator| (const condition& left, const condition& right)
 	return condition("(" + (std::string)left + " OR " + (std::string)right + ")");
 }
 
-inline condition operator! (const condition& cond)
+inline condition operator~ (const condition& cond)
 {
 	return condition("NOT (" + (std::string)cond + ")");
 }
 
-template <OperatorValueType T>
+template <ModelBasedType ModelT, OperatorValueType T>
 struct between : public condition
 {
 	inline explicit between(const std::string& column, T lower, T upper)
 	{
-		this->str = util::quote_str(column) + " BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
+		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+			" BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
 	}
 };
 
-template <>
-struct between<std::string> : public condition
+template <ModelBasedType ModelT>
+struct between<ModelT, std::string> : public condition
 {
 	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
 	{
-		this->str = util::quote_str(column) + " BETWEEN '" + lower + "' AND '" + upper + '\'';
+		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+			" BETWEEN '" + lower + "' AND '" + upper + '\'';
 	}
 };
 
-template <>
-struct between<const char*> : public condition
+template <ModelBasedType ModelT>
+struct between<ModelT, const char*> : public condition
 {
 	inline explicit between(const std::string& column, const char* lower, const char* upper)
 	{
-		this->str = util::quote_str(column) + " BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
+		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+			" BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
 	}
 };
 

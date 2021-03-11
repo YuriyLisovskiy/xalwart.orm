@@ -159,7 +159,7 @@ public:
 				[driver, select_pk, pk_val, first, second]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().using_(driver)
 						.template many_to_one<ModelT, PrimaryKeyT>(second, first, select_pk)
-						.where(q::equals(select_pk, pk_val))
+						.where(q::c<OtherModelT>(select_pk) == pk_val)
 						.to_vector();
 				}
 			));
@@ -209,7 +209,7 @@ public:
 					return select<OtherModelT>().using_(driver)
 						.join(q::left<OtherModelT, ModelT>(other_pk))
 						.template one_to_many<ModelT, PrimaryKeyT>(second, first, other_pk)
-						.where(q::equals(t_name + "\".\"" + ModelT::meta_pk_name, model_pk_val))
+						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
 						.first();
 				}
 			));
