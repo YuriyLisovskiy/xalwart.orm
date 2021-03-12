@@ -52,6 +52,12 @@ public:
 		void* container,
 		void(*handle_row)(void* container, void* row_map)
 	) const override;
+
+	// update row(s)
+	// TODO: update row(s)
+
+	// delete row(s)
+	void run_delete(const std::string& query) const override;
 };
 
 __SQLITE3_END__

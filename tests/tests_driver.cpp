@@ -28,6 +28,8 @@ public:
 		void(*handle_row)(void* container, void* row_map)
 	) const override {}
 
+	inline void run_delete(const std::string& query) const override {}
+
 	[[nodiscard]]
 	inline std::string name() const override { return "test"; }
 };

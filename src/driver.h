@@ -50,12 +50,20 @@ public:
 		const std::initializer_list<const char*>& columns,
 		bool distinct,
 		const std::vector<q::join>& joins,
-		const q::condition& where_cond,
+		const q::condition_t& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::initializer_list<std::string>& group_by_cols,
-		const q::condition& having_cond
+		const q::condition_t& having_cond
+	) const override;
+
+	// Generates 'DELETE' query as string.
+	//
+	// 'table_name' must be non-empty string.
+	[[nodiscard]]
+	std::string make_delete_query(
+		const std::string& table_name, const q::condition_t& where_cond
 	) const override;
 };
 

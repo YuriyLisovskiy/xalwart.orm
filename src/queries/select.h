@@ -39,43 +39,27 @@ protected:
 	// check the default constructor.
 	std::string pk_name;
 
-	// Holds pair {value, is_set}:
-	//  - value: actual value which will be forwarded to query generator;
-	//  - is_set: indicates if the value is set or not.
-	template <typename T>
-	struct pair
-	{
-		T value;
-		bool is_set = false;
-
-		inline void set(T v)
-		{
-			this->value = std::move(v);
-			this->is_set = true;
-		}
-	};
-
 	// Indicates whether to use distinction or not in SQL statement.
 	// The default is false.
-	pair<bool> distinct_;
+	q_value<bool> distinct_;
 
 	// Holds boolean condition for SQL 'WHERE' statement.
-	pair<q::condition> where_cond_;
+	q_value<q::condition_t> where_cond_;
 
 	// Holds columns list for SQL 'ORDER BY' statement.
-	pair<std::initializer_list<q::ordering>> order_by_cols_;
+	q_value<std::initializer_list<q::ordering>> order_by_cols_;
 
 	// Holds value for SQL 'LIMIT'. The default is -1.
-	pair<long int> limit_;
+	q_value<long int> limit_;
 
 	// Holds value for SQL 'OFFSET'. The default is -1.
-	pair<long int> offset_;
+	q_value<long int> offset_;
 
 	// Holds columns list for SQL 'GROUP BY' statement.
-	pair<std::initializer_list<std::string>> group_by_cols_;
+	q_value<std::initializer_list<std::string>> group_by_cols_;
 
 	// Holds boolean condition for SQL 'HAVING' statement.
-	pair<q::condition> having_cond_;
+	q_value<q::condition_t> having_cond_;
 
 	// Holds a list of conditions for SQL 'JOIN' statement.
 	std::vector<q::join> joins;
@@ -104,6 +88,42 @@ public:
 		this->db = driver;
 	};
 
+	// Sets SQL driver.
+	inline virtual select& use(abc::ISQLDriver* driver)
+	{
+		if (driver)
+		{
+			this->db = driver;
+		}
+
+		return *this;
+	}
+
+	// Generates query using SQL driver.
+	//
+	// Throws 'QueryError' when driver is not set.
+	[[nodiscard]]
+	inline virtual std::string query() const
+	{
+		if (!this->db)
+		{
+			throw QueryError("select: database driver not set", _ERROR_DETAILS_);
+		}
+
+		return this->db->make_select_query(
+			this->table_name,
+			ModelT::meta_fields,
+			this->distinct_.value,
+			this->joins,
+			this->where_cond_.value,
+			this->order_by_cols_.value,
+			this->limit_.value,
+			this->offset_.value,
+			this->group_by_cols_.value,
+			this->having_cond_.value
+		);
+	}
+
 	// Sets the distinct value.
 	//
 	// Throws 'QueryError' if this method is called more than once.
@@ -112,7 +132,8 @@ public:
 		if (this->distinct_.is_set)
 		{
 			throw QueryError(
-				"'distinct' value is already set, check method call sequence", _ERROR_DETAILS_
+				"select: 'distinct' value is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -299,7 +320,7 @@ public:
 
 						return select<OtherModelT>().using_(driver)
 							.distinct()
-							.join({"LEFT", m_table, q::condition(cond_str)})
+							.join({"LEFT", m_table, q::condition_t(cond_str)})
 							.template many_to_many<ModelT>(second, first, o_pk, s_pk, m_table)
 							.to_vector();
 					}
@@ -320,12 +341,13 @@ public:
 	// Sets the condition for 'where' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& where(const q::condition& cond)
+	inline virtual select& where(const q::condition_t& cond)
 	{
 		if (this->where_cond_.is_set)
 		{
 			throw QueryError(
-				"'where' condition is already set, check method call sequence", _ERROR_DETAILS_
+				"select: 'where' condition is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -342,7 +364,8 @@ public:
 		if (this->order_by_cols_.is_set)
 		{
 			throw QueryError(
-				"columns for ordering is already set, check method call sequence", _ERROR_DETAILS_
+				"select: columns for ordering is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -362,7 +385,8 @@ public:
 		if (this->limit_.is_set)
 		{
 			throw QueryError(
-				"'limit' value is already set, check method call sequence", _ERROR_DETAILS_
+				"select: 'limit' value is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -379,7 +403,8 @@ public:
 		if (this->offset_.is_set)
 		{
 			throw QueryError(
-				"'offset' value is already set, check method call sequence", _ERROR_DETAILS_
+				"select: 'offset' value is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -400,7 +425,8 @@ public:
 		if (this->group_by_cols_.is_set)
 		{
 			throw QueryError(
-				"columns for grouping is already set, check method call sequence", _ERROR_DETAILS_
+				"select: columns for grouping is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -415,27 +441,17 @@ public:
 	// Sets the condition for 'having' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& having(const q::condition& cond)
+	inline virtual select& having(const q::condition_t& cond)
 	{
 		if (this->having_cond_.is_set)
 		{
 			throw QueryError(
-				"'having' condition is already set, check method call sequence", _ERROR_DETAILS_
+				"select: 'having' condition is already set, check method call sequence",
+				_ERROR_DETAILS_
 			);
 		}
 
 		this->having_cond_.set(cond);
-		return *this;
-	}
-
-	// Sets SQL driver.
-	inline virtual select& using_(abc::ISQLDriver* driver)
-	{
-		if (driver)
-		{
-			this->db = driver;
-		}
-
 		return *this;
 	}
 
@@ -490,31 +506,6 @@ public:
 		});
 
 		return collection.first;
-	}
-
-	// Generates query using SQL driver.
-	//
-	// Throws 'QueryError' when driver is not set.
-	[[nodiscard]]
-	inline virtual std::string query() const
-	{
-		if (!this->db)
-		{
-			throw QueryError("select: database client not set", _ERROR_DETAILS_);
-		}
-
-		return this->db->make_select_query(
-			this->table_name,
-			ModelT::meta_fields,
-			this->distinct_.value,
-			this->joins,
-			this->where_cond_.value,
-			this->order_by_cols_.value,
-			this->limit_.value,
-			this->offset_.value,
-			this->group_by_cols_.value,
-			this->having_cond_.value
-		);
 	}
 };
 

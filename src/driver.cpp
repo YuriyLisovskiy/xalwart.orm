@@ -54,12 +54,12 @@ std::string SQLDriverBase::make_select_query(
 	const std::initializer_list<const char*>& columns,
 	bool distinct,
 	const std::vector<q::join>& joins,
-	const q::condition& where_cond,
+	const q::condition_t& where_cond,
 	const std::initializer_list<q::ordering>& order_by_cols,
 	long int limit,
 	long int offset,
 	const std::initializer_list<std::string>& group_by_cols,
-	const q::condition& having_cond
+	const q::condition_t& having_cond
 ) const
 {
 	if (table_name.empty())
@@ -168,6 +168,25 @@ std::string SQLDriverBase::make_select_query(
 		}
 
 		query += " HAVING " + having_str;
+	}
+
+	return query + ";";
+}
+
+std::string SQLDriverBase::make_delete_query(
+	const std::string& table_name, const q::condition_t& where_cond
+) const
+{
+	if (table_name.empty())
+	{
+		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+	}
+
+	std::string query = "DELETE FROM " + util::quote_str(table_name);
+	auto where_str = (std::string)where_cond;
+	if (!where_str.empty())
+	{
+		query += " WHERE " + where_str;
 	}
 
 	return query + ";";

@@ -49,12 +49,12 @@ public:
 		const std::initializer_list<const char*>& columns,
 		bool distinct,
 		const std::vector<q::join>& joins,
-		const q::condition& where_cond,
+		const q::condition_t& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::initializer_list<std::string>& group_by_cols,
-		const q::condition& having_cond
+		const q::condition_t& having_cond
 	) const = 0;
 
 	// In function 'handler_row(void*, void*)':
@@ -73,7 +73,12 @@ public:
 	// TODO: update row(s)
 
 	// delete row(s)
-	// TODO: delete row(s)
+	[[nodiscard]]
+	virtual std::string make_delete_query(
+		const std::string& table_name, const q::condition_t& where_cond
+	) const = 0;
+
+	virtual void run_delete(const std::string& query) const = 0;
 };
 
 __ABC_END__

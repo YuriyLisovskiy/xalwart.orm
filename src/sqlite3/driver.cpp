@@ -122,6 +122,11 @@ void SQLite3Driver::run_select(
 	}
 }
 
+void SQLite3Driver::run_delete(const std::string& query) const
+{
+	// TODO: SQLite3Driver::run_delete(const std::string& query)
+}
+
 __SQLITE3_END__
 
 #endif // USE_SQLITE3

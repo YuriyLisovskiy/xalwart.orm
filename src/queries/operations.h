@@ -16,6 +16,7 @@
 
 // Orm libraries.
 #include "../utility.h"
+#include "../exceptions.h"
 
 
 __Q_BEGIN__
@@ -63,15 +64,15 @@ inline ordering descending(const std::string& column)
 	return ordering(column, false);
 }
 
-struct condition
+struct condition_t
 {
 protected:
 	std::string str;
 
 public:
-	inline condition() = default;
+	inline condition_t() = default;
 
-	inline explicit condition(std::string str) : str(std::move(str))
+	inline explicit condition_t(std::string str) : str(std::move(str))
 	{
 	}
 
@@ -82,7 +83,7 @@ public:
 };
 
 template <ModelBasedType ModelT, OperatorValueType T>
-struct comparison_operator : public condition
+struct comparison_operator : public condition_t
 {
 public:
 	inline comparison_operator() = default;
@@ -98,7 +99,7 @@ public:
 };
 
 template <ModelBasedType ModelT>
-struct comparison_operator<ModelT, std::string> : public condition
+struct comparison_operator<ModelT, std::string> : public condition_t
 {
 public:
 	inline comparison_operator() = default;
@@ -114,7 +115,7 @@ public:
 };
 
 template <ModelBasedType ModelT>
-struct comparison_operator<ModelT, const char*> : public condition
+struct comparison_operator<ModelT, const char*> : public condition_t
 {
 public:
 	inline comparison_operator() = default;
@@ -177,23 +178,26 @@ struct c
 };
 
 // SQL logical operators.
-inline condition operator& (const condition& left, const condition& right)
+inline condition_t operator& (const condition_t& left, const condition_t& right)
 {
-	return condition("(" + (std::string)left + " AND " + (std::string)right + ")");
+	return condition_t("(" + (std::string)left + " AND " + (std::string)right + ")");
 }
 
-inline condition operator| (const condition& left, const condition& right)
+inline condition_t operator| (const condition_t& left, const condition_t& right)
 {
-	return condition("(" + (std::string)left + " OR " + (std::string)right + ")");
+	return condition_t("(" + (std::string)left + " OR " + (std::string)right + ")");
 }
 
-inline condition operator~ (const condition& cond)
+inline condition_t operator~ (const condition_t& cond)
 {
-	return condition("NOT (" + (std::string)cond + ")");
+	return condition_t("NOT (" + (std::string)cond + ")");
 }
+
+template <typename T>
+concept FundamentalType = std::is_fundamental_v<T>;
 
 template <ModelBasedType ModelT, OperatorValueType T>
-struct between : public condition
+struct between : public condition_t
 {
 	inline explicit between(const std::string& column, T lower, T upper)
 	{
@@ -203,7 +207,7 @@ struct between : public condition
 };
 
 template <ModelBasedType ModelT>
-struct between<ModelT, std::string> : public condition
+struct between<ModelT, std::string> : public condition_t
 {
 	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
 	{
@@ -213,7 +217,7 @@ struct between<ModelT, std::string> : public condition
 };
 
 template <ModelBasedType ModelT>
-struct between<ModelT, const char*> : public condition
+struct between<ModelT, const char*> : public condition_t
 {
 	inline explicit between(const std::string& column, const char* lower, const char* upper)
 	{
@@ -222,13 +226,64 @@ struct between<ModelT, const char*> : public condition
 	}
 };
 
-// TODO: implement ALL, ANY, EXISTS, IN, and LIKE operators.
+// TODO: test it
+template <ModelBasedType ModelT>
+condition_t like(const std::string& column, const std::string& pattern)
+{
+	return util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+		" LIKE '" + pattern + "'";
+}
+
+// TODO: test it
+template <ModelBasedType ModelT>
+condition_t like(
+	const std::string& column, const std::string& pattern, const std::string& escape
+)
+{
+	return like<ModelT>(column, pattern) + " ESCAPE '" + escape + "'";
+}
+
+// TODO: test it
+template <ModelBasedType ModelT, FundamentalIterType IterBegin, FundamentalIterType IterEnd>
+condition_t in(const std::string& column, IterBegin begin, IterEnd end)
+{
+	if (begin == end)
+	{
+		throw QueryError("in: list is empty", _ERROR_DETAILS_);
+	}
+
+	return condition_t(str::join(begin, end, ", ",
+		[](
+			const typename std::iterator_traits<IterBegin>::value_type& item
+		) -> std::string {
+			return std::to_string(item);
+		}
+	));
+}
+
+// TODO: test it
+template <ModelBasedType ModelT, StringIterType IterBegin, StringIterType IterEnd>
+condition_t in(const std::string& column, IterBegin begin, IterEnd end)
+{
+	if (begin == end)
+	{
+		throw QueryError("in: list is empty", _ERROR_DETAILS_);
+	}
+
+	return condition_t(str::join(begin, end, ", ",
+		[](
+			const typename std::iterator_traits<IterBegin>::value_type& item
+	    ) -> std::string { return item; }
+	));
+}
+
+// TODO: implement ALL, ANY, and EXISTS operators.
 
 struct join
 {
 	std::string type;
 	std::string table_name;
-	q::condition condition;
+	q::condition_t condition;
 
 	inline explicit operator std::string() const
 	{
@@ -237,7 +292,7 @@ struct join
 };
 
 template <typename LeftT, typename RightT>
-join left(const std::string& join_pk, const q::condition& extra_condition={})
+join left(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
@@ -250,7 +305,7 @@ join left(const std::string& join_pk, const q::condition& extra_condition={})
 		condition_str += " AND " + extra_cond_str;
 	}
 
-	return {"LEFT", table_name, q::condition(condition_str)};
+	return {"LEFT", table_name, q::condition_t(condition_str)};
 }
 
 __Q_END__

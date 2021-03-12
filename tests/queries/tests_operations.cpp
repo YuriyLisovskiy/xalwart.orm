@@ -162,21 +162,21 @@ TEST(TestCase_Q_greater_or_equals, c_string)
 TEST(TestCase_Q_logical, operator_and)
 {
 	std::string expected = R"(("id" = 1 AND "name" = 'John'))";
-	auto actual = orm::q::condition("\"id\" = 1") & orm::q::condition("\"name\" = 'John'");
+	auto actual = orm::q::condition_t("\"id\" = 1") & orm::q::condition_t("\"name\" = 'John'");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Q_logical, operator_or)
 {
 	std::string expected = R"(("id" = 1 OR "name" = 'John'))";
-	auto actual = orm::q::condition("\"id\" = 1") | orm::q::condition("\"name\" = 'John'");
+	auto actual = orm::q::condition_t("\"id\" = 1") | orm::q::condition_t("\"name\" = 'John'");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Q_logical, operator_not)
 {
 	std::string expected = "NOT (\"id\" = 1)";
-	auto actual = ~orm::q::condition("\"id\" = 1");
+	auto actual = ~orm::q::condition_t("\"id\" = 1");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
