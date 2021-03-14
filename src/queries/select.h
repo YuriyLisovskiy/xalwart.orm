@@ -178,7 +178,7 @@ public:
 			);
 			first(model, xw::Lazy<std::vector<OtherModelT>>(
 				[driver, select_pk, pk_val, first, second]() -> std::vector<OtherModelT> {
-					return select<OtherModelT>().using_(driver)
+					return select<OtherModelT>().use(driver)
 						.template many_to_one<ModelT, PrimaryKeyT>(second, first, select_pk)
 						.where(q::c<OtherModelT>(select_pk) == pk_val)
 						.to_vector();
@@ -227,7 +227,7 @@ public:
 			);
 			first(model, xw::Lazy<OtherModelT>(
 				[driver, first, second, t_name, other_pk, model_pk_val]() -> OtherModelT {
-					return select<OtherModelT>().using_(driver)
+					return select<OtherModelT>().use(driver)
 						.join(q::left<OtherModelT, ModelT>(other_pk))
 						.template one_to_many<ModelT, PrimaryKeyT>(second, first, other_pk)
 						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
@@ -318,7 +318,7 @@ public:
 						auto cond_str = '"' + second_t_name + "\".\"" + first_pk_name
 							+ "\" = \"" + m_table + "\".\"" + s_pk + '"';
 
-						return select<OtherModelT>().using_(driver)
+						return select<OtherModelT>().use(driver)
 							.distinct()
 							.join({"LEFT", m_table, q::condition_t(cond_str)})
 							.template many_to_many<ModelT>(second, first, o_pk, s_pk, m_table)

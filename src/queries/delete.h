@@ -37,6 +37,11 @@ protected:
 protected:
 	virtual inline void append_model(const ModelT& model)
 	{
+		if (model.is_null())
+		{
+			throw QueryError("delete: unable to delete null model", _ERROR_DETAILS_);
+		}
+
 		this->pks.push_back(model.__get_attr__(ModelT::meta_pk_name)->__str__());
 	}
 
@@ -70,15 +75,22 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	virtual inline std::string query() const
+	virtual inline std::string query()
 	{
 		if (!this->db)
 		{
 			throw QueryError("delete: database driver not set", _ERROR_DETAILS_);
 		}
 
+		if (!this->where_cond.is_set)
+		{
+			this->where_cond.set(in<ModelT>(
+				ModelT::meta_pk_name, this->pks.begin(), this->pks.end()
+			));
+		}
+
 		return this->db->make_delete_query(
-			util::get_table_name<ModelT>(), this->where_cond
+			util::get_table_name<ModelT>(), this->where_cond.value
 		);
 	}
 
@@ -112,13 +124,6 @@ public:
 	// if it was not set manually.
 	inline virtual void exec()
 	{
-		if (!this->where_cond.is_set)
-		{
-			this->where_cond.set(in<ModelT>(
-				ModelT::meta_pk_name, this->pks.begin(), this->pks.end()
-			));
-		}
-
 		auto query = this->query();
 		this->db->run_delete(query);
 	}

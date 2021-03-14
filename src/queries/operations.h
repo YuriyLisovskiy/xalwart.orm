@@ -252,13 +252,11 @@ condition_t in(const std::string& column, IterBegin begin, IterEnd end)
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	return condition_t(str::join(begin, end, ", ",
-		[](
+	std::string condition_str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+		" IN (" + str::join(begin, end, ", ", [](
 			const typename std::iterator_traits<IterBegin>::value_type& item
-		) -> std::string {
-			return std::to_string(item);
-		}
-	));
+		) -> std::string { return std::to_string(item); }) + ")";
+	return condition_t(condition_str);
 }
 
 // TODO: test it
@@ -270,11 +268,11 @@ condition_t in(const std::string& column, IterBegin begin, IterEnd end)
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	return condition_t(str::join(begin, end, ", ",
-		[](
+	std::string condition_str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
+		" IN (" + str::join(begin, end, ", ", [](
 			const typename std::iterator_traits<IterBegin>::value_type& item
-	    ) -> std::string { return item; }
-	));
+		) -> std::string { return item; }) + ")";
+	return condition_t(condition_str);
 }
 
 // TODO: implement ALL, ANY, and EXISTS operators.

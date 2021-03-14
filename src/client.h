@@ -20,7 +20,7 @@
 
 __ORM_BEGIN__
 
-class Client
+class Client final
 {
 protected:
 
@@ -88,7 +88,7 @@ public:
 
 	// Retrieve first row from database.
 	template <ModelBasedType ModelT>
-	inline ModelT get(const q::condition& cond) const
+	inline ModelT get(const q::condition_t& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond).first();
 	}
@@ -103,10 +103,13 @@ public:
 	// Creates 'select' statement object with called 'where' method.
 	// So, 'WHERE' condition is set and can not be changed.
 	template <ModelBasedType ModelT>
-	inline q::select<ModelT> filter(const q::condition& cond) const
+	inline q::select<ModelT> filter(const q::condition_t& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond);
 	}
+
+	// TODO: docs
+
 };
 
 __ORM_END__

@@ -45,6 +45,12 @@ public:
 	// TODO: !experimental feature!
 	static constexpr std::initializer_list<const char*> meta_fields = {};
 
+protected:
+	inline void copy_base(const Model& other)
+	{
+		this->_is_null_model = other._is_null_model;
+	}
+
 public:
 
 	// By default throws 'NotImplementedException'.
