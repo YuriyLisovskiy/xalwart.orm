@@ -190,13 +190,15 @@ TEST(TestCase_Q_between, fundamental)
 TEST(TestCase_Q_between, string)
 {
 	std::string expected = R"("test_model"."name" BETWEEN 'John' AND 'Steve')";
-	auto actual = orm::q::between<TestModel, std::string>("name", "John", "Steve");
+	auto actual = orm::q::between<TestModel>(
+		"name", std::string("John"), std::string("Steve")
+	);
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Q_between, c_string)
 {
 	std::string expected = R"("test_model"."name" BETWEEN 'John' AND 'Steve')";
-	auto actual = orm::q::between<TestModel, const char*>("name", "John", "Steve");
+	auto actual = orm::q::between<TestModel>("name", "John", "Steve");
 	ASSERT_EQ(expected, (std::string)actual);
 }

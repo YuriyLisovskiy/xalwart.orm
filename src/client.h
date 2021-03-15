@@ -16,9 +16,13 @@
 #include "./abc.h"
 #include "./queries/insert.h"
 #include "./queries/select.h"
+#include "./queries/delete.h"
 
 
 __ORM_BEGIN__
+
+template <typename IterT>
+concept ModelTypeIterator = std::is_base_of_v<Model, typename std::iterator_traits<IterT>::value_type>;
 
 class Client final
 {
@@ -76,9 +80,10 @@ public:
 	}
 
 	// Inserts the list of models to the database.
-	template <ModelBasedType ModelT, typename IteratorBegin, typename IteratorEnd>
-	inline void insert_bulk(IteratorBegin begin, IteratorEnd end) const
+	template <ModelTypeIterator IterBegin, ModelTypeIterator IterEnd>
+	inline void insert(IterBegin begin, IterEnd end) const
 	{
+		using ModelT = typename std::iterator_traits<IterBegin>::value_type;
 		auto query = q::insert<ModelT>(this->db.get(), *begin++);
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {
 			query.model(model);
@@ -108,8 +113,32 @@ public:
 		return q::select<ModelT>(this->db.get()).where(cond);
 	}
 
-	// TODO: docs
+	// Deletes list of models using iterator.
+	template <ModelTypeIterator IteratorT>
+	inline void delete_(IteratorT begin, IteratorT end) const
+	{
+		using ModelT = typename std::iterator_traits<IteratorT>::value_type;
+		auto query = q::delete_<ModelT>().use(this->db.get());
+		std::for_each(begin, end, [&query](const ModelT& model) -> void {
+			query.model(model);
+		});
+		query.exec();
+	}
 
+	// Deletes list of models using initializer list.
+	template <ModelBasedType ModelT>
+	inline void delete_(const std::initializer_list<ModelT>& list) const
+	{
+		using ConstIterator = typename std::initializer_list<ModelT>::const_iterator;
+		this->template delete_<ConstIterator>(list.begin(), list.end());
+	}
+
+	// Deletes single model.
+	template <ModelBasedType ModelT>
+	inline void delete_(const ModelT& model) const
+	{
+		q::delete_<ModelT>().use(this->db.get()).model(model).exec();
+	}
 };
 
 __ORM_END__

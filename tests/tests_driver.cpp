@@ -7,7 +7,6 @@
 #include <gtest/gtest.h>
 
 #include "../src/driver.h"
-#include "../src/exceptions.h"
 
 using namespace xw;
 
@@ -104,8 +103,8 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ThrowsEmptyColumns)
 {
 	ASSERT_THROW(
 		auto _ = this->driver->make_select_query(
-			TestDriver_TestModel::meta_table_name, {}, false, {}, {}, {}, -1, -1, {}, {}
-		), orm::QueryError
+		TestDriver_TestModel::meta_table_name, {}, false, {}, {}, {}, -1, -1, {}, {}
+	), orm::QueryError
 	);
 }
 

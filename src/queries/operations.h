@@ -25,6 +25,9 @@ template <typename T>
 concept OperatorValueType = std::is_fundamental_v<T> ||
 	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
 
+template <typename T>
+concept FundamentalType = std::is_fundamental_v<T>;
+
 struct ordering
 {
 public:
@@ -66,71 +69,84 @@ inline ordering descending(const std::string& column)
 
 struct condition_t
 {
-protected:
-	std::string str;
+public:
+
+	// Condition string, example `"id" = 1`.
+	std::string raw_condition;
 
 public:
 	inline condition_t() = default;
 
-	inline explicit condition_t(std::string str) : str(std::move(str))
+	inline explicit condition_t(std::string condition) : raw_condition(std::move(condition))
 	{
 	}
 
-	virtual inline explicit operator std::string() const
+	inline explicit operator std::string() const
 	{
-		return this->str;
+		return this->raw_condition;
 	};
 };
 
+struct column_condition_t : public condition_t
+{
+public:
+	inline column_condition_t() = default;
+
+	inline column_condition_t(
+		const std::string& table_name,
+		const std::string& column_name,
+		const std::string& condition
+	) : condition_t(
+		util::quote_str(table_name) + "." + util::quote_str(column_name) + " " + condition
+	)
+	{
+	}
+};
+
 template <ModelBasedType ModelT, OperatorValueType T>
-struct comparison_operator : public condition_t
+struct comparison_op_t : public column_condition_t
 {
 public:
-	inline comparison_operator() = default;
+	inline comparison_op_t() = default;
 
-	inline explicit comparison_operator(
+	inline explicit comparison_op_t(
 		const std::string& column_name, const std::string& op, T value
+	) : column_condition_t(
+		ModelT::meta_table_name, column_name, op + " " + std::to_string(value)
 	)
 	{
-		auto table = util::quote_str(ModelT::meta_table_name);
-		auto column = util::quote_str(column_name);
-		this->str = table + "." + column + " " + op + " " + std::to_string(value);
 	}
 };
 
 template <ModelBasedType ModelT>
-struct comparison_operator<ModelT, std::string> : public condition_t
+struct comparison_op_t<ModelT, std::string> : public column_condition_t
 {
 public:
-	inline comparison_operator() = default;
+	inline comparison_op_t() = default;
 
-	inline explicit comparison_operator(
+	inline explicit comparison_op_t(
 		const std::string& column_name, const std::string& op, const std::string& value
-	)
+	) : column_condition_t(ModelT::meta_table_name, column_name, op + " '" + value + "'")
 	{
-		auto table = util::quote_str(ModelT::meta_table_name);
-		auto column = util::quote_str(column_name);
-		this->str = table + "." + column + " " + op + " '" + value + "'";
 	}
 };
 
 template <ModelBasedType ModelT>
-struct comparison_operator<ModelT, const char*> : public condition_t
+struct comparison_op_t<ModelT, const char*> : public column_condition_t
 {
 public:
-	inline comparison_operator() = default;
+	inline comparison_op_t() = default;
 
-	inline explicit comparison_operator(
+	inline explicit comparison_op_t(
 		const std::string& column_name, const std::string& op, const char* value
+	) : column_condition_t(
+		ModelT::meta_table_name, column_name, op + " '" + std::string(value) + "'"
 	)
 	{
-		auto table = util::quote_str(ModelT::meta_table_name);
-		auto column = util::quote_str(column_name);
-		this->str = table + "." + column + " " + op + " '" + std::string(value) + "'";
 	}
 };
 
-// SQL comparison operators.
+// SQL comparison operators for columns.
 template <ModelBasedType ModelT>
 struct c
 {
@@ -141,51 +157,55 @@ struct c
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator== (T val)
+	comparison_op_t<ModelT, T> operator== (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, "=", val);
+		return comparison_op_t<ModelT, T>(this->column, "=", val);
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator!= (T val)
+	comparison_op_t<ModelT, T> operator!= (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, "!=", val);
+		return comparison_op_t<ModelT, T>(this->column, "!=", val);
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator< (T val)
+	comparison_op_t<ModelT, T> operator< (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, "<", val);
+		return comparison_op_t<ModelT, T>(this->column, "<", val);
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator> (T val)
+	comparison_op_t<ModelT, T> operator> (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, ">", val);
+		return comparison_op_t<ModelT, T>(this->column, ">", val);
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator<= (T val)
+	comparison_op_t<ModelT, T> operator<= (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, "<=", val);
+		return comparison_op_t<ModelT, T>(this->column, "<=", val);
 	}
 
 	template <OperatorValueType T>
-	comparison_operator<ModelT, T> operator>= (T val)
+	comparison_op_t<ModelT, T> operator>= (T val)
 	{
-		return comparison_operator<ModelT, T>(this->column, ">=", val);
+		return comparison_op_t<ModelT, T>(this->column, ">=", val);
 	}
 };
 
 // SQL logical operators.
 inline condition_t operator& (const condition_t& left, const condition_t& right)
 {
-	return condition_t("(" + (std::string)left + " AND " + (std::string)right + ")");
+	return condition_t(
+		"(" + (std::string)left + " AND " + (std::string)right + ")"
+	);
 }
 
 inline condition_t operator| (const condition_t& left, const condition_t& right)
 {
-	return condition_t("(" + (std::string)left + " OR " + (std::string)right + ")");
+	return condition_t(
+		"(" + (std::string)left + " OR " + (std::string)right + ")"
+	);
 }
 
 inline condition_t operator~ (const condition_t& cond)
@@ -193,86 +213,81 @@ inline condition_t operator~ (const condition_t& cond)
 	return condition_t("NOT (" + (std::string)cond + ")");
 }
 
-template <typename T>
-concept FundamentalType = std::is_fundamental_v<T>;
-
-template <ModelBasedType ModelT, OperatorValueType T>
-struct between : public condition_t
+template <ModelBasedType ModelT, FundamentalType T>
+inline column_condition_t between(const std::string& column, T lower, T upper)
 {
-	inline explicit between(const std::string& column, T lower, T upper)
-	{
-		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-			" BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper);
-	}
-};
+	return column_condition_t(
+		ModelT::meta_table_name, column,
+		"BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper)
+	);
+}
 
 template <ModelBasedType ModelT>
-struct between<ModelT, std::string> : public condition_t
+inline column_condition_t between(
+	const std::string& column, std::string lower, std::string upper
+)
 {
-	inline explicit between(const std::string& column, const std::string& lower, const std::string& upper)
-	{
-		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-			" BETWEEN '" + lower + "' AND '" + upper + '\'';
-	}
-};
+	return column_condition_t(
+		ModelT::meta_table_name, column,
+		"BETWEEN '" + std::move(lower) + "' AND '" + std::move(upper) + '\''
+	);
+}
 
 template <ModelBasedType ModelT>
-struct between<ModelT, const char*> : public condition_t
+inline column_condition_t between(
+	const std::string& column, const char* lower, const char* upper
+)
 {
-	inline explicit between(const std::string& column, const char* lower, const char* upper)
-	{
-		this->str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-			" BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\'';
-	}
-};
-
-// TODO: test it
-template <ModelBasedType ModelT>
-condition_t like(const std::string& column, const std::string& pattern)
-{
-	return util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-		" LIKE '" + pattern + "'";
+	return column_condition_t(
+		ModelT::meta_table_name, column,
+		"BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\''
+	);
 }
 
 // TODO: test it
 template <ModelBasedType ModelT>
-condition_t like(
+inline column_condition_t like(const std::string& column, const std::string& pattern)
+{
+	return column_condition_t(ModelT::meta_table_name, column, " LIKE '" + pattern + "'");
+}
+
+// TODO: test it
+template <ModelBasedType ModelT>
+inline column_condition_t like(
 	const std::string& column, const std::string& pattern, const std::string& escape
 )
 {
-	return like<ModelT>(column, pattern) + " ESCAPE '" + escape + "'";
+	return like<ModelT>(column, pattern + " ESCAPE '" + escape + "'");
 }
 
 // TODO: test it
-template <ModelBasedType ModelT, FundamentalIterType IterBegin, FundamentalIterType IterEnd>
-condition_t in(const std::string& column, IterBegin begin, IterEnd end)
+template <ModelBasedType ModelT, FundamentalIterType IteratorT>
+inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
 	if (begin == end)
 	{
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	std::string condition_str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-		" IN (" + str::join(begin, end, ", ", [](
-			const typename std::iterator_traits<IterBegin>::value_type& item
-		) -> std::string { return std::to_string(item); }) + ")";
-	return condition_t(condition_str);
+	std::string condition = " IN (" + str::join(begin, end, ", ", [](
+		const typename std::iterator_traits<IteratorT>::value_type& item
+	) -> std::string { return std::to_string(item); }) + ")";
+	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
 // TODO: test it
-template <ModelBasedType ModelT, StringIterType IterBegin, StringIterType IterEnd>
-condition_t in(const std::string& column, IterBegin begin, IterEnd end)
+template <ModelBasedType ModelT, StringIterType IteratorT>
+inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
 	if (begin == end)
 	{
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	std::string condition_str = util::quote_str(ModelT::meta_table_name) + "." + util::quote_str(column) +
-		" IN (" + str::join(begin, end, ", ", [](
-			const typename std::iterator_traits<IterBegin>::value_type& item
-		) -> std::string { return item; }) + ")";
-	return condition_t(condition_str);
+	std::string condition = " IN (" + str::join(begin, end, ", ", [](
+		const typename std::iterator_traits<IteratorT>::value_type& item
+	) -> std::string { return item; }) + ")";
+	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
 // TODO: implement ALL, ANY, and EXISTS operators.
@@ -290,7 +305,7 @@ struct join
 };
 
 template <typename LeftT, typename RightT>
-join left(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join left(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;

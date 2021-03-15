@@ -70,6 +70,16 @@ protected:
 	typedef std::function<void(ModelT& model)> relation_callable;
 	std::vector<relation_callable> relations;
 
+protected:
+
+	// Sets SQL `join` condition of two tables. For more info,
+	// check the `xw::q::join` class and related functions.
+	inline select& join(q::join join_row)
+	{
+		this->joins.push_back(std::move(join_row));
+		return *this;
+	}
+
 public:
 
 	// Retrieves table name and sets the default values.
@@ -180,7 +190,7 @@ public:
 				[driver, select_pk, pk_val, first, second]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().use(driver)
 						.template many_to_one<ModelT, PrimaryKeyT>(second, first, select_pk)
-						.where(q::c<OtherModelT>(select_pk) == pk_val)
+						.where(q::c(select_pk) == pk_val)
 						.to_vector();
 				}
 			));
@@ -230,7 +240,7 @@ public:
 					return select<OtherModelT>().use(driver)
 						.join(q::left<OtherModelT, ModelT>(other_pk))
 						.template one_to_many<ModelT, PrimaryKeyT>(second, first, other_pk)
-						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
+						.where(q::c(ModelT::meta_pk_name) == model_pk_val)
 						.first();
 				}
 			));
@@ -327,14 +337,6 @@ public:
 				));
 			}
 		);
-		return *this;
-	}
-
-	// Sets SQL `join` condition of two tables. For more info,
-	// check the `xw::q::join` class and related functions.
-	inline select& join(q::join join_row)
-	{
-		this->joins.push_back(std::move(join_row));
 		return *this;
 	}
 
