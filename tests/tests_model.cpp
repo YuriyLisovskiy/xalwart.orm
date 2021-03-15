@@ -58,3 +58,24 @@ TEST(TestCase_Model, meta_omit_pk_Default_IsTrue)
 {
 	ASSERT_TRUE(orm::Model::meta_omit_pk);
 }
+
+class Model_TestCase : public ::testing::Test
+{
+protected:
+	class TestModel : public orm::Model
+	{
+	public:
+		static constexpr const char* meta_table_name = "test_model";
+		static constexpr const char* meta_pk_name = "test_model_id";
+	};
+};
+
+TEST_F(Model_TestCase, get_table_name)
+{
+	ASSERT_EQ(orm::get_table_name<Model_TestCase::TestModel>(), "test_model");
+}
+
+TEST_F(Model_TestCase, get_pk_name)
+{
+	ASSERT_EQ(orm::get_pk_name<Model_TestCase::TestModel>(), "test_model_id");
+}

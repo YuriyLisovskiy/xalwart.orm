@@ -17,6 +17,7 @@
 // Orm libraries.
 #include "../utility.h"
 #include "../exceptions.h"
+#include "../model.h"
 
 
 __Q_BEGIN__
@@ -24,9 +25,6 @@ __Q_BEGIN__
 template <typename T>
 concept OperatorValueType = std::is_fundamental_v<T> ||
 	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
-
-template <typename T>
-concept FundamentalType = std::is_fundamental_v<T>;
 
 struct ordering
 {
@@ -193,6 +191,20 @@ struct c
 	}
 };
 
+// TODO: test it
+template <ModelBasedType ModelT>
+inline column_condition_t is_null(const std::string& column)
+{
+	return column_condition_t(ModelT::meta_table_name, column, "IS NULL");
+}
+
+// TODO: test it
+template <ModelBasedType ModelT>
+inline column_condition_t is_not_null(const std::string& column)
+{
+	return column_condition_t(ModelT::meta_table_name, column, "IS NOT NULL");
+}
+
 // SQL logical operators.
 inline condition_t operator& (const condition_t& left, const condition_t& right)
 {
@@ -213,7 +225,7 @@ inline condition_t operator~ (const condition_t& cond)
 	return condition_t("NOT (" + (std::string)cond + ")");
 }
 
-template <ModelBasedType ModelT, FundamentalType T>
+template <ModelBasedType ModelT, types::fundamental_type T>
 inline column_condition_t between(const std::string& column, T lower, T upper)
 {
 	return column_condition_t(
@@ -304,6 +316,7 @@ struct join
 	}
 };
 
+// TODO: test it
 template <typename LeftT, typename RightT>
 inline join left(const std::string& join_pk, const q::condition_t& extra_condition={})
 {

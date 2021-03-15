@@ -19,6 +19,7 @@
 
 __Q_BEGIN__
 
+// TODO: test it
 template <ModelBasedType ModelT>
 class delete_
 {
@@ -90,7 +91,7 @@ public:
 		}
 
 		return this->db->make_delete_query(
-			util::get_table_name<ModelT>(), this->where_cond.value
+			get_table_name<ModelT>(), this->where_cond.value
 		);
 	}
 

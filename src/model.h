@@ -12,13 +12,24 @@
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
 #include <xalwart.core/types/string.h>
+#include <xalwart.core/types/fundamental.h>
 #include <xalwart.core/string_utils.h>
+#include <xalwart.core/lazy.h>
 
 // Module definitions.
 #include "./_def_.h"
 
+// Orm libraries.
+#include "./utility.h"
+
 
 __ORM_BEGIN__
+
+class Model;
+
+// Used in templates where Model-based class is required.
+template <typename T>
+concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
 
 class Model : public object::Object
 {
@@ -42,7 +53,6 @@ public:
 	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
 
-	// TODO: !experimental feature!
 	static constexpr std::initializer_list<const char*> meta_fields = {};
 
 protected:
@@ -112,8 +122,65 @@ public:
 	}
 };
 
-// Used in templates where Model-based class is required.
-template <typename T>
-concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+// Retrieves table name of 'ModelT'. If ModelT::meta_table_name
+// is nullptr, uses 'utility::demangle(...)' method to complete
+// the operation.
+template <ModelBasedType ModelT>
+inline std::string get_table_name()
+{
+	if constexpr (ModelT::meta_table_name != nullptr)
+	{
+		return ModelT::meta_table_name;
+	}
+	else
+	{
+		auto table_name = xw::utility::demangle(typeid(ModelT).name());
+		return table_name.substr(table_name.rfind(':') + 1);
+	}
+}
+
+template <ModelBasedType ModelT>
+inline std::string get_pk_name()
+{
+	return ModelT::meta_pk_name;
+}
+
+template <types::fundamental_type F>
+inline object::Attribute field_accessor(F* field)
+{
+	return object::Attribute(
+		[field]() -> std::shared_ptr<object::Object> {
+			return std::make_shared<types::Fundamental<F>>(*field);
+		},
+		[field](const void* val) -> void {
+			size_t len = std::strlen((char*)val);
+			std::string str_val = {(char*)val, (char*)val + len + 1};
+			*field = util::as<F>(str_val.c_str());
+		}
+	);
+}
+
+inline object::Attribute field_accessor(std::string* field)
+{
+	return xw::object::Attribute(
+		[field]() -> std::shared_ptr<object::Object> {
+			return std::make_shared<types::String>(*field);
+		},
+		[field](const void* val) -> void {
+			size_t len = std::strlen((char*)val);
+			*field = {(char*)val, (char*)val + len + 1};
+		}
+	);
+}
+
+template <ModelBasedType F, LazyType<F> L>
+inline object::Attribute field_getter_lazy(L* field)
+{
+	return object::Attribute(
+		[field]() -> std::shared_ptr<object::Object> {
+			return std::make_shared<F>(field->value());
+		}
+	);
+}
 
 __ORM_END__

@@ -70,27 +70,6 @@ TEST(TestCase_utility, as_std_string)
 	ASSERT_EQ(orm::util::as<std::string>("Hello, World"), std::string("Hello, World"));
 }
 
-class Utility_TestCase : public ::testing::Test
-{
-protected:
-	class TestModel : public orm::Model
-	{
-	public:
-		static constexpr const char* meta_table_name = "test_model";
-		static constexpr const char* meta_pk_name = "test_model_id";
-	};
-};
-
-TEST_F(Utility_TestCase, get_table_name)
-{
-	ASSERT_EQ(orm::util::get_table_name<Utility_TestCase::TestModel>(), "test_model");
-}
-
-TEST_F(Utility_TestCase, get_pk_name)
-{
-	ASSERT_EQ(orm::util::get_pk_name<Utility_TestCase::TestModel>(), "test_model_id");
-}
-
 TEST(TestCase_utility, quote_str_AlreadyQuoted)
 {
 	ASSERT_EQ(orm::util::quote_str(R"("Hello")"), R"("Hello")");

@@ -17,7 +17,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./queries/operations.h"
+#include "./queries/conditions.h"
 
 
 __ABC_BEGIN__

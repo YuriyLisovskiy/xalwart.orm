@@ -17,7 +17,7 @@
 // Orm libraries.
 #include "../abc.h"
 #include "../exceptions.h"
-#include "../utility.h"
+//#include "../utility.h"
 
 
 __Q_BEGIN__
@@ -134,7 +134,7 @@ public:
 		}
 
 		return this->db->make_insert_query(
-			util::get_table_name<ModelT>(), this->columns_str, this->rows
+			get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
 
