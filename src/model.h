@@ -183,4 +183,17 @@ inline object::Attribute field_getter_lazy(L* field)
 	);
 }
 
+// TESTME: make_fk
+template <ModelBasedType ModelT>
+inline std::string make_fk()
+{
+	std::string table_name = ModelT::meta_table_name;
+	if (table_name.ends_with('s'))
+	{
+		table_name = table_name.substr(0, table_name.size() - 1);
+	}
+
+	return table_name + "_" + ModelT::meta_pk_name;
+}
+
 __ORM_END__

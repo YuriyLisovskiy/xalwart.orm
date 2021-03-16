@@ -339,7 +339,6 @@ inline column_condition_t in(const std::string& column, const std::initializer_l
 
 // TODO: implement ALL, ANY, and EXISTS operators.
 
-// TESTME: join_t
 struct join_t
 {
 	std::string type;
@@ -358,45 +357,42 @@ struct join_t
 	}
 };
 
-// TESTME: join
 template <typename LeftT, typename RightT>
-inline join_t join(
-	const std::string& type, const std::string& join_pk, const q::condition_t& extra_condition={}
+inline join_t join_on(
+	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}
 )
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
+	auto fk = fk_to_left.empty() ? make_fk<LeftT>() : fk_to_left;
 	auto condition_str = util::quote_str(left_table_name) + "." + util::quote_str(LeftT::meta_pk_name)
 		+ " = " +
-		util::quote_str(table_name) + "." + util::quote_str(join_pk);
+		util::quote_str(table_name) + "." + util::quote_str(fk);
 	auto extra_cond_str = (std::string)extra_condition;
 	if (!extra_cond_str.empty())
 	{
 		condition_str += " AND (" + extra_cond_str + ")";
 	}
 
-	return {type, table_name, q::condition_t(condition_str)};
+	return join_t(type, table_name, q::condition_t(condition_str));
 }
 
-// TESTME: inner_on (join)
 template <typename LeftT, typename RightT>
-inline join_t inner_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join_t inner_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
-	return join<LeftT, RightT>("INNER", join_pk, extra_condition);
+	return join_on<LeftT, RightT>("INNER", fk_to_left, extra_condition);
 }
 
-// TESTME: left_on (join)
 template <typename LeftT, typename RightT>
-inline join_t left_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join_t left_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
-	return join<LeftT, RightT>("LEFT", join_pk, extra_condition);
+	return join_on<LeftT, RightT>("LEFT", fk_to_left, extra_condition);
 }
 
-// TESTME: cross_on (join)
 template <typename LeftT, typename RightT>
-inline join_t cross_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join_t cross_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
-	return join<LeftT, RightT>("CROSS", join_pk, extra_condition);
+	return join_on<LeftT, RightT>("CROSS", fk_to_left, extra_condition);
 }
 
 __Q_END__

@@ -375,7 +375,7 @@ public:
 
 						return select<OtherModelT>().use(driver)
 							.distinct()
-							.join({"LEFT", m_table, q::condition_t(cond_str)})
+							.join(join_t("LEFT", m_table, q::condition_t(cond_str)))
 							.template many_to_many<ModelT>(second, first, o_pk, s_pk, m_table)
 							.to_vector();
 					}
