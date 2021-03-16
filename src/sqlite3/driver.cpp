@@ -11,9 +11,6 @@
 // Core libraries.
 #include <xalwart.core/string_utils.h>
 
-// Orm libraries.
-#include "../exceptions.h"
-
 
 __SQLITE3_BEGIN__
 
