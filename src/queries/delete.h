@@ -14,12 +14,12 @@
 // Orm libraries.
 #include "../abc.h"
 #include "../exceptions.h"
-#include "./operations.h"
+#include "./conditions.h"
 
 
 __Q_BEGIN__
 
-// TODO: test it
+// TESTME: delete_
 template <ModelBasedType ModelT>
 class delete_
 {

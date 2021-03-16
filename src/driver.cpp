@@ -9,9 +9,6 @@
 // Core libraries.
 #include <xalwart.core/string_utils.h>
 
-// Orm libraries.
-#include "./exceptions.h"
-
 
 __ORM_BEGIN__
 
@@ -53,7 +50,7 @@ std::string SQLDriverBase::make_select_query(
 	const std::string& table_name,
 	const std::initializer_list<const char*>& columns,
 	bool distinct,
-	const std::vector<q::join>& joins,
+	const std::vector<q::join_t>& joins,
 	const q::condition_t& where_cond,
 	const std::initializer_list<q::ordering>& order_by_cols,
 	long int limit,

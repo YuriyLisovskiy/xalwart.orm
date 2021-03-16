@@ -38,33 +38,34 @@ protected:
 
 	// Indicates whether to use distinction or not in SQL statement.
 	// The default is false.
-	q_value<bool> distinct_;
+	q_value<bool> q_distinct;
 
 	// Holds boolean condition for SQL 'WHERE' statement.
-	q_value<q::condition_t> where_cond_;
+	q_value<q::condition_t> q_where;
 
 	// Holds columns list for SQL 'ORDER BY' statement.
-	q_value<std::initializer_list<q::ordering>> order_by_cols_;
+	q_value<std::initializer_list<q::ordering>> q_order_by;
 
 	// Holds value for SQL 'LIMIT'. The default is -1.
-	q_value<long int> limit_;
+	q_value<long int> q_limit;
 
 	// Holds value for SQL 'OFFSET'. The default is -1.
-	q_value<long int> offset_;
+	q_value<long int> q_offset;
 
 	// Holds columns list for SQL 'GROUP BY' statement.
-	q_value<std::initializer_list<std::string>> group_by_cols_;
+	q_value<std::initializer_list<std::string>> q_group_by;
 
 	// Holds boolean condition for SQL 'HAVING' statement.
-	q_value<q::condition_t> having_cond_;
+	q_value<q::condition_t> q_having;
 
 	// Holds a list of conditions for SQL 'JOIN' statement.
-	std::vector<q::join> joins;
+	std::vector<q::join_t> joins;
+
+	typedef std::function<void(ModelT& model)> relation_callable;
 
 	// Holds a list of lambda-functions which must be
 	// called for each selected object to set lazy
 	// initializers.
-	typedef std::function<void(ModelT& model)> relation_callable;
 	std::vector<relation_callable> relations;
 
 public:
@@ -74,9 +75,9 @@ public:
 	{
 		this->table_name = get_table_name<ModelT>();
 		this->pk_name = get_pk_name<ModelT>();
-		this->distinct_.value = false;
-		this->limit_.value = -1;
-		this->offset_.value = -1;
+		this->q_distinct.value = false;
+		this->q_limit.value = -1;
+		this->q_offset.value = -1;
 	};
 
 	// Sets SQL driver and calls the default constructor.
@@ -110,14 +111,14 @@ public:
 		return this->db->make_select_query(
 			this->table_name,
 			ModelT::meta_fields,
-			this->distinct_.value,
+			this->q_distinct.value,
 			this->joins,
-			this->where_cond_.value,
-			this->order_by_cols_.value,
-			this->limit_.value,
-			this->offset_.value,
-			this->group_by_cols_.value,
-			this->having_cond_.value
+			this->q_where.value,
+			this->q_order_by.value,
+			this->q_limit.value,
+			this->q_offset.value,
+			this->q_group_by.value,
+			this->q_having.value
 		);
 	}
 
@@ -126,7 +127,7 @@ public:
 	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& distinct()
 	{
-		if (this->distinct_.is_set)
+		if (this->q_distinct.is_set)
 		{
 			throw QueryError(
 				"select: 'distinct' value is already set, check method call sequence",
@@ -134,18 +135,19 @@ public:
 			);
 		}
 
-		this->distinct_.set(true);
+		this->q_distinct.set(true);
 		return *this;
 	}
 
 	// Sets SQL `join` condition of two tables. For more info,
 	// check the `xw::q::join` class and related functions.
-	inline select& join(q::join join_row)
+	inline select& join(q::join_t join)
 	{
-		this->joins.push_back(std::move(join_row));
+		this->joins.push_back(std::move(join));
 		return *this;
 	}
 
+	// TESTME: one_to_many
 	// Retrieves models with lazy initialization connected
 	// with one to many relationship.
 	//
@@ -157,9 +159,9 @@ public:
 	// to each of the selected `OtherModelT` objects via an address to
 	// class field of `ModelT`.
 	//
-	// `select_pk`: is used for joining of `ModelT` with `OtherModelT`.
+	// `foreign_key`: is used for joining of `ModelT` with `OtherModelT`.
 	// It is foreign key in `OtherModelT` to `ModelT` table.
-	// If `select_pk` is empty it will be generated automatically using
+	// If `foreign_key` is empty it will be generated automatically using
 	// `ModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
@@ -168,24 +170,24 @@ public:
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
-		std::string select_pk=""
+		std::string foreign_key=""
 	)
 	{
-		if (select_pk.empty())
+		if (foreign_key.empty())
 		{
-			select_pk = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
+			foreign_key = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
 		}
 
 		abc::ISQLDriver* driver = this->db;
-		this->relations.push_back([driver, select_pk, first, second](ModelT& model) -> void {
+		this->relations.push_back([driver, foreign_key, first, second](ModelT& model) -> void {
 			auto pk_val = util::as<PrimaryKeyT>(
 				model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
 			);
 			first(model, xw::Lazy<std::vector<OtherModelT>>(
-				[driver, select_pk, pk_val, first, second]() -> std::vector<OtherModelT> {
+				[driver, foreign_key, pk_val, first, second]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().use(driver)
-						.template many_to_one<ModelT, PrimaryKeyT>(second, first, select_pk)
-						.where(q::c<ModelT>(select_pk) == pk_val)
+						.template many_to_one<ModelT, PrimaryKeyT>(second, first, foreign_key)
+						.where(q::c<OtherModelT>(foreign_key) == pk_val)
 						.to_vector();
 				}
 			));
@@ -193,6 +195,30 @@ public:
 		return *this;
 	}
 
+	// TESTME: one_to_many (simplified)
+	// Simplified `one_to_many` method where lambdas are generated
+	// automatically.
+	//
+	// For more details, read the above method's doc.
+	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	inline select& one_to_many(
+		xw::Lazy<std::vector<OtherModelT>> ModelT::*left,
+		xw::Lazy<ModelT> OtherModelT::*right,
+		std::string foreign_key=""
+	)
+	{
+		return this->template one_to_many<OtherModelT, PrimaryKeyT>(
+			[left](ModelT& model, const xw::Lazy<std::vector<OtherModelT>>& value) {
+				model.*left = value;
+			},
+			[right](OtherModelT& model, const xw::Lazy<ModelT>& value) {
+				model.*right = value;
+			},
+			foreign_key
+		);
+	}
+
+	// TESTME: many_to_one
 	// Retrieves models with lazy initialization connected
 	// with one to many relationship.
 	//
@@ -204,9 +230,9 @@ public:
 	// to each of the selected `OtherModelT` objects via an address to
 	// class field of `ModelT`.
 	//
-	// `select_pk`: is used for joining of `ModelT` with `OtherModelT`.
+	// `foreign_key`: is used for joining of `ModelT` with `OtherModelT`.
 	// It is foreign key in `ModelT` to `OtherModelT` table.
-	// If `select_pk` is empty it will be generated automatically using
+	// If `foreign_key` is empty it will be generated automatically using
 	// `OtherModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
@@ -215,26 +241,26 @@ public:
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::vector<ModelT>>&)>& second,
-		std::string other_pk=""
+		std::string foreign_key=""
 	)
 	{
-		if (other_pk.empty())
+		if (foreign_key.empty())
 		{
 			std::string other_table_name = OtherModelT::meta_table_name;
-			other_pk = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
+			foreign_key = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
 		}
 
 		abc::ISQLDriver* driver = this->db;
 		auto t_name = this->table_name;
-		this->relations.push_back([driver, first, second, t_name, other_pk](ModelT& model) -> void {
+		this->relations.push_back([driver, first, second, t_name, foreign_key](ModelT& model) -> void {
 			auto model_pk_val = util::as<PrimaryKeyT>(model.__get_attr__(
 				ModelT::meta_pk_name)->__str__().c_str()
 			);
 			first(model, xw::Lazy<OtherModelT>(
-				[driver, first, second, t_name, other_pk, model_pk_val]() -> OtherModelT {
+				[driver, first, second, t_name, foreign_key, model_pk_val]() -> OtherModelT {
 					return select<OtherModelT>().use(driver)
-						.join(q::left<OtherModelT, ModelT>(other_pk))
-						.template one_to_many<ModelT, PrimaryKeyT>(second, first, other_pk)
+						.join(q::left<OtherModelT, ModelT>(foreign_key))
+						.template one_to_many<ModelT, PrimaryKeyT>(second, first, foreign_key)
 						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
 						.first();
 				}
@@ -243,6 +269,30 @@ public:
 		return *this;
 	}
 
+	// TESTME: many_to_one (simplified)
+	// Simplified `many_to_one` method where lambdas are generated
+	// automatically.
+	//
+	// For more details, read the above method's doc.
+	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	inline select& many_to_one(
+		xw::Lazy<OtherModelT> ModelT::*left,
+		xw::Lazy<std::vector<ModelT>> OtherModelT::*right,
+		std::string foreign_key=""
+	)
+	{
+		return this->template many_to_one<OtherModelT, PrimaryKeyT>(
+			[left](ModelT& model, const xw::Lazy<OtherModelT>& value) {
+				model.*left = value;
+			},
+			[right](OtherModelT& model, const xw::Lazy<std::vector<ModelT>>& value) {
+				model.*right = value;
+			},
+			foreign_key
+		);
+	}
+
+	// TESTME: many_to_many
 	// Retrieves lists of models with lazy initialization
 	// connected with many to many relationship.
 	//
@@ -254,17 +304,17 @@ public:
 	// to each of the selected `OtherModelT` objects via an address to
 	// class field of `ModelT`.
 	//
-	// `select_pk`: is used for joining of `ModelT` with intermediate
+	// `left_fk`: is used for joining of `ModelT` with intermediate
 	// table. It is foreign key in middle table to `ModelT` table.
-	// If `select_pk` is empty it will be generated automatically
+	// If `left_fk` is empty it will be generated automatically
 	// using `ModelT::meta_table_name` without last char (usually 's')
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
 	//
-	// `other_pk`: is used for joining of `OtherModelT` with intermediate
+	// `right_fk`: is used for joining of `OtherModelT` with intermediate
 	// table. It is foreign key in middle table to `OtherModelT` table.
-	// If `other_pk` is empty it will be generated automatically
+	// If `right_fk` is empty it will be generated automatically
 	// using `OtherModelT::meta_table_name` without last char
 	// (usually 's') and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'cars', so, the result
@@ -280,7 +330,7 @@ public:
 	inline select& many_to_many(
 		const std::function<void(ModelT&, const Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const Lazy<std::vector<ModelT>>&)>& second,
-		std::string select_pk="", std::string other_pk="", std::string mid_table=""
+		std::string left_fk="", std::string right_fk="", std::string mid_table=""
 	)
 	{
 		abc::ISQLDriver* driver = this->db;
@@ -288,11 +338,11 @@ public:
 		auto first_pk_name = this->pk_name;
 		this->relations.push_back(
 			[
-				driver, first_t_name, first_pk_name, select_pk, other_pk, first, second, mid_table
+				driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, mid_table
 			](ModelT& model) -> void {
 				first(model, Lazy<std::vector<OtherModelT>>(
 					[
-						driver, first_t_name, first_pk_name, select_pk, other_pk, first, second, mid_table
+						driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, mid_table
 					]() -> std::vector<OtherModelT> {
 						std::string second_t_name = OtherModelT::meta_table_name;
 						std::string m_table = mid_table;
@@ -308,13 +358,13 @@ public:
 							}
 						}
 
-						std::string s_pk = select_pk;
+						std::string s_pk = left_fk;
 						if (s_pk.empty())
 						{
 							s_pk = first_t_name.substr(0, first_t_name.size() - 1) + "_id";
 						}
 
-						std::string o_pk = other_pk;
+						std::string o_pk = right_fk;
 						if (o_pk.empty())
 						{
 							o_pk = second_t_name.substr(0, second_t_name.size() - 1) + "_id";
@@ -335,12 +385,35 @@ public:
 		return *this;
 	}
 
+	// TESTME: many_to_many (simplified)
+	// Simplified `many_to_many` method where lambdas are generated
+	// automatically.
+	//
+	// For more details, read the above method's doc.
+	template <ModelBasedType OtherModelT>
+	inline select& many_to_many(
+		Lazy<std::vector<OtherModelT>> ModelT::*left,
+		Lazy<std::vector<ModelT>> OtherModelT::*right,
+		std::string left_fk="", std::string right_fk="", std::string mid_table=""
+	)
+	{
+		return this->template many_to_many<OtherModelT>(
+			[left](ModelT& model, const Lazy<std::vector<OtherModelT>>& value) {
+				model.*left = value;
+			},
+			[right](OtherModelT& model, const Lazy<std::vector<ModelT>>& value) {
+				model.*right = value;
+			},
+			left_fk, right_fk, mid_table
+		);
+	}
+
 	// Sets the condition for 'where' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& where(const q::condition_t& cond)
 	{
-		if (this->where_cond_.is_set)
+		if (this->q_where.is_set)
 		{
 			throw QueryError(
 				"select: 'where' condition is already set, check method call sequence",
@@ -348,7 +421,7 @@ public:
 			);
 		}
 
-		this->where_cond_.set(cond);
+		this->q_where.set(cond);
 		return *this;
 	}
 
@@ -358,7 +431,7 @@ public:
 	// more than once with non-empty columns list.
 	inline virtual select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
-		if (this->order_by_cols_.is_set)
+		if (this->q_order_by.is_set)
 		{
 			throw QueryError(
 				"select: columns for ordering is already set, check method call sequence",
@@ -368,7 +441,7 @@ public:
 
 		if (columns.size())
 		{
-			this->order_by_cols_.set(columns);
+			this->q_order_by.set(columns);
 		}
 
 		return *this;
@@ -379,7 +452,7 @@ public:
 	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& limit(size_t limit)
 	{
-		if (this->limit_.is_set)
+		if (this->q_limit.is_set)
 		{
 			throw QueryError(
 				"select: 'limit' value is already set, check method call sequence",
@@ -387,7 +460,7 @@ public:
 			);
 		}
 
-		this->limit_.set(limit);
+		this->q_limit.set(limit);
 		return *this;
 	}
 
@@ -397,7 +470,7 @@ public:
 	// more than once with positive value.
 	inline virtual select& offset(size_t offset)
 	{
-		if (this->offset_.is_set)
+		if (this->q_offset.is_set)
 		{
 			throw QueryError(
 				"select: 'offset' value is already set, check method call sequence",
@@ -407,7 +480,7 @@ public:
 
 		if (offset > 0)
 		{
-			this->offset_.set(offset);
+			this->q_offset.set(offset);
 		}
 
 		return *this;
@@ -419,7 +492,7 @@ public:
 	// more than once with non-empty columns list.
 	inline virtual select& group_by(const std::initializer_list<std::string>& columns)
 	{
-		if (this->group_by_cols_.is_set)
+		if (this->q_group_by.is_set)
 		{
 			throw QueryError(
 				"select: columns for grouping is already set, check method call sequence",
@@ -429,7 +502,7 @@ public:
 
 		if (columns.size())
 		{
-			this->group_by_cols_.set(columns);
+			this->q_group_by.set(columns);
 		}
 
 		return *this;
@@ -440,7 +513,7 @@ public:
 	// Throws 'QueryError' if this method is called more than once.
 	inline virtual select& having(const q::condition_t& cond)
 	{
-		if (this->having_cond_.is_set)
+		if (this->q_having.is_set)
 		{
 			throw QueryError(
 				"select: 'having' condition is already set, check method call sequence",
@@ -448,7 +521,7 @@ public:
 			);
 		}
 
-		this->having_cond_.set(cond);
+		this->q_having.set(cond);
 		return *this;
 	}
 
@@ -461,7 +534,7 @@ public:
 	inline virtual ModelT first()
 	{
 		// check if `limit(...)` was not called
-		if (!this->limit_.is_set)
+		if (!this->q_limit.is_set)
 		{
 			this->limit(1);
 		}

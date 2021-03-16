@@ -191,14 +191,14 @@ struct c
 	}
 };
 
-// TODO: test it
+// TESTME: is_null
 template <ModelBasedType ModelT>
 inline column_condition_t is_null(const std::string& column)
 {
 	return column_condition_t(ModelT::meta_table_name, column, "IS NULL");
 }
 
-// TODO: test it
+// TESTME: is_not_null
 template <ModelBasedType ModelT>
 inline column_condition_t is_not_null(const std::string& column)
 {
@@ -256,14 +256,14 @@ inline column_condition_t between(
 	);
 }
 
-// TODO: test it
+// TESTME: like
 template <ModelBasedType ModelT>
 inline column_condition_t like(const std::string& column, const std::string& pattern)
 {
 	return column_condition_t(ModelT::meta_table_name, column, " LIKE '" + pattern + "'");
 }
 
-// TODO: test it
+// TESTME: like (with escape)
 template <ModelBasedType ModelT>
 inline column_condition_t like(
 	const std::string& column, const std::string& pattern, const std::string& escape
@@ -272,7 +272,7 @@ inline column_condition_t like(
 	return like<ModelT>(column, pattern + " ESCAPE '" + escape + "'");
 }
 
-// TODO: test it
+// TESTME: in (fundamental)
 template <ModelBasedType ModelT, FundamentalIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
@@ -287,7 +287,7 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
-// TODO: test it
+// TESTME: in (string)
 template <ModelBasedType ModelT, StringIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
@@ -304,11 +304,18 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 
 // TODO: implement ALL, ANY, and EXISTS operators.
 
-struct join
+// TESTME: join_t
+struct join_t
 {
 	std::string type;
 	std::string table_name;
 	q::condition_t condition;
+
+	join_t(
+		std::string type, std::string table_name, q::condition_t condition
+	) : type(std::move(type)), table_name(std::move(table_name)), condition(std::move(condition))
+	{
+	}
 
 	inline explicit operator std::string() const
 	{
@@ -316,9 +323,9 @@ struct join
 	}
 };
 
-// TODO: test it
+// TESTME: left (join)
 template <typename LeftT, typename RightT>
-inline join left(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join_t left(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
@@ -328,7 +335,7 @@ inline join left(const std::string& join_pk, const q::condition_t& extra_conditi
 	auto extra_cond_str = (std::string)extra_condition;
 	if (!extra_cond_str.empty())
 	{
-		condition_str += " AND " + extra_cond_str;
+		condition_str += " AND (" + extra_cond_str + ")";
 	}
 
 	return {"LEFT", table_name, q::condition_t(condition_str)};

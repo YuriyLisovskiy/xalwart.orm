@@ -49,7 +49,7 @@ public:
 		const std::string& table_name,
 		const std::initializer_list<const char*>& columns,
 		bool distinct,
-		const std::vector<q::join>& joins,
+		const std::vector<q::join_t>& joins,
 		const q::condition_t& where_cond,
 		const std::initializer_list<q::ordering>& order_by_cols,
 		long int limit,
