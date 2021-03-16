@@ -337,8 +337,6 @@ inline column_condition_t in(const std::string& column, const std::initializer_l
 	return in<ModelT, std::initializer_list<const char*>::const_iterator>(column, values.begin(), values.end());
 }
 
-// TODO: implement ALL, ANY, and EXISTS operators.
-
 struct join_t
 {
 	std::string type;
