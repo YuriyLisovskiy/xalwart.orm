@@ -278,7 +278,6 @@ inline column_condition_t like(
 	);
 }
 
-// TESTME: in (fundamental)
 template <ModelBasedType ModelT, FundamentalIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
@@ -287,20 +286,21 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	std::string condition = " IN (" + str::join(begin, end, ", ", [](
-		const typename std::iterator_traits<IteratorT>::value_type& item
-	) -> std::string { return std::to_string(item); }) + ")";
+	using ItemT = typename std::iterator_traits<IteratorT>::value_type;
+	std::string condition = "IN (" + str::join(
+		begin, end, ", ", [](const ItemT& item) -> std::string { return std::to_string(item); }
+	) + ")";
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
-// TESTME: in (fundamental, initializer list)
 template <ModelBasedType ModelT, types::fundamental_type RangeValueT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<RangeValueT>& values)
 {
-	return in<ModelT, std::initializer_list<RangeValueT>::const_iterator>(column, values.begin(), values.end());
+	return in<ModelT, typename std::initializer_list<RangeValueT>::const_iterator>(
+		column, values.begin(), values.end()
+	);
 }
 
-// TESTME: in (string)
 template <ModelBasedType ModelT, StringIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
@@ -309,20 +309,28 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
 	}
 
-	std::string condition = " IN (" + str::join(begin, end, ", ", [](
-		const typename std::iterator_traits<IteratorT>::value_type& item
-	) -> std::string { return item; }) + ")";
+	using ItemT = typename std::iterator_traits<IteratorT>::value_type;
+	std::string condition = "IN (" + str::join(
+		begin, end, ", ", [](const ItemT& item) -> std::string {
+			if constexpr (std::is_same_v<ItemT, const char*>)
+			{
+				return "'" + std::string(item) + "'";
+			}
+			else
+			{
+				return "'" + item + "'";
+			}
+		}
+	) + ")";
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
-// TESTME: in (string, initializer list)
 template <ModelBasedType ModelT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<std::string>& values)
 {
 	return in<ModelT, std::initializer_list<std::string>::const_iterator>(column, values.begin(), values.end());
 }
 
-// TESTME: in (const char*, initializer list)
 template <ModelBasedType ModelT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<const char*>& values)
 {
@@ -370,21 +378,21 @@ inline join_t join(
 	return {type, table_name, q::condition_t(condition_str)};
 }
 
-// TESTME: inner (join)
+// TESTME: inner_on (join)
 template <typename LeftT, typename RightT>
 inline join_t inner_on(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
 	return join<LeftT, RightT>("INNER", join_pk, extra_condition);
 }
 
-// TESTME: left (join)
+// TESTME: left_on (join)
 template <typename LeftT, typename RightT>
 inline join_t left_on(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
 	return join<LeftT, RightT>("LEFT", join_pk, extra_condition);
 }
 
-// TESTME: cross (join)
+// TESTME: cross_on (join)
 template <typename LeftT, typename RightT>
 inline join_t cross_on(const std::string& join_pk, const q::condition_t& extra_condition={})
 {
