@@ -149,7 +149,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Join)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LEFT JOIN "right_model" ON "left_model"."id" = "right_model"."left_id";)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {
-			orm::q::left<LeftTestModel, RightTestModel>("left_id")
+			orm::q::left_on<LeftTestModel, RightTestModel>("left_id")
 		}, {}, {}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);

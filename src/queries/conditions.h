@@ -94,10 +94,18 @@ public:
 		const std::string& table_name,
 		const std::string& column_name,
 		const std::string& condition
-	) : condition_t(
-		util::quote_str(table_name) + "." + util::quote_str(column_name) + " " + condition
-	)
+	) : condition_t("")
 	{
+		if (column_name.empty())
+		{
+			throw QueryError("'column_name' is empty", _ERROR_DETAILS_);
+		}
+
+		this->raw_condition = util::quote_str(column_name) + " " + condition;
+		if (!table_name.empty())
+		{
+			this->raw_condition = util::quote_str(table_name) + "." + this->raw_condition;
+		}
 	}
 };
 
@@ -191,14 +199,12 @@ struct c
 	}
 };
 
-// TESTME: is_null
 template <ModelBasedType ModelT>
 inline column_condition_t is_null(const std::string& column)
 {
 	return column_condition_t(ModelT::meta_table_name, column, "IS NULL");
 }
 
-// TESTME: is_not_null
 template <ModelBasedType ModelT>
 inline column_condition_t is_not_null(const std::string& column)
 {
@@ -256,20 +262,20 @@ inline column_condition_t between(
 	);
 }
 
-// TESTME: like
 template <ModelBasedType ModelT>
 inline column_condition_t like(const std::string& column, const std::string& pattern)
 {
-	return column_condition_t(ModelT::meta_table_name, column, " LIKE '" + pattern + "'");
+	return column_condition_t(ModelT::meta_table_name, column, "LIKE '" + pattern + "'");
 }
 
-// TESTME: like (with escape)
 template <ModelBasedType ModelT>
 inline column_condition_t like(
 	const std::string& column, const std::string& pattern, const std::string& escape
 )
 {
-	return like<ModelT>(column, pattern + " ESCAPE '" + escape + "'");
+	return column_condition_t(
+		ModelT::meta_table_name, column, "LIKE '" + pattern + "' ESCAPE '" + escape + "'"
+	);
 }
 
 // TESTME: in (fundamental)
@@ -287,6 +293,13 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
+// TESTME: in (fundamental, initializer list)
+template <ModelBasedType ModelT, types::fundamental_type RangeValueT>
+inline column_condition_t in(const std::string& column, const std::initializer_list<RangeValueT>& values)
+{
+	return in<ModelT, std::initializer_list<RangeValueT>::const_iterator>(column, values.begin(), values.end());
+}
+
 // TESTME: in (string)
 template <ModelBasedType ModelT, StringIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
@@ -300,6 +313,20 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 		const typename std::iterator_traits<IteratorT>::value_type& item
 	) -> std::string { return item; }) + ")";
 	return column_condition_t(ModelT::meta_table_name, column, condition);
+}
+
+// TESTME: in (string, initializer list)
+template <ModelBasedType ModelT>
+inline column_condition_t in(const std::string& column, const std::initializer_list<std::string>& values)
+{
+	return in<ModelT, std::initializer_list<std::string>::const_iterator>(column, values.begin(), values.end());
+}
+
+// TESTME: in (const char*, initializer list)
+template <ModelBasedType ModelT>
+inline column_condition_t in(const std::string& column, const std::initializer_list<const char*>& values)
+{
+	return in<ModelT, std::initializer_list<const char*>::const_iterator>(column, values.begin(), values.end());
 }
 
 // TODO: implement ALL, ANY, and EXISTS operators.
@@ -323,9 +350,11 @@ struct join_t
 	}
 };
 
-// TESTME: left (join)
+// TESTME: join
 template <typename LeftT, typename RightT>
-inline join_t left(const std::string& join_pk, const q::condition_t& extra_condition={})
+inline join_t join(
+	const std::string& type, const std::string& join_pk, const q::condition_t& extra_condition={}
+)
 {
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
@@ -338,7 +367,28 @@ inline join_t left(const std::string& join_pk, const q::condition_t& extra_condi
 		condition_str += " AND (" + extra_cond_str + ")";
 	}
 
-	return {"LEFT", table_name, q::condition_t(condition_str)};
+	return {type, table_name, q::condition_t(condition_str)};
+}
+
+// TESTME: inner (join)
+template <typename LeftT, typename RightT>
+inline join_t inner_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+{
+	return join<LeftT, RightT>("INNER", join_pk, extra_condition);
+}
+
+// TESTME: left (join)
+template <typename LeftT, typename RightT>
+inline join_t left_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+{
+	return join<LeftT, RightT>("LEFT", join_pk, extra_condition);
+}
+
+// TESTME: cross (join)
+template <typename LeftT, typename RightT>
+inline join_t cross_on(const std::string& join_pk, const q::condition_t& extra_condition={})
+{
+	return join<LeftT, RightT>("CROSS", join_pk, extra_condition);
 }
 
 __Q_END__

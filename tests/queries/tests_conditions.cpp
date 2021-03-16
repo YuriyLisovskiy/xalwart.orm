@@ -159,6 +159,18 @@ TEST(TestCase_Q_greater_or_equals, c_string)
 	ASSERT_EQ(expected, actual);
 }
 
+TEST(TestCase_Q_is_null, id)
+{
+	auto expected = R"("test_model"."id" IS NULL)";
+	ASSERT_EQ((std::string)orm::q::is_null<TestModel>("id"), expected);
+}
+
+TEST(TestCase_Q_is_not_null, id)
+{
+	auto expected = R"("test_model"."id" IS NOT NULL)";
+	ASSERT_EQ((std::string)orm::q::is_not_null<TestModel>("id"), expected);
+}
+
 TEST(TestCase_Q_logical, operator_and)
 {
 	std::string expected = R"(("id" = 1 AND "name" = 'John'))";
@@ -201,4 +213,16 @@ TEST(TestCase_Q_between, c_string)
 	std::string expected = R"("test_model"."name" BETWEEN 'John' AND 'Steve')";
 	auto actual = orm::q::between<TestModel>("name", "John", "Steve");
 	ASSERT_EQ(expected, (std::string)actual);
+}
+
+TEST(TestCase_Q_like, Default)
+{
+	auto expected = R"("test_model"."id" LIKE '%Wild%')";
+	ASSERT_EQ((std::string)orm::q::like<TestModel>("id", "%Wild%"), expected);
+}
+
+TEST(TestCase_Q_like, WithEscape)
+{
+	auto expected = R"("test_model"."id" LIKE '%Wild%' ESCAPE '\')";
+	ASSERT_EQ((std::string)orm::q::like<TestModel>("id", "%Wild%", "\\"), expected);
 }

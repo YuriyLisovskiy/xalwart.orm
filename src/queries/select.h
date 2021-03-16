@@ -259,7 +259,7 @@ public:
 			first(model, xw::Lazy<OtherModelT>(
 				[driver, first, second, t_name, foreign_key, model_pk_val]() -> OtherModelT {
 					return select<OtherModelT>().use(driver)
-						.join(q::left<OtherModelT, ModelT>(foreign_key))
+						.join(q::left_on<OtherModelT, ModelT>(foreign_key))
 						.template one_to_many<ModelT, PrimaryKeyT>(second, first, foreign_key)
 						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
 						.first();
