@@ -25,12 +25,6 @@
 
 __ORM_BEGIN__
 
-class Model;
-
-// Used in templates where Model-based class is required.
-template <typename T>
-concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
-
 class Model : public object::Object
 {
 private:
@@ -122,26 +116,28 @@ public:
 	}
 };
 
+// Used in templates where Model-based class is required.
+template <typename T>
+concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+
 // Retrieves table name of 'ModelT'. If ModelT::meta_table_name
 // is nullptr, uses 'utility::demangle(...)' method to complete
 // the operation.
 template <ModelBasedType ModelT>
 inline std::string get_table_name()
 {
-	if constexpr (ModelT::meta_table_name != nullptr)
-	{
-		return ModelT::meta_table_name;
-	}
-	else
-	{
-		auto table_name = xw::utility::demangle(typeid(ModelT).name());
-		return table_name.substr(table_name.rfind(':') + 1);
-	}
+	static_assert(
+		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
+	);
+	return ModelT::meta_table_name;
 }
 
 template <ModelBasedType ModelT>
 inline std::string get_pk_name()
 {
+	static_assert(
+		ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized"
+	);
 	return ModelT::meta_pk_name;
 }
 
@@ -183,10 +179,12 @@ inline object::Attribute field_getter_lazy(L* field)
 	);
 }
 
-// TESTME: make_fk
 template <ModelBasedType ModelT>
 inline std::string make_fk()
 {
+	static_assert(
+		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
+	);
 	std::string table_name = ModelT::meta_table_name;
 	if (table_name.ends_with('s'))
 	{

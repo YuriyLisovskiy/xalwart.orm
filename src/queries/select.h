@@ -24,6 +24,9 @@ __Q_BEGIN__
 template <ModelBasedType ModelT>
 class select
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
+
 protected:
 
 	// Driver to perform an access to the database.

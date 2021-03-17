@@ -12,6 +12,7 @@ using namespace xw;
 
 struct TestModel : public orm::Model
 {
+	static constexpr const char* meta_table_name = "test_models";
 };
 
 class TestCase_Q_insert_One : public ::testing::Test

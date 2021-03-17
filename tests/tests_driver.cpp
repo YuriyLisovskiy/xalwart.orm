@@ -182,7 +182,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_OrderBy)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {
-			orm::q::ascending("id"), orm::q::descending("name")
+			orm::q::asc<TestDriver_TestModel>("id"), orm::q::desc<TestDriver_TestModel>("name")
 		}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);

@@ -26,43 +26,58 @@ template <typename T>
 concept OperatorValueType = std::is_fundamental_v<T> ||
 	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
 
-struct ordering
+struct ordering final
 {
-public:
-	std::string column;
-	bool ascending = true;
+private:
+	std::string _table;
+	std::string _column;
+	bool _ascending = true;
 
 public:
 	inline ordering() = default;
 
 	inline ordering(
-		std::string column, bool ascending
-	) : column(std::move(column)), ascending(ascending)
+		std::string table, std::string column, bool ascending
+	) : _table(std::move(table)), _column(std::move(column)), _ascending(ascending)
 	{
+		if (this->_column.empty())
+		{
+			throw QueryError("ordering: 'column' is required", _ERROR_DETAILS_);
+		}
 	}
 
-	inline explicit ordering(std::string column) : column(std::move(column))
-	{
-	}
-
-	inline explicit ordering(const char* column) : ordering(std::string(column))
+	inline explicit ordering(
+		std::string table, std::string column
+	) : _table(std::move(table)), _column(std::move(column))
 	{
 	}
 
 	virtual inline explicit operator std::string() const
 	{
-		return util::quote_str(this->column) + (this->ascending ? " ASC" : " DESC");
+		auto result = util::quote_str(this->_column) + (this->_ascending ? " ASC" : " DESC");
+		if (!this->_table.empty())
+		{
+			result = util::quote_str(this->_table) + "." + result;
+		}
+
+		return result;
 	}
 };
 
-inline ordering ascending(const std::string& column)
+template <ModelBasedType ModelT>
+inline ordering asc(const std::string& column)
 {
-	return ordering(column, true);
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
+	return ordering(ModelT::meta_table_name, column, true);
 }
 
-inline ordering descending(const std::string& column)
+template <ModelBasedType ModelT>
+inline ordering desc(const std::string& column)
 {
-	return ordering(column, false);
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
+	return ordering(ModelT::meta_table_name, column, false);
 }
 
 struct condition_t
@@ -112,6 +127,8 @@ public:
 template <ModelBasedType ModelT, OperatorValueType T>
 struct comparison_op_t : public column_condition_t
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 public:
 	inline comparison_op_t() = default;
 
@@ -127,6 +144,8 @@ public:
 template <ModelBasedType ModelT>
 struct comparison_op_t<ModelT, std::string> : public column_condition_t
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 public:
 	inline comparison_op_t() = default;
 
@@ -140,6 +159,8 @@ public:
 template <ModelBasedType ModelT>
 struct comparison_op_t<ModelT, const char*> : public column_condition_t
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 public:
 	inline comparison_op_t() = default;
 
@@ -156,8 +177,12 @@ public:
 template <ModelBasedType ModelT>
 struct c
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
+protected:
 	std::string column;
 
+public:
 	inline explicit c(std::string column) : column(std::move(column))
 	{
 	}
@@ -202,12 +227,16 @@ struct c
 template <ModelBasedType ModelT>
 inline column_condition_t is_null(const std::string& column)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(ModelT::meta_table_name, column, "IS NULL");
 }
 
 template <ModelBasedType ModelT>
 inline column_condition_t is_not_null(const std::string& column)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(ModelT::meta_table_name, column, "IS NOT NULL");
 }
 
@@ -234,6 +263,8 @@ inline condition_t operator~ (const condition_t& cond)
 template <ModelBasedType ModelT, types::fundamental_type T>
 inline column_condition_t between(const std::string& column, T lower, T upper)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(
 		ModelT::meta_table_name, column,
 		"BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper)
@@ -245,6 +276,8 @@ inline column_condition_t between(
 	const std::string& column, std::string lower, std::string upper
 )
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(
 		ModelT::meta_table_name, column,
 		"BETWEEN '" + std::move(lower) + "' AND '" + std::move(upper) + '\''
@@ -256,6 +289,8 @@ inline column_condition_t between(
 	const std::string& column, const char* lower, const char* upper
 )
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(
 		ModelT::meta_table_name, column,
 		"BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\''
@@ -265,6 +300,8 @@ inline column_condition_t between(
 template <ModelBasedType ModelT>
 inline column_condition_t like(const std::string& column, const std::string& pattern)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(ModelT::meta_table_name, column, "LIKE '" + pattern + "'");
 }
 
@@ -273,6 +310,8 @@ inline column_condition_t like(
 	const std::string& column, const std::string& pattern, const std::string& escape
 )
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	return column_condition_t(
 		ModelT::meta_table_name, column, "LIKE '" + pattern + "' ESCAPE '" + escape + "'"
 	);
@@ -281,6 +320,8 @@ inline column_condition_t like(
 template <ModelBasedType ModelT, FundamentalIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	if (begin == end)
 	{
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
@@ -304,6 +345,8 @@ inline column_condition_t in(const std::string& column, const std::initializer_l
 template <ModelBasedType ModelT, StringIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
 	if (begin == end)
 	{
 		throw QueryError("in: list is empty", _ERROR_DETAILS_);
@@ -355,11 +398,15 @@ struct join_t
 	}
 };
 
-template <typename LeftT, typename RightT>
+template <ModelBasedType LeftT, ModelBasedType RightT>
 inline join_t join_on(
 	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}
 )
 {
+	static_assert(LeftT::meta_table_name != nullptr, "'meta_table_name' of left model is not initialized");
+	static_assert(LeftT::meta_pk_name != nullptr, "'meta_pk_name' of left model is not initialized");
+	static_assert(RightT::meta_table_name != nullptr, "'meta_table_name' of right model is not initialized");
+
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
 	auto fk = fk_to_left.empty() ? make_fk<LeftT>() : fk_to_left;

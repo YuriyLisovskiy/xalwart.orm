@@ -21,15 +21,15 @@ public:
 
 TEST(TestCase_Conditions, ordering_Ascending)
 {
-	std::string expected = "\"id\" ASC";
-	auto actual = orm::q::ascending("id");
+	auto expected = R"("test_model"."id" ASC)";
+	auto actual = orm::q::asc<TestModel>("id");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Conditions, ordering_Descending)
 {
-	std::string expected = "\"id\" DESC";
-	auto actual = orm::q::descending("id");
+	auto expected = R"("test_model"."id" DESC)";
+	auto actual = orm::q::desc<TestModel>("id");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 

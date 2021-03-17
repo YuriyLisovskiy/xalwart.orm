@@ -98,21 +98,12 @@ std::string SQLDriverBase::make_select_query(
 
 	if (order_by_cols.size())
 	{
-		query += " ORDER BY ";
-		for (auto it = order_by_cols.begin(); it != order_by_cols.end(); it++)
-		{
-			auto ob_column = *it;
-			if (ob_column.column.find('.') == std::string::npos)
-			{
-				ob_column.column = prefix + util::quote_str(ob_column.column);
+		query += " ORDER BY " + str::join(
+			order_by_cols.begin(), order_by_cols.end(), ", ",
+			[](const q::ordering& ob_column) -> std::string {
+				return (std::string)ob_column;
 			}
-
-			query += (std::string)ob_column;
-			if (std::next(it) != order_by_cols.end())
-			{
-				query += ", ";
-			}
-		}
+		);
 	}
 
 	if (limit > -1)

@@ -17,7 +17,6 @@
 // Orm libraries.
 #include "../abc.h"
 #include "../exceptions.h"
-//#include "../utility.h"
 
 
 __Q_BEGIN__
@@ -25,6 +24,9 @@ __Q_BEGIN__
 template <ModelBasedType ModelT>
 class insert
 {
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
+
 protected:
 
 	// Driver to perform an access to the database.

@@ -43,12 +43,12 @@ TEST_F(TestCase_Q_select, where_NotThrow)
 
 TEST_F(TestCase_Q_select, order_by_NotThrow)
 {
-	ASSERT_NO_THROW(this->query->order_by({orm::q::ascending("id")}));
+	ASSERT_NO_THROW(this->query->order_by({orm::q::asc<TestModel>("id")}));
 }
 
 TEST_F(TestCase_Q_select, order_by_MultipleCalls_NotThrow_WhenFirstCallArgsIsEmpty)
 {
-	ASSERT_NO_THROW(this->query->order_by({}).order_by({orm::q::ascending("id")}));
+	ASSERT_NO_THROW(this->query->order_by({}).order_by({orm::q::asc<TestModel>("id")}));
 }
 
 TEST_F(TestCase_Q_select, limit_NotThrow)
@@ -110,7 +110,8 @@ TEST_F(TestCase_Q_select, where_Throws_MultipleCallsException)
 TEST_F(TestCase_Q_select, order_by_Throws_MultipleCallsException)
 {
 	ASSERT_THROW(
-		this->query->order_by({orm::q::ascending("id")}).order_by({orm::q::descending("name")}),
+		this->query->order_by({orm::q::asc<TestModel>("id")})
+			.order_by({orm::q::desc<TestModel>("name")}),
 		orm::QueryError
 	);
 }
