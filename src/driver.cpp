@@ -161,6 +161,22 @@ std::string SQLDriverBase::make_select_query(
 	return query + ";";
 }
 
+std::string SQLDriverBase::make_update_query(
+	const std::string& table_name,
+	const std::string& columns_data,
+	const q::condition_t& condition
+) const
+{
+	if (table_name.empty())
+	{
+		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+	}
+
+	std::string query = "UPDATE " + table_name +
+		" SET " + columns_data + " WHERE " + (std::string)condition;
+	return query;
+}
+
 std::string SQLDriverBase::make_delete_query(
 	const std::string& table_name, const q::condition_t& where_cond
 ) const

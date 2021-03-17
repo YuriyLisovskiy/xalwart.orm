@@ -58,6 +58,18 @@ public:
 		const q::condition_t& having_cond
 	) const override;
 
+	// Generates 'UPDATE' query as string.
+	//
+	// `table_name`: must be non-empty string.
+	// `columns_data`: columns with data,
+	// example: "column1 = data1, column2 = data2, ..."
+	[[nodiscard]]
+	std::string make_update_query(
+		const std::string& table_name,
+		const std::string& columns_data,
+		const q::condition_t& condition
+	) const override;
+
 	// Generates 'DELETE' query as string.
 	//
 	// 'table_name' must be non-empty string.

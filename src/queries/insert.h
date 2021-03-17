@@ -66,16 +66,7 @@ protected:
 				this->columns_str += attr->first;
 			}
 
-			auto value = attr->second.get();
-			if (dynamic_cast<types::String*>(value.get()))
-			{
-				row += value->__repr__();
-			}
-			else
-			{
-				row += value->__str__();
-			}
-
+			row += attr->second.get()->__repr__();
 			if (std::next(attr) != model.attrs_end())
 			{
 				if (is_first)

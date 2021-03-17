@@ -119,6 +119,18 @@ void SQLite3Driver::run_select(
 	}
 }
 
+void SQLite3Driver::run_update(const std::string& query) const
+{
+	char* message_error;
+	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
+	if (exit != SQLITE_OK)
+	{
+		auto message = std::string(message_error);
+		sqlite3_free(message_error);
+		throw SQLError(message, _ERROR_DETAILS_);
+	}
+}
+
 void SQLite3Driver::run_delete(const std::string& query) const
 {
 	char* message_error;

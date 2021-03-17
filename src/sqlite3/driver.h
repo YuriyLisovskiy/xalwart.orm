@@ -54,7 +54,7 @@ public:
 	) const override;
 
 	// update row(s)
-	// TODO: update row(s)
+	void run_update(const std::string& query) const override;
 
 	// delete row(s)
 	void run_delete(const std::string& query) const override;
