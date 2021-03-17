@@ -16,6 +16,7 @@
 #include "./abc.h"
 #include "./queries/insert.h"
 #include "./queries/select.h"
+#include "./queries/update.h"
 #include "./queries/delete.h"
 
 
@@ -111,6 +112,15 @@ public:
 	inline q::select<ModelT> filter(const q::condition_t& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond);
+	}
+
+	// TODO: add update method(s)
+
+	// Creates 'delete_' statement object with initialized driver.
+	template <ModelBasedType ModelT>
+	inline q::delete_<ModelT> delete_() const
+	{
+		return q::delete_<ModelT>().use(this->db.get());
 	}
 
 	// Deletes list of models using iterator.

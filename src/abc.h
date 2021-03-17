@@ -70,7 +70,14 @@ public:
 	) const = 0;
 
 	// update row(s)
-	// TODO: update row(s)
+	[[nodiscard]]
+	virtual std::string make_update_query(
+		const std::string& table_name,
+		const std::string& columns_data,
+		const q::condition_t& condition
+	) const = 0;
+
+	virtual void run_update(const std::string& query) const = 0;
 
 	// delete row(s)
 	[[nodiscard]]

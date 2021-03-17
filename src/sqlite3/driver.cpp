@@ -119,6 +119,11 @@ void SQLite3Driver::run_select(
 	}
 }
 
+void SQLite3Driver::run_update(const std::string& query) const
+{
+	// TODO: run_update(const std::string& query)
+}
+
 void SQLite3Driver::run_delete(const std::string& query) const
 {
 	char* message_error;
