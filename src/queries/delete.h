@@ -19,7 +19,6 @@
 
 __Q_BEGIN__
 
-// TESTME: delete_
 template <ModelBasedType ModelT>
 class delete_
 {
