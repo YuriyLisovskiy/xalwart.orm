@@ -10,26 +10,17 @@
 
 using namespace xw;
 
-struct TestModel : public orm::Model
+struct TestModel : public orm::Model<TestModel>
 {
 	int id{};
 
 	static constexpr const char* meta_table_name = "test_models";
 
-	TestModel()
-	{
-		this->__attrs__ = {
-			{"id", orm::field_accessor(&this->id)}
-		};
-	}
+	static const std::tuple<orm::column_t<TestModel, int>> meta_columns;
+};
 
-	TestModel(const TestModel& other) : TestModel()
-	{
-		if (this != &other)
-		{
-			this->id = other.id;
-		}
-	}
+const std::tuple<orm::column_t<TestModel, int>> TestModel::meta_columns = {
+	orm::column_t<TestModel, int>("id", &TestModel::id)
 };
 
 class TestCaseF_Q_delete : public ::testing::Test

@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-class TestModel : public orm::Model
+class TestModel : public orm::Model<TestModel>
 {
 public:
 	static constexpr const char* meta_table_name = "test_model";
@@ -323,7 +323,7 @@ TEST(TestCase_Conditions, in_CStringInitializerList_ThrowsEmptyRange)
 	);
 }
 
-class OtherTestModel : public orm::Model
+class OtherTestModel : public orm::Model<OtherTestModel>
 {
 public:
 	static constexpr const char* meta_table_name = "other_test_models";

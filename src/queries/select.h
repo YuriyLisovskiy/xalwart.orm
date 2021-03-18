@@ -21,7 +21,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <std::default_initializable ModelT>
 class select
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -76,8 +76,8 @@ public:
 	// Retrieves table name and sets the default values.
 	inline explicit select()
 	{
-		this->table_name = get_table_name<ModelT>();
-		this->pk_name = get_pk_name<ModelT>();
+		this->table_name = util::get_table_name<ModelT>();
+		this->pk_name = util::get_pk_name<ModelT>();
 		this->q_distinct.value = false;
 		this->q_limit.value = -1;
 		this->q_offset.value = -1;
@@ -111,9 +111,13 @@ public:
 			throw QueryError("select: database driver not set", _ERROR_DETAILS_);
 		}
 
+		std::vector<std::string> columns;
+		util::tuple_for_each(ModelT::meta_columns, [&columns](auto& column) {
+			columns.push_back(column.name);
+		});
 		return this->db->make_select_query(
 			this->table_name,
-			ModelT::meta_fields,
+			columns,
 			this->q_distinct.value,
 			this->joins,
 			this->q_where.value,
@@ -169,7 +173,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	template <typename OtherModelT, typename PrimaryKeyT>
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
@@ -203,7 +207,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	template <typename PrimaryKeyT, typename OtherModelT>
 	inline select& one_to_many(
 		xw::Lazy<std::vector<OtherModelT>> ModelT::*left,
 		xw::Lazy<ModelT> OtherModelT::*right,
@@ -240,7 +244,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	template <typename OtherModelT, typename PrimaryKeyT>
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::vector<ModelT>>&)>& second,
@@ -277,7 +281,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	template <typename PrimaryKeyT, typename OtherModelT>
 	inline select& many_to_one(
 		xw::Lazy<OtherModelT> ModelT::*left,
 		xw::Lazy<std::vector<ModelT>> OtherModelT::*right,
@@ -329,7 +333,7 @@ public:
 	// by underscore ('_'). For example:
 	//   `ModelT::meta_table_name` is 'persons' and `OtherModelT::meta_table_name`
 	//   is 'cars', so, the result will be 'cars_persons'.
-	template <ModelBasedType OtherModelT>
+	template <typename OtherModelT>
 	inline select& many_to_many(
 		const std::function<void(ModelT&, const Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const Lazy<std::vector<ModelT>>&)>& second,
@@ -393,7 +397,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <ModelBasedType OtherModelT>
+	template <typename OtherModelT>
 	inline select& many_to_many(
 		Lazy<std::vector<OtherModelT>> ModelT::*left,
 		Lazy<std::vector<ModelT>> OtherModelT::*right,

@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-struct TestDriver_TestModel : public orm::Model
+struct TestDriver_TestModel : public orm::Model<TestDriver_TestModel>
 {
 	static constexpr const char* meta_table_name = "test";
 };
@@ -128,7 +128,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Distinct)
 	ASSERT_EQ(expected, actual);
 }
 
-class LeftTestModel : public orm::Model
+class LeftTestModel : public orm::Model<LeftTestModel>
 {
 public:
 	static constexpr const char* meta_table_name = "left_model";
@@ -137,7 +137,7 @@ public:
 	};
 };
 
-class RightTestModel : public orm::Model
+class RightTestModel : public orm::Model<RightTestModel>
 {
 public:
 	static constexpr const char* meta_table_name = "right_model";

@@ -19,7 +19,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 class delete_
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -93,7 +93,7 @@ public:
 		}
 
 		return this->db->make_delete_query(
-			get_table_name<ModelT>(), this->where_cond.value
+			util::get_table_name<ModelT>(), this->where_cond.value
 		);
 	}
 

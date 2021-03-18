@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include "../src/model.h"
 #include "../src/utility.h"
 
 using namespace xw;
@@ -78,4 +79,44 @@ TEST(TestCase_utility, quote_str_AlreadyQuoted)
 TEST(TestCase_utility, quote_str_NotQuoted)
 {
 	ASSERT_EQ(orm::util::quote_str("Hello"), R"("Hello")");
+}
+
+class Model_TestCase : public ::testing::Test
+{
+protected:
+	class TestModel : public orm::Model<TestModel>
+	{
+	public:
+		static constexpr const char* meta_table_name = "test_models";
+		static constexpr const char* meta_pk_name = "id";
+	};
+};
+
+TEST_F(Model_TestCase, get_table_name)
+{
+	ASSERT_EQ(orm::util::get_table_name<Model_TestCase::TestModel>(), "test_models");
+}
+
+TEST_F(Model_TestCase, get_pk_name)
+{
+	ASSERT_EQ(orm::util::get_pk_name<Model_TestCase::TestModel>(), "id");
+}
+
+TEST_F(Model_TestCase, make_fk_CutEndingS)
+{
+	auto expected = "test_model_id";
+	ASSERT_EQ(orm::util::make_fk<Model_TestCase::TestModel>(), expected);
+}
+
+class TestM : public orm::Model<TestM>
+{
+public:
+	static constexpr const char* meta_table_name = "test";
+	static constexpr const char* meta_pk_name = "custom_identifier";
+};
+
+TEST(ModelUnitlity_TestCase, make_fk)
+{
+	auto expected = "test_custom_identifier";
+	ASSERT_EQ(orm::util::make_fk<TestM>(), expected);
 }

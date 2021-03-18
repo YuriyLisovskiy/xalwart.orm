@@ -48,7 +48,7 @@ std::string SQLDriverBase::make_insert_query(
 
 std::string SQLDriverBase::make_select_query(
 	const std::string& table_name,
-	const std::initializer_list<const char*>& columns,
+	const std::vector<std::string>& columns,
 	bool distinct,
 	const std::vector<q::join_t>& joins,
 	const q::condition_t& where_cond,
@@ -64,7 +64,7 @@ std::string SQLDriverBase::make_select_query(
 		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
-	if (!columns.size())
+	if (columns.empty())
 	{
 		this->throw_empty_arg("columns", _ERROR_DETAILS_);
 	}

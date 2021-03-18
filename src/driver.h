@@ -47,7 +47,7 @@ public:
 	[[nodiscard]]
 	std::string make_select_query(
 		const std::string& table_name,
-		const std::initializer_list<const char*>& columns,
+		const std::vector<std::string>& columns,
 		bool distinct,
 		const std::vector<q::join_t>& joins,
 		const q::condition_t& where_cond,

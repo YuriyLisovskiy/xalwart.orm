@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-struct TestModel : public orm::Model
+struct TestModel : public orm::Model<TestModel>
 {
 	static constexpr const char* meta_table_name = "test_model";
 };

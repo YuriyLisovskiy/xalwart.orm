@@ -8,6 +8,9 @@
 
 #pragma once
 
+// Core libraries.
+#include <xalwart.core/exceptions.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -119,6 +122,123 @@ inline std::string as<std::string>(const void* data)
 inline std::string quote_str(const std::string& s)
 {
 	return s.starts_with('"') ? s : '"' + s + '"';
+}
+
+template <
+	size_t Index = 0,   // start iteration at 0 index
+	typename TupleT,    // the tuple type
+	size_t Size = std::tuple_size_v<std::remove_reference_t<TupleT>>, // tuple size
+	typename CallableT, // the callable to bo invoked for each tuple item
+	typename... ArgsT   // other arguments to be passed to the callable
+>
+void tuple_for_each(TupleT&& tuple, CallableT&& callable, ArgsT&&... args)
+{
+	if constexpr (Index < Size)
+	{
+		if constexpr (std::is_assignable_v<
+			bool&, std::invoke_result_t<CallableT&&, ArgsT&&..., decltype(std::get<Index>(tuple))>
+		>)
+		{
+			if (!std::invoke(callable, args..., std::get<Index>(tuple)))
+			{
+				return;
+			}
+		}
+		else
+		{
+			std::invoke(callable, args..., std::get<Index>(tuple));
+		}
+
+		if constexpr (Index + 1 < Size)
+		{
+			tuple_for_each<Index + 1>(
+				std::forward<TupleT>(tuple),
+				std::forward<CallableT>(callable),
+				std::forward<ArgsT>(args)...
+			);
+		}
+	}
+}
+
+template <typename ModelT>
+inline std::string make_fk()
+{
+	static_assert(
+		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
+	);
+	std::string table_name = ModelT::meta_table_name;
+	if (table_name.ends_with('s'))
+	{
+		table_name = table_name.substr(0, table_name.size() - 1);
+	}
+
+	return table_name + "_" + ModelT::meta_pk_name;
+}
+
+template<class L, class R>
+struct typed_comparator {
+	bool operator()(const L &, const R &) const {
+		return false;
+	}
+};
+
+template<class O>
+struct typed_comparator<O, O> {
+	bool operator()(const O &lhs, const O &rhs) const {
+		return lhs == rhs;
+	}
+};
+
+template<class L, class R>
+bool compare_any(const L &lhs, const R &rhs) {
+	return typed_comparator<L, R>()(lhs, rhs);
+}
+
+template <typename F, typename O>
+inline std::string get_column_name(F O::* member_pointer)
+{
+	std::string name;
+	util::tuple_for_each(O::meta_columns, [&name, member_pointer](auto& column)
+	{
+		if (util::compare_any(column.member_pointer, member_pointer))
+		{
+			name = column.name;
+			return false;
+		}
+
+		return true;
+	});
+
+	if (name.empty())
+	{
+		throw core::ValueError("column not found", _ERROR_DETAILS_);
+	}
+
+	return name;
+}
+
+template <typename ModelT>
+inline std::string get_table_name()
+{
+	static_assert(
+		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
+	);
+	return ModelT::meta_table_name;
+}
+
+template <typename ModelT>
+inline std::string get_pk_name()
+{
+	static_assert(
+		ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized"
+	);
+	return ModelT::meta_pk_name;
+}
+
+template <typename T>
+inline constexpr bool allowed_column_type()
+{
+	return std::is_fundamental_v<T> || std::is_same_v<T, std::string>;
 }
 
 __ORM_UTIL_END__

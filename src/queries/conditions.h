@@ -64,7 +64,7 @@ public:
 	}
 };
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline ordering asc(const std::string& column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -72,7 +72,7 @@ inline ordering asc(const std::string& column)
 	return ordering(ModelT::meta_table_name, column, true);
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline ordering desc(const std::string& column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -124,7 +124,7 @@ public:
 	}
 };
 
-template <ModelBasedType ModelT, OperatorValueType T>
+template <typename ModelT, OperatorValueType T>
 struct comparison_op_t : public column_condition_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -141,7 +141,7 @@ public:
 	}
 };
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 struct comparison_op_t<ModelT, std::string> : public column_condition_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -156,7 +156,7 @@ public:
 	}
 };
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 struct comparison_op_t<ModelT, const char*> : public column_condition_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -174,7 +174,7 @@ public:
 };
 
 // SQL comparison operators for columns.
-template <ModelBasedType ModelT>
+template <typename ModelT>
 struct c
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -224,7 +224,7 @@ public:
 	}
 };
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t is_null(const std::string& column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -232,7 +232,7 @@ inline column_condition_t is_null(const std::string& column)
 	return column_condition_t(ModelT::meta_table_name, column, "IS NULL");
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t is_not_null(const std::string& column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -260,7 +260,7 @@ inline condition_t operator~ (const condition_t& cond)
 	return condition_t("NOT (" + (std::string)cond + ")");
 }
 
-template <ModelBasedType ModelT, types::fundamental_type T>
+template <typename ModelT, types::fundamental_type T>
 inline column_condition_t between(const std::string& column, T lower, T upper)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -271,7 +271,7 @@ inline column_condition_t between(const std::string& column, T lower, T upper)
 	);
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t between(
 	const std::string& column, std::string lower, std::string upper
 )
@@ -284,7 +284,7 @@ inline column_condition_t between(
 	);
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t between(
 	const std::string& column, const char* lower, const char* upper
 )
@@ -297,7 +297,7 @@ inline column_condition_t between(
 	);
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t like(const std::string& column, const std::string& pattern)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -305,7 +305,7 @@ inline column_condition_t like(const std::string& column, const std::string& pat
 	return column_condition_t(ModelT::meta_table_name, column, "LIKE '" + pattern + "'");
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t like(
 	const std::string& column, const std::string& pattern, const std::string& escape
 )
@@ -317,7 +317,7 @@ inline column_condition_t like(
 	);
 }
 
-template <ModelBasedType ModelT, FundamentalIterType IteratorT>
+template <typename ModelT, FundamentalIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -334,7 +334,7 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
-template <ModelBasedType ModelT, types::fundamental_type RangeValueT>
+template <typename ModelT, types::fundamental_type RangeValueT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<RangeValueT>& values)
 {
 	return in<ModelT, typename std::initializer_list<RangeValueT>::const_iterator>(
@@ -342,7 +342,7 @@ inline column_condition_t in(const std::string& column, const std::initializer_l
 	);
 }
 
-template <ModelBasedType ModelT, StringIterType IteratorT>
+template <typename ModelT, StringIterType IteratorT>
 inline column_condition_t in(const std::string& column, IteratorT begin, IteratorT end)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -368,13 +368,13 @@ inline column_condition_t in(const std::string& column, IteratorT begin, Iterato
 	return column_condition_t(ModelT::meta_table_name, column, condition);
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<std::string>& values)
 {
 	return in<ModelT, std::initializer_list<std::string>::const_iterator>(column, values.begin(), values.end());
 }
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 inline column_condition_t in(const std::string& column, const std::initializer_list<const char*>& values)
 {
 	return in<ModelT, std::initializer_list<const char*>::const_iterator>(column, values.begin(), values.end());
@@ -398,7 +398,7 @@ struct join_t
 	}
 };
 
-template <ModelBasedType LeftT, ModelBasedType RightT>
+template <typename LeftT, typename RightT>
 inline join_t join_on(
 	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}
 )
@@ -409,7 +409,7 @@ inline join_t join_on(
 
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
-	auto fk = fk_to_left.empty() ? make_fk<LeftT>() : fk_to_left;
+	auto fk = fk_to_left.empty() ? util::make_fk<LeftT>() : fk_to_left;
 	auto condition_str = util::quote_str(left_table_name) + "." + util::quote_str(LeftT::meta_pk_name)
 		+ " = " +
 		util::quote_str(table_name) + "." + util::quote_str(fk);

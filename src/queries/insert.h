@@ -21,7 +21,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <typename ModelT>
 class insert
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -48,36 +48,35 @@ protected:
 	//
 	// `is_first`: used to indicate if `append` is called for the
 	// first time. If true, than generates `columns_str`.
-	virtual inline void append_model(const ModelT& model, bool is_first)
+	virtual inline void append_model(const ModelT& model)
 	{
 		std::string row;
-		for (auto attr = model.attrs_begin(); attr != model.attrs_end(); attr++)
+		util::tuple_for_each(ModelT::meta_columns, [&row, model](auto& column)
 		{
 			if constexpr (ModelT::meta_omit_pk)
 			{
-				if (attr->first == ModelT::meta_pk_name)
+				if (column.name == std::string(ModelT::meta_pk_name))
 				{
-					continue;
+					return true;
 				}
 			}
 
-			if (is_first)
+			using field_type = typename std::remove_reference<decltype(column)>::type;
+			using T = typename field_type::field_type;
+			if constexpr (std::is_fundamental_v<T>)
 			{
-				this->columns_str += attr->first;
+				row += std::to_string(model.*column.member_pointer);
+			}
+			else if constexpr (std::is_same_v<T, std::string>)
+			{
+				row += "'" + model.*column.member_pointer + "'";
 			}
 
-			row += attr->second.get()->__repr__();
-			if (std::next(attr) != model.attrs_end())
-			{
-				if (is_first)
-				{
-					this->columns_str += ", ";
-				}
+			row += ", ";
+			return true;
+		});
 
-				row += ", ";
-			}
-		}
-
+		str::rtrim(row, ", ");
 		this->rows.push_back(row);
 	}
 
@@ -95,7 +94,22 @@ public:
 			);
 		}
 
-		this->append_model(model, true);
+		util::tuple_for_each(ModelT::meta_columns, [this, model](auto& column)
+		{
+			if constexpr (ModelT::meta_omit_pk)
+			{
+				if (column.name == std::string(ModelT::meta_pk_name))
+				{
+					return true;
+				}
+			}
+
+			this->columns_str += column.name + ", ";
+			return true;
+		});
+
+		str::rtrim(this->columns_str, ", ");
+		this->append_model(model);
 	};
 
 	// Sets SQL driver and appends model to insertion list.
@@ -127,7 +141,7 @@ public:
 		}
 
 		return this->db->make_insert_query(
-			get_table_name<ModelT>(), this->columns_str, this->rows
+			util::get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
 
@@ -144,7 +158,7 @@ public:
 		}
 
 		this->is_bulk = true;
-		this->append_model(model, false);
+		this->append_model(model);
 		return *this;
 	}
 

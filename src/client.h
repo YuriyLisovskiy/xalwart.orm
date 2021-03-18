@@ -55,7 +55,7 @@ public:
 	}
 
 	// Inserts one model to the database.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline void insert_one(const ModelT& model) const
 	{
 		q::insert<ModelT>(this->db.get(), model).one();
@@ -63,7 +63,7 @@ public:
 
 	// Inserts one model to the database and writes
 	// last inserted primary key to 'pk' out argument.
-	template <ModelBasedType ModelT, typename PkT>
+	template <typename ModelT, typename PkT>
 	inline void insert_one(const ModelT& model, PkT* pk) const
 	{
 		auto pk_str = q::insert<ModelT>(this->db.get(), model).one();
@@ -74,14 +74,14 @@ public:
 	}
 
 	// Creates 'insert' statement object with initialized driver.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline q::insert<ModelT> insert(const ModelT& model) const
 	{
 		return q::insert<ModelT>(this->db.get(), model);
 	}
 
 	// Inserts the list of models to the database.
-	template <ModelTypeIterator IterBegin, ModelTypeIterator IterEnd>
+	template <typename IterBegin, typename IterEnd>
 	inline void insert(IterBegin begin, IterEnd end) const
 	{
 		using ModelT = typename std::iterator_traits<IterBegin>::value_type;
@@ -93,14 +93,14 @@ public:
 	}
 
 	// Retrieve first row from database.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline ModelT get(const q::condition_t& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond).first();
 	}
 
 	// Creates 'select' statement object with initialized driver.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline q::select<ModelT> select() const
 	{
 		return q::select<ModelT>(this->db.get());
@@ -108,28 +108,28 @@ public:
 
 	// Creates 'select' statement object with called 'where' method.
 	// So, 'WHERE' condition is set and can not be changed.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline q::select<ModelT> filter(const q::condition_t& cond) const
 	{
 		return q::select<ModelT>(this->db.get()).where(cond);
 	}
 
 	// Updates single model.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline void update(const ModelT& model) const
 	{
 		q::update<ModelT>(model).use(this->db.get()).exec();
 	}
 
 	// Creates 'delete_' statement object with initialized driver.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline q::delete_<ModelT> delete_() const
 	{
 		return q::delete_<ModelT>().use(this->db.get());
 	}
 
 	// Deletes list of models using iterator.
-	template <ModelTypeIterator IteratorT>
+	template <typename IteratorT>
 	inline void delete_(IteratorT begin, IteratorT end) const
 	{
 		using ModelT = typename std::iterator_traits<IteratorT>::value_type;
@@ -141,7 +141,7 @@ public:
 	}
 
 	// Deletes list of models using initializer list.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline void delete_(const std::initializer_list<ModelT>& list) const
 	{
 		using ConstIterator = typename std::initializer_list<ModelT>::const_iterator;
@@ -149,7 +149,7 @@ public:
 	}
 
 	// Deletes single model.
-	template <ModelBasedType ModelT>
+	template <typename ModelT>
 	inline void delete_(const ModelT& model) const
 	{
 		q::delete_<ModelT>().use(this->db.get()).model(model).exec();
