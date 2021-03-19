@@ -235,10 +235,4 @@ inline std::string get_pk_name()
 	return ModelT::meta_pk_name;
 }
 
-template <typename T>
-inline constexpr bool allowed_column_type()
-{
-	return std::is_fundamental_v<T> || std::is_same_v<T, std::string>;
-}
-
 __ORM_UTIL_END__

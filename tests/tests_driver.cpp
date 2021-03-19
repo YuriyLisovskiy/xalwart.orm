@@ -12,7 +12,23 @@ using namespace xw;
 
 struct TestDriver_TestModel : public orm::Model<TestDriver_TestModel>
 {
+	int id{};
+	std::string name;
+
 	static constexpr const char* meta_table_name = "test";
+
+	static const std::tuple<
+		orm::column_meta_t<TestDriver_TestModel, int>,
+		orm::column_meta_t<TestDriver_TestModel, std::string>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<TestDriver_TestModel, int>,
+	orm::column_meta_t<TestDriver_TestModel, std::string>
+> TestDriver_TestModel::meta_columns = {
+	orm::make_column_meta("id", &TestDriver_TestModel::id),
+	orm::make_column_meta("name", &TestDriver_TestModel::name)
 };
 
 class TestDriver : public orm::SQLDriverBase
@@ -162,7 +178,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Where)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE "test"."id" = 1;)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1
+			orm::q::c(&TestDriver_TestModel::id) == 1
 		}, {}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -173,7 +189,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedWhere)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE ("test"."id" = 1 AND "test"."name" < 'John');)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1 & orm::q::c<TestDriver_TestModel>("name") < "John"
+			orm::q::c(&TestDriver_TestModel::id) == 1 & orm::q::c(&TestDriver_TestModel::name) < "John"
 		}, {}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -184,7 +200,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_OrderBy)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {
-			orm::q::asc<TestDriver_TestModel>("id"), orm::q::desc<TestDriver_TestModel>("name")
+			orm::q::asc(&TestDriver_TestModel::id), orm::q::desc(&TestDriver_TestModel::name)
 		}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -230,7 +246,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ThrowsHavingWithoutGroupBy)
 {
 	ASSERT_THROW(auto _ = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1
+			orm::q::c(&TestDriver_TestModel::id) == 1
 		}
 	), orm::QueryError);
 }
@@ -241,7 +257,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Having)
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0,
 		{"id"},
-		orm::q::c<TestDriver_TestModel>("id") == 1
+		orm::q::c(&TestDriver_TestModel::id) == 1
 	);
 	ASSERT_EQ(expected, actual);
 }
@@ -253,7 +269,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedHaving)
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {
 			"id"
 		},
-		orm::q::c<TestDriver_TestModel>("id") == 1 & orm::q::c<TestDriver_TestModel>("name") < "John"
+		orm::q::c(&TestDriver_TestModel::id) == 1 & orm::q::c(&TestDriver_TestModel::name) < "John"
 	);
 	ASSERT_EQ(expected, actual);
 }

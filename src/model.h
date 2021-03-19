@@ -28,7 +28,7 @@
 __ORM_BEGIN__
 
 template <typename ModelT, typename FieldT>
-struct column_t
+struct column_meta_t
 {
 	using field_type = FieldT;
 	using model_type = ModelT;
@@ -37,14 +37,14 @@ struct column_t
 
 	FieldT ModelT::* member_pointer;
 
-	column_t() = default;
+	column_meta_t() = default;
 
-	column_t(std::string name, FieldT ModelT::* member_ptr)
+	column_meta_t(std::string name, FieldT ModelT::* member_ptr)
 		: name(std::move(name)), member_pointer(member_ptr)
 	{
 	}
 
-	column_t(const column_t& other)
+	column_meta_t(const column_meta_t& other)
 	{
 		if (this != &other)
 		{
@@ -55,11 +55,11 @@ struct column_t
 };
 
 template <typename ModelT, typename FieldT>
-inline column_t<ModelT, FieldT> make_column(
+inline column_meta_t<ModelT, FieldT> make_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
 {
-	return column_t<ModelT, FieldT>(name, member_ptr);
+	return column_meta_t<ModelT, FieldT>(name, member_ptr);
 }
 
 template <typename Derived, typename ...Columns>

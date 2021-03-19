@@ -14,6 +14,18 @@
 
 __SQLITE3_BEGIN__
 
+void SQLite3Driver::execute_query(const std::string& query) const
+{
+	char* message_error;
+	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
+	if (exit != SQLITE_OK)
+	{
+		auto message = std::string(message_error);
+		sqlite3_free(message_error);
+		throw SQLError(message, _ERROR_DETAILS_);
+	}
+}
+
 SQLite3Driver::SQLite3Driver(const char* filename)
 {
 	if (!filename)
@@ -121,26 +133,12 @@ void SQLite3Driver::run_select(
 
 void SQLite3Driver::run_update(const std::string& query) const
 {
-	char* message_error;
-	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
-	if (exit != SQLITE_OK)
-	{
-		auto message = std::string(message_error);
-		sqlite3_free(message_error);
-		throw SQLError(message, _ERROR_DETAILS_);
-	}
+	this->execute_query(query);
 }
 
 void SQLite3Driver::run_delete(const std::string& query) const
 {
-	char* message_error;
-	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
-	if (exit != SQLITE_OK)
-	{
-		auto message = std::string(message_error);
-		sqlite3_free(message_error);
-		throw SQLError(message, _ERROR_DETAILS_);
-	}
+	this->execute_query(query);
 }
 
 __SQLITE3_END__

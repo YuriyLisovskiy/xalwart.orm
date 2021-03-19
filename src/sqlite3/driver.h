@@ -27,6 +27,9 @@ class SQLite3Driver : public SQLDriverBase
 protected:
 	::sqlite3* db = nullptr;
 
+protected:
+	void execute_query(const std::string& query) const;
+
 public:
 	explicit SQLite3Driver(const char* filename);
 

@@ -83,12 +83,6 @@ public:
 		this->q_offset.value = -1;
 	};
 
-	// Sets SQL driver and calls the default constructor.
-	inline explicit select(abc::ISQLDriver* driver) : select()
-	{
-		this->db = driver;
-	};
-
 	// Sets SQL driver.
 	inline virtual select& use(abc::ISQLDriver* driver)
 	{

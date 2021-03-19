@@ -19,7 +19,7 @@
 
 __Q_BEGIN__
 
-template <typename ModelT>
+template <typename PkT, typename ModelT>
 class delete_
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -35,7 +35,10 @@ protected:
 
 	// List of primary keys to delete. It will be used by
 	// default if `where` is not called.
-	std::vector<std::string> pks{};
+	std::vector<PkT> pks{};
+
+	// Requires when generating condition.
+	PkT ModelT::* pk_member_ptr;
 
 protected:
 	virtual inline void append_model(const ModelT& model)
@@ -45,22 +48,16 @@ protected:
 			throw QueryError("delete: unable to delete null model", _ERROR_DETAILS_);
 		}
 
-		this->pks.push_back(model.__get_attr__(ModelT::meta_pk_name)->__str__());
+		this->pks.push_back(model.*this->pk_member_ptr);
 	}
 
 public:
 	inline explicit delete_() = default;
 
 	// Appends model's pk to deletion list.
-	inline explicit delete_(const ModelT& model)
+	inline explicit delete_(PkT ModelT::* pk, const ModelT& model) : pk_member_ptr(pk)
 	{
 		this->append_model(model);
-	};
-
-	// Sets SQL driver and calls the default constructor.
-	inline explicit delete_(abc::ISQLDriver* driver) : delete_()
-	{
-		this->db = driver;
 	};
 
 	// Sets SQL driver.
@@ -87,9 +84,7 @@ public:
 
 		if (!this->where_cond.is_set)
 		{
-			this->where_cond.set(in<ModelT>(
-				ModelT::meta_pk_name, this->pks.begin(), this->pks.end()
-			));
+			this->where_cond.set(in(this->pk_member_ptr, this->pks.begin(), this->pks.end()));
 		}
 
 		return this->db->make_delete_query(

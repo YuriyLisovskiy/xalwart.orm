@@ -22,9 +22,6 @@
 
 __ORM_BEGIN__
 
-template <typename IterT>
-concept ModelTypeIterator = std::is_base_of_v<Model, typename std::iterator_traits<IterT>::value_type>;
-
 class Client final
 {
 protected:
@@ -58,18 +55,18 @@ public:
 	template <typename ModelT>
 	inline void insert_one(const ModelT& model) const
 	{
-		q::insert<ModelT>(this->db.get(), model).one();
+		q::insert<ModelT>(model).use(this->db.get()).one();
 	}
 
 	// Inserts one model to the database and writes
 	// last inserted primary key to 'pk' out argument.
 	template <typename ModelT, typename PkT>
-	inline void insert_one(const ModelT& model, PkT* pk) const
+	inline void insert_one(ModelT& model, PkT ModelT::* pk_member_ptr) const
 	{
-		auto pk_str = q::insert<ModelT>(this->db.get(), model).one();
-		if (pk != nullptr)
+		auto pk_str = q::insert<ModelT>(model).use(this->db.get()).one();
+		if (pk_member_ptr)
 		{
-			*pk = util::as<PkT>((const void*)pk_str.c_str());
+			model.*pk_member_ptr = util::as<PkT>((const void*)pk_str.c_str());
 		}
 	}
 
@@ -77,7 +74,7 @@ public:
 	template <typename ModelT>
 	inline q::insert<ModelT> insert(const ModelT& model) const
 	{
-		return q::insert<ModelT>(this->db.get(), model);
+		return q::insert<ModelT>(model).use(this->db.get());
 	}
 
 	// Inserts the list of models to the database.
@@ -85,7 +82,7 @@ public:
 	inline void insert(IterBegin begin, IterEnd end) const
 	{
 		using ModelT = typename std::iterator_traits<IterBegin>::value_type;
-		auto query = q::insert<ModelT>(this->db.get(), *begin++);
+		auto query = q::insert<ModelT>(*begin++).use(this->db.get());
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {
 			query.model(model);
 		});
@@ -96,14 +93,14 @@ public:
 	template <typename ModelT>
 	inline ModelT get(const q::condition_t& cond) const
 	{
-		return q::select<ModelT>(this->db.get()).where(cond).first();
+		return q::select<ModelT>().use(this->db.get()).where(cond).first();
 	}
 
 	// Creates 'select' statement object with initialized driver.
 	template <typename ModelT>
 	inline q::select<ModelT> select() const
 	{
-		return q::select<ModelT>(this->db.get());
+		return q::select<ModelT>().use(this->db.get());
 	}
 
 	// Creates 'select' statement object with called 'where' method.
@@ -111,7 +108,7 @@ public:
 	template <typename ModelT>
 	inline q::select<ModelT> filter(const q::condition_t& cond) const
 	{
-		return q::select<ModelT>(this->db.get()).where(cond);
+		return q::select<ModelT>().use(this->db.get()).where(cond);
 	}
 
 	// Updates single model.

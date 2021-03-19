@@ -78,12 +78,6 @@ public:
 		);
 	};
 
-	// Sets SQL driver and prepares model's data.
-	inline explicit update(abc::ISQLDriver* driver, const ModelT& model) : update(model)
-	{
-		this->db = driver;
-	};
-
 	// Sets SQL driver.
 	inline update& use(abc::ISQLDriver* driver)
 	{

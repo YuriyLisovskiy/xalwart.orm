@@ -94,7 +94,8 @@ public:
 			);
 		}
 
-		util::tuple_for_each(ModelT::meta_columns, [this, model](auto& column)
+		std::string columns;
+		util::tuple_for_each(ModelT::meta_columns, [&columns](auto& column)
 		{
 			if constexpr (ModelT::meta_omit_pk)
 			{
@@ -104,18 +105,13 @@ public:
 				}
 			}
 
-			this->columns_str += column.name + ", ";
+			columns += column.name + ", ";
 			return true;
 		});
 
+		this->columns_str = columns;
 		str::rtrim(this->columns_str, ", ");
 		this->append_model(model);
-	};
-
-	// Sets SQL driver and appends model to insertion list.
-	inline explicit insert(abc::ISQLDriver* driver, const ModelT& model) : insert(model)
-	{
-		this->db = driver;
 	};
 
 	// Sets SQL driver.
