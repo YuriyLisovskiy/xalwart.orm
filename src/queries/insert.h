@@ -21,11 +21,10 @@
 
 __Q_BEGIN__
 
-template <typename ModelT>
+template <ModelBasedType ModelT>
 class insert
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
 
 protected:
 
@@ -55,7 +54,7 @@ protected:
 		{
 			if constexpr (ModelT::meta_omit_pk)
 			{
-				if (column.name == std::string(ModelT::meta_pk_name))
+				if (column.is_pk)
 				{
 					return true;
 				}
@@ -99,7 +98,7 @@ public:
 		{
 			if constexpr (ModelT::meta_omit_pk)
 			{
-				if (column.name == std::string(ModelT::meta_pk_name))
+				if (column.is_pk)
 				{
 					return true;
 				}

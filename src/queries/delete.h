@@ -19,11 +19,10 @@
 
 __Q_BEGIN__
 
-template <typename PkT, typename ModelT>
+template <typename PkT, ModelBasedType ModelT>
 class delete_
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
 
 protected:
 
@@ -52,11 +51,22 @@ protected:
 	}
 
 public:
-	inline explicit delete_() = default;
+	inline explicit delete_(PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
+	{
+		if (!this->pk_member_ptr)
+		{
+			throw QueryError("delete: 'pk' member pointer is nullptr", _ERROR_DETAILS_);
+		}
+	};
 
 	// Appends model's pk to deletion list.
-	inline explicit delete_(PkT ModelT::* pk, const ModelT& model) : pk_member_ptr(pk)
+	inline explicit delete_(const ModelT& model, PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
 	{
+		if (!this->pk_member_ptr)
+		{
+			throw QueryError("delete: 'pk' member pointer is nullptr", _ERROR_DETAILS_);
+		}
+
 		this->append_model(model);
 	};
 

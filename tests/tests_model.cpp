@@ -53,11 +53,6 @@ TEST(TestCase_Model, meta_table_name_Default_IsNullptr)
 	ASSERT_EQ(TestModel::meta_table_name, nullptr);
 }
 
-TEST(TestCase_Model, meta_pk_name_Default_IsId)
-{
-	ASSERT_EQ(TestModel::meta_pk_name, "id");
-}
-
 TEST(TestCase_Model, meta_omit_pk_Default_IsTrue)
 {
 	ASSERT_TRUE(TestModel::meta_omit_pk);

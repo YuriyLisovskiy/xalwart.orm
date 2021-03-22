@@ -27,7 +27,7 @@ const std::tuple<
 	orm::column_meta_t<TestCase_Q_TestModel, int>,
 	orm::column_meta_t<TestCase_Q_TestModel, std::string>
 > TestCase_Q_TestModel::meta_columns = {
-	orm::make_column_meta("id", &TestCase_Q_TestModel::id),
+	orm::make_pk_column_meta("id", &TestCase_Q_TestModel::id),
 	orm::make_column_meta("name", &TestCase_Q_TestModel::name)
 };
 

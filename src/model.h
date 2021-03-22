@@ -34,13 +34,14 @@ struct column_meta_t
 	using model_type = ModelT;
 
 	std::string name;
+	bool is_pk;
 
 	FieldT ModelT::* member_pointer;
 
 	column_meta_t() = default;
 
-	column_meta_t(std::string name, FieldT ModelT::* member_ptr)
-		: name(std::move(name)), member_pointer(member_ptr)
+	column_meta_t(std::string name, FieldT ModelT::* member_ptr, bool is_pk)
+		: name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk)
 	{
 	}
 
@@ -49,6 +50,7 @@ struct column_meta_t
 		if (this != &other)
 		{
 			this->name = other.name;
+			this->is_pk = other.is_pk;
 			this->member_pointer = other.member_pointer;
 		}
 	}
@@ -59,7 +61,15 @@ inline column_meta_t<ModelT, FieldT> make_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
 {
-	return column_meta_t<ModelT, FieldT>(name, member_ptr);
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
+}
+
+template <typename ModelT, typename FieldT>
+inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr
+)
+{
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
 }
 
 template <typename Derived, typename ...Columns>
@@ -76,9 +86,6 @@ public:
 
 	// Must be overwritten in child class.
 	static constexpr const char* meta_table_name = nullptr;
-
-	// Can be overwritten in child class.
-	static constexpr const char* meta_pk_name = "id";
 
 	// Omit primary key when inserting new models.
 	//
@@ -129,7 +136,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Object> __get_attr__(const char* attr_name) const override
+	std::shared_ptr<Object> __get_attr__(const char* attr_name) override
 	{
 		std::shared_ptr<Object> obj;
 		util::tuple_for_each(Derived::meta_columns, [this, attr_name, &obj](auto& column)
@@ -224,7 +231,7 @@ template <typename Derived, typename ...Cs>
 const std::tuple<Cs...> Model<Derived, Cs...>::meta_columns = {};
 
 // Used in templates where Model-based class is required.
-//template <typename T>
-//concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+template <typename T>
+concept ModelBasedType = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
 
 __ORM_END__

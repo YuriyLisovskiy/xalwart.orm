@@ -147,19 +147,49 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Distinct)
 class LeftTestModel : public orm::Model<LeftTestModel>
 {
 public:
+	int id{};
+	std::string name;
+
 	static constexpr const char* meta_table_name = "left_model";
-	static constexpr std::initializer_list<const char*> meta_fields = {
-		"id", "name"
-	};
+
+	static const std::tuple<
+		orm::column_meta_t<LeftTestModel, int>,
+		orm::column_meta_t<LeftTestModel, std::string>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<LeftTestModel, int>,
+	orm::column_meta_t<LeftTestModel, std::string>
+> LeftTestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &LeftTestModel::id),
+	orm::make_column_meta("name", &LeftTestModel::name)
 };
 
 class RightTestModel : public orm::Model<RightTestModel>
 {
 public:
+	int id{};
+	std::string name;
+	int left_id{};
+
 	static constexpr const char* meta_table_name = "right_model";
-	static constexpr std::initializer_list<const char*> meta_fields = {
-		"id", "name", "left_id"
-	};
+
+	static const std::tuple<
+		orm::column_meta_t<RightTestModel, int>,
+		orm::column_meta_t<RightTestModel, std::string>,
+		orm::column_meta_t<RightTestModel, int>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<RightTestModel, int>,
+	orm::column_meta_t<RightTestModel, std::string>,
+	orm::column_meta_t<RightTestModel, int>
+> RightTestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &RightTestModel::id),
+	orm::make_column_meta("name", &RightTestModel::name),
+	orm::make_column_meta("left_id", &RightTestModel::left_id)
 };
 
 TEST_F(SQLDriverBase_TestCase, make_select_query_Join)

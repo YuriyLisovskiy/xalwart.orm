@@ -87,9 +87,16 @@ protected:
 	class TestModel : public orm::Model<TestModel>
 	{
 	public:
+		int id{};
+
 		static constexpr const char* meta_table_name = "test_models";
-		static constexpr const char* meta_pk_name = "id";
+
+		static const std::tuple<orm::column_meta_t<TestModel, int>> meta_columns;
 	};
+};
+
+const std::tuple<orm::column_meta_t<Model_TestCase::TestModel, int>> Model_TestCase::TestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &Model_TestCase::TestModel::id)
 };
 
 TEST_F(Model_TestCase, get_table_name)
@@ -111,8 +118,14 @@ TEST_F(Model_TestCase, make_fk_CutEndingS)
 class TestM : public orm::Model<TestM>
 {
 public:
+	int custom_identifier{};
+
 	static constexpr const char* meta_table_name = "test";
-	static constexpr const char* meta_pk_name = "custom_identifier";
+	static const std::tuple<orm::column_meta_t<TestM, int>> meta_columns;
+};
+
+const std::tuple<orm::column_meta_t<TestM, int>> TestM::meta_columns = {
+	orm::make_pk_column_meta("custom_identifier", &TestM::custom_identifier)
 };
 
 TEST(ModelUnitlity_TestCase, make_fk)

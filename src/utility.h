@@ -14,6 +14,9 @@
 // Module definitions.
 #include "./_def_.h"
 
+// Orm libraries.
+#include "./exceptions.h"
+
 
 __ORM_UTIL_BEGIN__
 
@@ -161,6 +164,23 @@ void tuple_for_each(TupleT&& tuple, CallableT&& callable, ArgsT&&... args)
 }
 
 template <typename ModelT>
+inline std::string get_pk_name()
+{
+	std::string result;
+	util::tuple_for_each(ModelT::meta_columns, [&result](auto& column)
+	{
+		if (column.is_pk)
+		{
+			result = column.name;
+			return false;
+		}
+
+		return true;
+	});
+	return result;
+}
+
+template <typename ModelT>
 inline std::string make_fk()
 {
 	static_assert(
@@ -172,7 +192,13 @@ inline std::string make_fk()
 		table_name = table_name.substr(0, table_name.size() - 1);
 	}
 
-	return table_name + "_" + ModelT::meta_pk_name;
+	auto pk_name = get_pk_name<ModelT>();
+	if (pk_name.empty())
+	{
+		throw QueryError("make_fk: model requires pk column", _ERROR_DETAILS_);
+	}
+
+	return table_name + "_" + pk_name;
 }
 
 template<class L, class R>
@@ -224,15 +250,6 @@ inline std::string get_table_name()
 		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
 	);
 	return ModelT::meta_table_name;
-}
-
-template <typename ModelT>
-inline std::string get_pk_name()
-{
-	static_assert(
-		ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized"
-	);
-	return ModelT::meta_pk_name;
 }
 
 __ORM_UTIL_END__

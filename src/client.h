@@ -119,18 +119,20 @@ public:
 	}
 
 	// Creates 'delete_' statement object with initialized driver.
-	template <typename ModelT>
-	inline q::delete_<ModelT> delete_() const
+	template <typename PkT, typename ModelT>
+	inline q::delete_<PkT, ModelT> delete_(PkT ModelT::* pk = &ModelT::id) const
 	{
-		return q::delete_<ModelT>().use(this->db.get());
+		return q::delete_<PkT, ModelT>(pk).use(this->db.get());
 	}
 
 	// Deletes list of models using iterator.
-	template <typename IteratorT>
-	inline void delete_(IteratorT begin, IteratorT end) const
+	template <
+		typename PkT, typename IteratorT,
+		typename ModelT = typename std::iterator_traits<IteratorT>::value_type
+	>
+	inline void delete_(IteratorT begin, IteratorT end, PkT ModelT::* pk = &ModelT::id) const
 	{
-		using ModelT = typename std::iterator_traits<IteratorT>::value_type;
-		auto query = q::delete_<ModelT>().use(this->db.get());
+		auto query = q::delete_<PkT, ModelT>().use(this->db.get());
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {
 			query.model(model);
 		});
@@ -138,18 +140,18 @@ public:
 	}
 
 	// Deletes list of models using initializer list.
-	template <typename ModelT>
-	inline void delete_(const std::initializer_list<ModelT>& list) const
+	template <typename PkT, typename ModelT>
+	inline void delete_(const std::initializer_list<ModelT>& list, PkT ModelT::* pk = &ModelT::id) const
 	{
 		using ConstIterator = typename std::initializer_list<ModelT>::const_iterator;
-		this->template delete_<ConstIterator>(list.begin(), list.end());
+		this->template delete_<PkT, ConstIterator>(list.begin(), list.end());
 	}
 
 	// Deletes single model.
-	template <typename ModelT>
-	inline void delete_(const ModelT& model) const
+	template <typename PkT, typename ModelT>
+	inline void delete_(const ModelT& model, PkT ModelT::* pk = &ModelT::id) const
 	{
-		q::delete_<ModelT>().use(this->db.get()).model(model).exec();
+		q::delete_<PkT, ModelT>().use(this->db.get()).model(model).exec();
 	}
 };
 

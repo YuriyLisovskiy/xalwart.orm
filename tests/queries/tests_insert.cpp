@@ -12,7 +12,15 @@ using namespace xw;
 
 struct TestModel : public orm::Model<TestModel>
 {
+	int id{};
+
 	static constexpr const char* meta_table_name = "test_models";
+
+	static const std::tuple<orm::column_meta_t<TestModel, int>> meta_columns;
+};
+
+const std::tuple<orm::column_meta_t<TestModel, int>> TestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &TestModel::id)
 };
 
 class TestCase_Q_insert_One : public ::testing::Test

@@ -27,7 +27,7 @@ const std::tuple<
 	orm::column_meta_t<TestCaseF_Q_delete_TestModel, int>,
 	orm::column_meta_t<TestCaseF_Q_delete_TestModel, std::string>
 > TestCaseF_Q_delete_TestModel::meta_columns = {
-	orm::make_column_meta("id", &TestCaseF_Q_delete_TestModel::id),
+	orm::make_pk_column_meta("id", &TestCaseF_Q_delete_TestModel::id),
 	orm::make_column_meta("name", &TestCaseF_Q_delete_TestModel::name)
 };
 
@@ -39,8 +39,8 @@ protected:
 	void SetUp() override
 	{
 		this->query = new orm::q::delete_(
-			&TestCaseF_Q_delete_TestModel::id,
-			TestCaseF_Q_delete_TestModel()
+			TestCaseF_Q_delete_TestModel(),
+			&TestCaseF_Q_delete_TestModel::id
 		);
 	}
 
@@ -86,7 +86,7 @@ TEST(TestCase_Q_delete, constructor_ThrowsNullModel)
 	TestCaseF_Q_delete_TestModel null_model;
 	null_model.mark_as_null();
 	ASSERT_THROW(
-		auto _ = orm::q::delete_(&TestCaseF_Q_delete_TestModel::id, null_model),
+		auto _ = orm::q::delete_(null_model, &TestCaseF_Q_delete_TestModel::id),
 		orm::QueryError
 	);
 }

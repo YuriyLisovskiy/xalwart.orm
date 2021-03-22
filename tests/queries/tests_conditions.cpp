@@ -31,7 +31,7 @@ const std::tuple<
 	orm::column_meta_t<TestModel, std::string>,
 	orm::column_meta_t<TestModel, const char*>
 > TestModel::meta_columns = {
-	orm::make_column_meta("id", &TestModel::id),
+	orm::make_pk_column_meta("id", &TestModel::id),
 	orm::make_column_meta("name", &TestModel::name),
 	orm::make_column_meta("name_c_str", &TestModel::name_c_str)
 };

@@ -405,20 +405,25 @@ struct join_t
 	}
 };
 
-// TODO: change `ft_to_left` parameter type to member pointer.
+// TODO: change `fk_to_left` parameter type to member pointer.
 template <typename LeftT, typename RightT>
 inline join_t join_on(
 	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}
 )
 {
 	static_assert(LeftT::meta_table_name != nullptr, "'meta_table_name' of left model is not initialized");
-	static_assert(LeftT::meta_pk_name != nullptr, "'meta_pk_name' of left model is not initialized");
 	static_assert(RightT::meta_table_name != nullptr, "'meta_table_name' of right model is not initialized");
 
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
 	auto fk = fk_to_left.empty() ? util::make_fk<LeftT>() : fk_to_left;
-	auto condition_str = util::quote_str(left_table_name) + "." + util::quote_str(LeftT::meta_pk_name)
+	auto left_pk = util::get_pk_name<LeftT>();
+	if (left_pk.empty())
+	{
+		throw QueryError("join_on: model requires pk column", _ERROR_DETAILS_);
+	}
+
+	auto condition_str = util::quote_str(left_table_name) + "." + util::quote_str(left_pk)
 		+ " = " +
 		util::quote_str(table_name) + "." + util::quote_str(fk);
 	auto extra_cond_str = (std::string)extra_condition;
