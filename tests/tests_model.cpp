@@ -45,7 +45,7 @@ TEST(TestCase_Model, __repr___NullModel)
 {
 	TestModel model;
 	model.mark_as_null();
-	ASSERT_EQ(model.__repr__(), "Model{null}");
+	ASSERT_EQ(model.__repr__(), "null");
 }
 
 TEST(TestCase_Model, meta_table_name_Default_IsNullptr)

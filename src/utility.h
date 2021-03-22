@@ -252,4 +252,37 @@ inline std::string get_table_name()
 	return ModelT::meta_table_name;
 }
 
+// Checks constraints of the Model.
+//
+// !IMPORTANT!
+// Currently Model supports single pk only.
+//
+// Throws `ModelError` if model contains exactly one
+// primary key column.
+template <typename ModelT>
+inline void check_model()
+{
+	// Checks if only one primary key is present.
+	bool has_pk = false;
+	util::tuple_for_each(ModelT::meta_columns, [&has_pk](auto& column)
+	{
+		if (column.is_pk)
+		{
+			if (has_pk)
+			{
+				throw ModelError("model has more than one primary key", _ERROR_DETAILS_);
+			}
+
+			has_pk = true;
+		}
+
+		return true;
+	});
+
+	if (!has_pk)
+	{
+		throw ModelError("model does not contain primary key", _ERROR_DETAILS_);
+	}
+}
+
 __ORM_UTIL_END__

@@ -25,4 +25,7 @@ DEF_EXCEPTION_WITH_BASE(QueryError, core::BaseException, "query error");
 // Must be thrown to indicate drivers' errors when running SQL statements.
 DEF_EXCEPTION_WITH_BASE(SQLError, core::BaseException, "sql error");
 
+// Must be thrown if the model does not meet some requirements.
+DEF_EXCEPTION_WITH_BASE(ModelError, core::BaseException, "model error");
+
 __ORM_END__

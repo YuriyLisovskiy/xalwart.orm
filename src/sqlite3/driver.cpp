@@ -14,7 +14,7 @@
 
 __SQLITE3_BEGIN__
 
-void SQLite3Driver::execute_query(const std::string& query) const
+void Driver::execute_query(const std::string& query) const
 {
 	char* message_error;
 	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
@@ -26,7 +26,7 @@ void SQLite3Driver::execute_query(const std::string& query) const
 	}
 }
 
-SQLite3Driver::SQLite3Driver(const char* filename)
+Driver::Driver(const char* filename)
 {
 	if (!filename)
 	{
@@ -45,7 +45,7 @@ SQLite3Driver::SQLite3Driver(const char* filename)
 	this->db = driver;
 }
 
-std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
+std::string Driver::run_insert(const std::string& query, bool bulk) const
 {
 	if (query.empty())
 	{
@@ -84,7 +84,7 @@ std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
 	return data.second;
 }
 
-void SQLite3Driver::run_select(
+void Driver::run_select(
 	const std::string& query, void* container, void(*handle_row)(void*, void*)
 ) const
 {
@@ -131,12 +131,12 @@ void SQLite3Driver::run_select(
 	}
 }
 
-void SQLite3Driver::run_update(const std::string& query) const
+void Driver::run_update(const std::string& query) const
 {
 	this->execute_query(query);
 }
 
-void SQLite3Driver::run_delete(const std::string& query) const
+void Driver::run_delete(const std::string& query) const
 {
 	this->execute_query(query);
 }

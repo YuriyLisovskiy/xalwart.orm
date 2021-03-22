@@ -72,6 +72,8 @@ inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
 	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
 }
 
+// !IMPORTANT!
+// Currently Model supports single pk only.
 template <typename Derived, typename ...Columns>
 class Model : public object::Object
 {
@@ -92,9 +94,16 @@ public:
 	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
 
+	// Tuple of mapped columns. At least, primary key
+	// is required.
+	//
+	// Must be overwritten in child class.
 	static const std::tuple<Columns...> meta_columns;
 
 protected:
+
+	// Copies base class. Must be called when copy-constructor
+	// is overridden.
 	inline void copy_base(const Model& other)
 	{
 		this->_is_null_model = other._is_null_model;
@@ -127,12 +136,7 @@ public:
 	[[nodiscard]]
 	inline std::string __repr__() const override
 	{
-		if (this->_is_null_model)
-		{
-			return "Model{null}";
-		}
-
-		return object::Object::__repr__();
+		return this->__str__();
 	}
 
 	[[nodiscard]]

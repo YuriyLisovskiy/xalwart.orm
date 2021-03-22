@@ -29,6 +29,8 @@ protected:
 	// Driver to perform an access to the database.
 	abc::ISQLDriver* db = nullptr;
 
+	std::string table_name;
+
 	std::string columns_data;
 
 	q::condition_t condition;
@@ -42,6 +44,8 @@ public:
 		{
 			throw QueryError("update: unable to update null model", _ERROR_DETAILS_);
 		}
+
+		this->table_name = util::get_table_name<ModelT>();
 
 		std::string pk_name, pk_val;
 		util::tuple_for_each(ModelT::meta_columns, [this, model, &pk_name, &pk_val](auto& column)
@@ -97,7 +101,7 @@ public:
 		});
 
 		str::rtrim(this->columns_data, ", ");
-		this->condition = q::column_condition_t("", pk_name, "= " + pk_val);
+		this->condition = q::column_condition_t(this->table_name, pk_name, "= " + pk_val);
 	};
 
 	// Sets SQL driver.
@@ -123,7 +127,7 @@ public:
 		}
 
 		return this->db->make_update_query(
-			util::get_table_name<ModelT>(), this->columns_data, this->condition
+			util::quote_str(this->table_name), this->columns_data, this->condition
 		);
 	}
 

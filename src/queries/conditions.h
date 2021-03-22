@@ -405,7 +405,6 @@ struct join_t
 	}
 };
 
-// TODO: change `fk_to_left` parameter type to member pointer.
 template <typename LeftT, typename RightT>
 inline join_t join_on(
 	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}

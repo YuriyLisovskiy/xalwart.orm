@@ -22,7 +22,7 @@
 
 __SQLITE3_BEGIN__
 
-class SQLite3Driver : public SQLDriverBase
+class Driver : public SQLDriverBase
 {
 protected:
 	::sqlite3* db = nullptr;
@@ -31,9 +31,9 @@ protected:
 	void execute_query(const std::string& query) const;
 
 public:
-	explicit SQLite3Driver(const char* filename);
+	explicit Driver(const char* filename);
 
-	inline ~SQLite3Driver() override
+	inline ~Driver() override
 	{
 		sqlite3_close(this->db);
 		SQLDriverBase::~SQLDriverBase();

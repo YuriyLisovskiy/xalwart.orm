@@ -58,6 +58,7 @@ public:
 		const q::condition_t& having_cond
 	) const override;
 
+	// TESTME: make_update_query
 	// Generates 'UPDATE' query as string.
 	//
 	// `table_name`: must be non-empty string.
@@ -70,6 +71,7 @@ public:
 		const q::condition_t& condition
 	) const override;
 
+	// TESTME: make_delete_query
 	// Generates 'DELETE' query as string.
 	//
 	// 'table_name' must be non-empty string.

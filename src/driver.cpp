@@ -173,7 +173,7 @@ std::string SQLDriverBase::make_update_query(
 	}
 
 	std::string query = "UPDATE " + table_name +
-		" SET " + columns_data + " WHERE " + (std::string)condition;
+		" SET " + columns_data + " WHERE " + (std::string)condition + ";";
 	return query;
 }
 
