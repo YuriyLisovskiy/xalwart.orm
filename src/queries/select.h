@@ -1,5 +1,5 @@
 /**
- * query/select.h
+ * queries/select.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -21,6 +21,7 @@
 
 __Q_BEGIN__
 
+// TESTME: add tests with mocked driver
 template <ModelBasedType ModelT>
 class select
 {
@@ -75,8 +76,8 @@ public:
 	// Retrieves table name and sets the default values.
 	inline explicit select()
 	{
-		this->table_name = util::get_table_name<ModelT>();
-		this->pk_name = util::get_pk_name<ModelT>();
+		this->table_name = meta::get_table_name<ModelT>();
+		this->pk_name = meta::get_pk_name<ModelT>();
 		if (this->pk_name.empty())
 		{
 			throw QueryError("select: model requires pk column", _ERROR_DETAILS_);
@@ -182,16 +183,16 @@ public:
 		std::string foreign_key=""
 	)
 	{
-		auto fk_column = foreign_key.empty() ? util::make_fk<ModelT>() : foreign_key;
+		auto fk_column = foreign_key.empty() ? meta::make_fk<ModelT>() : foreign_key;
 		abc::ISQLDriver* driver = this->db;
 		this->relations.push_back([driver, fk_column, first, second, model_pk](ModelT& model) -> void {
-			auto pk_val = "'" + model.__get_attr__(util::get_column_name(model_pk).c_str())->__str__() + "'";
+			auto pk_val = "'" + model.__get_attr__(meta::get_column_name(model_pk).c_str())->__str__() + "'";
 			first(model, xw::Lazy<std::vector<OtherModelT>>(
 				[driver, fk_column, pk_val, first, second, model_pk]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().use(driver)
 						.template many_to_one<PrimaryKeyT, ModelT>(second, first, model_pk, fk_column)
 						.where(q::column_condition_t(
-							util::get_table_name<OtherModelT>(),
+							meta::get_table_name<OtherModelT>(),
 							util::quote_str(fk_column), "= " + pk_val
 						))
 						.to_vector();
@@ -256,7 +257,7 @@ public:
 		const std::string& foreign_key=""
 	)
 	{
-		auto fk_column = foreign_key.empty() ? util::make_fk<OtherModelT>() : foreign_key;
+		auto fk_column = foreign_key.empty() ? meta::make_fk<OtherModelT>() : foreign_key;
 		abc::ISQLDriver* driver = this->db;
 		auto t_name = this->table_name;
 		auto pk_name_str = this->pk_name;
@@ -271,8 +272,8 @@ public:
 						.join(q::left_on<OtherModelT, ModelT>(fk_column))
 						.template one_to_many<PrimaryKeyT, ModelT>(second, first, other_model_pk, fk_column)
 						.where(q::column_condition_t(
-							util::get_table_name<ModelT>(),
-							util::quote_str(util::get_column_name(other_model_pk).c_str()), "= " + model_pk_val
+							meta::get_table_name<ModelT>(),
+							util::quote_str(meta::get_column_name(other_model_pk).c_str()), "= " + model_pk_val
 						))
 						.first();
 				}
@@ -372,8 +373,8 @@ public:
 							}
 						}
 
-						std::string s_pk = left_fk.empty() ? util::make_fk<ModelT>() : left_fk;
-						std::string o_pk = right_fk.empty() ? util::make_fk<OtherModelT>() : right_fk;
+						std::string s_pk = left_fk.empty() ? meta::make_fk<ModelT>() : left_fk;
+						std::string o_pk = right_fk.empty() ? meta::make_fk<OtherModelT>() : right_fk;
 						auto cond_str = '"' + second_t_name + "\".\"" + first_pk_name
 							+ "\" = \"" + m_table + "\".\"" + s_pk + '"';
 

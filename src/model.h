@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <iostream>
-
 // Core libraries.
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
@@ -27,7 +25,12 @@
 
 __ORM_BEGIN__
 
-template <typename ModelT, typename FieldT>
+template <typename T>
+concept column_field_type = std::is_fundamental_v<T> ||
+	std::is_same_v<std::string, T> ||
+	std::is_same_v<const char*, T>;
+
+template <typename ModelT, column_field_type FieldT>
 struct column_meta_t
 {
 	using field_type = FieldT;
@@ -56,7 +59,7 @@ struct column_meta_t
 	}
 };
 
-template <typename ModelT, typename FieldT>
+template <typename ModelT, column_field_type FieldT>
 inline column_meta_t<ModelT, FieldT> make_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
@@ -64,7 +67,7 @@ inline column_meta_t<ModelT, FieldT> make_column_meta(
 	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
 }
 
-template <typename ModelT, typename FieldT>
+template <typename ModelT, column_field_type FieldT>
 inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
@@ -237,5 +240,25 @@ const std::tuple<Cs...> Model<Derived, Cs...>::meta_columns = {};
 // Used in templates where Model-based class is required.
 template <typename T>
 concept ModelBasedType = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
+
+template <typename M, column_field_type F>
+std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)
+{
+	std::string result;
+	if constexpr (std::is_fundamental_v<F>)
+	{
+		result = std::to_string(model.*column_meta.member_pointer);
+	}
+	else if constexpr (std::is_same_v<F, std::string>)
+	{
+		result = "'" + model.*column_meta.member_pointer + "'";
+	}
+	else if constexpr (std::is_same_v<F, const char*>)
+	{
+		result = "'" + std::string(model.*column_meta.member_pointer) + "'";
+	}
+
+	return result;
+}
 
 __ORM_END__

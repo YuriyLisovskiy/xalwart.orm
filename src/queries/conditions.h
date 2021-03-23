@@ -15,6 +15,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
+#include "../meta.h"
 #include "../utility.h"
 #include "../exceptions.h"
 #include "../model.h"
@@ -69,7 +70,7 @@ inline ordering asc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
-	return ordering(ModelT::meta_table_name, util::get_column_name(column), true);
+	return ordering(ModelT::meta_table_name, meta::get_column_name(column), true);
 }
 
 template <typename ColumnT, typename ModelT>
@@ -77,7 +78,7 @@ inline ordering desc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
-	return ordering(ModelT::meta_table_name, util::get_column_name(column), false);
+	return ordering(ModelT::meta_table_name, meta::get_column_name(column), false);
 }
 
 struct condition_t
@@ -223,7 +224,7 @@ public:
 template <typename ColumnT, typename ModelT>
 inline column_t<ModelT, ColumnT> c(ColumnT ModelT::* member_pointer)
 {
-	return column_t<ModelT, ColumnT>(util::get_column_name(member_pointer));
+	return column_t<ModelT, ColumnT>(meta::get_column_name(member_pointer));
 }
 
 template <typename ColumnT, typename ModelT>
@@ -231,7 +232,7 @@ inline column_condition_t is_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
-	return column_condition_t(ModelT::meta_table_name, util::get_column_name(member_pointer), "IS NULL");
+	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(member_pointer), "IS NULL");
 }
 
 template <typename ColumnT, typename ModelT>
@@ -239,7 +240,7 @@ inline column_condition_t is_not_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
-	return column_condition_t(ModelT::meta_table_name, util::get_column_name(member_pointer), "IS NOT NULL");
+	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(member_pointer), "IS NOT NULL");
 }
 
 // SQL logical operators.
@@ -268,7 +269,7 @@ inline column_condition_t between(ColumnT ModelT::* column, ColumnT lower, Colum
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
-		ModelT::meta_table_name, util::get_column_name(column),
+		ModelT::meta_table_name, meta::get_column_name(column),
 		"BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper)
 	);
 }
@@ -281,7 +282,7 @@ inline column_condition_t between(
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
-		ModelT::meta_table_name, util::get_column_name(column),
+		ModelT::meta_table_name, meta::get_column_name(column),
 		"BETWEEN '" + lower + "' AND '" + upper + '\''
 	);
 }
@@ -294,7 +295,7 @@ inline column_condition_t between(
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
-		ModelT::meta_table_name, util::get_column_name(column),
+		ModelT::meta_table_name, meta::get_column_name(column),
 		"BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\''
 	);
 }
@@ -305,7 +306,7 @@ inline column_condition_t like(ColumnT ModelT::* column, const std::string& patt
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
-		ModelT::meta_table_name, util::get_column_name(column), "LIKE '" + pattern + "'"
+		ModelT::meta_table_name, meta::get_column_name(column), "LIKE '" + pattern + "'"
 	);
 }
 
@@ -317,7 +318,7 @@ inline column_condition_t like(
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
-		ModelT::meta_table_name, util::get_column_name(column),
+		ModelT::meta_table_name, meta::get_column_name(column),
 		"LIKE '" + pattern + "' ESCAPE '" + escape + "'"
 	);
 }
@@ -335,7 +336,7 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	std::string condition = "IN (" + str::join(
 		begin, end, ", ", [](const ColumnT& item) -> std::string { return std::to_string(item); }
 	) + ")";
-	return column_condition_t(ModelT::meta_table_name, util::get_column_name(column), condition);
+	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(column), condition);
 }
 
 template <typename ColumnT, types::fundamental_type RangeValueT, typename ModelT>
@@ -368,7 +369,7 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 			}
 		}
 	) + ")";
-	return column_condition_t(ModelT::meta_table_name, util::get_column_name(column), condition);
+	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(column), condition);
 }
 
 template <typename ModelT>
@@ -415,8 +416,8 @@ inline join_t join_on(
 
 	std::string left_table_name = LeftT::meta_table_name;
 	const auto& table_name = RightT::meta_table_name;
-	auto fk = fk_to_left.empty() ? util::make_fk<LeftT>() : fk_to_left;
-	auto left_pk = util::get_pk_name<LeftT>();
+	auto fk = fk_to_left.empty() ? meta::make_fk<LeftT>() : fk_to_left;
+	auto left_pk = meta::get_pk_name<LeftT>();
 	if (left_pk.empty())
 	{
 		throw QueryError("join_on: model requires pk column", _ERROR_DETAILS_);

@@ -18,9 +18,9 @@
 
 __Q_BEGIN__
 
-// TESTME: update
+// TODO: consider bulk update.
 template <ModelBasedType ModelT>
-class update
+class update final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
@@ -29,10 +29,16 @@ protected:
 	// Driver to perform an access to the database.
 	abc::ISQLDriver* db = nullptr;
 
+	// Name of the table which is retrieved from
+	// `ModelT::meta_table_name` static member.
 	std::string table_name;
 
+	// Columns with new values separated by comma.
+	// Example: "name = 'Steve', age = 21".
 	std::string columns_data;
 
+	// Condition for 'WHERE' statement.
+	// Indicates what rows should be updated.
 	q::condition_t condition;
 
 public:
@@ -45,7 +51,7 @@ public:
 			throw QueryError("update: unable to update null model", _ERROR_DETAILS_);
 		}
 
-		this->table_name = util::get_table_name<ModelT>();
+		this->table_name = meta::get_table_name<ModelT>();
 
 		std::string pk_name, pk_val;
 		util::tuple_for_each(ModelT::meta_columns, [this, model, &pk_name, &pk_val](auto& column)
@@ -55,22 +61,7 @@ public:
 
 			if (column.is_pk)
 			{
-				if constexpr (std::is_fundamental_v<T>)
-				{
-					pk_val = std::to_string(model.*column.member_pointer);
-				}
-				else if constexpr (std::is_same_v<T, std::string>)
-				{
-					pk_val = "'" + model.*column.member_pointer + "'";
-				}
-				else
-				{
-					throw QueryError(
-						"update: column types other than std::string and fundamentals are not supported",
-						_ERROR_DETAILS_
-					);
-				}
-
+				pk_val = get_column_value_as_string<ModelT, T>(model, column);
 				pk_name = column.name;
 
 				if constexpr (ModelT::meta_omit_pk)
@@ -79,24 +70,8 @@ public:
 				}
 			}
 
-			this->columns_data += column.name + " = ";
-			if constexpr (std::is_fundamental_v<T>)
-			{
-				this->columns_data += std::to_string(model.*column.member_pointer);
-			}
-			else if constexpr (std::is_same_v<T, std::string>)
-			{
-				this->columns_data += "'" + model.*column.member_pointer + "'";
-			}
-			else
-			{
-				throw QueryError(
-					"update: column types other than std::string and fundamentals are not supported",
-					_ERROR_DETAILS_
-				);
-			}
-
-			this->columns_data += ", ";
+			this->columns_data += column.name + " = " +
+				get_column_value_as_string<ModelT, T>(model, column) + ", ";
 			return true;
 		});
 
@@ -127,7 +102,7 @@ public:
 		}
 
 		return this->db->make_update_query(
-			util::quote_str(this->table_name), this->columns_data, this->condition
+			this->table_name, this->columns_data, this->condition
 		);
 	}
 

@@ -22,7 +22,7 @@
 __Q_BEGIN__
 
 template <ModelBasedType ModelT>
-class insert
+class insert final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
@@ -47,7 +47,7 @@ protected:
 	//
 	// `is_first`: used to indicate if `append` is called for the
 	// first time. If true, than generates `columns_str`.
-	virtual inline void append_model(const ModelT& model)
+	inline void append_model(const ModelT& model)
 	{
 		std::string row;
 		util::tuple_for_each(ModelT::meta_columns, [&row, model](auto& column)
@@ -114,7 +114,7 @@ public:
 	};
 
 	// Sets SQL driver.
-	inline virtual insert& use(abc::ISQLDriver* driver)
+	virtual insert& use(abc::ISQLDriver* driver)
 	{
 		if (driver)
 		{
@@ -128,7 +128,7 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	virtual inline std::string query() const
+	inline std::string query() const
 	{
 		if (!this->db)
 		{
@@ -136,14 +136,14 @@ public:
 		}
 
 		return this->db->make_insert_query(
-			util::get_table_name<ModelT>(), this->columns_str, this->rows
+			meta::get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
 
 	// Appends model to insertion list.
 	//
 	// Throws 'QueryError' if model is null.
-	virtual inline insert& model(const ModelT& model)
+	inline insert& model(const ModelT& model)
 	{
 		if (model.is_null())
 		{
@@ -161,7 +161,7 @@ public:
 	//
 	// Throws 'QueryError' if more than one model was set.
 	[[nodiscard]]
-	inline virtual std::string one() const
+	inline std::string one() const
 	{
 		if (this->is_bulk)
 		{
@@ -184,7 +184,7 @@ public:
 	}
 
 	// Inserts row(s) into database.
-	inline virtual void bulk()
+	inline void bulk()
 	{
 		auto query = this->query();
 		this->db->run_insert(query, true);

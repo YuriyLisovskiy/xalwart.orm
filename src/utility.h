@@ -122,6 +122,14 @@ inline std::string as<std::string>(const void* data)
 	return std::string((const char*)data);
 }
 
+template<>
+struct item_return<const char*>{ typedef const char* type; };
+template<>
+inline const char* as<const char*>(const void* data)
+{
+	return (const char*)data;
+}
+
 inline std::string quote_str(const std::string& s)
 {
 	return s.starts_with('"') ? s : '"' + s + '"';
@@ -163,44 +171,6 @@ void tuple_for_each(TupleT&& tuple, CallableT&& callable, ArgsT&&... args)
 	}
 }
 
-template <typename ModelT>
-inline std::string get_pk_name()
-{
-	std::string result;
-	util::tuple_for_each(ModelT::meta_columns, [&result](auto& column)
-	{
-		if (column.is_pk)
-		{
-			result = column.name;
-			return false;
-		}
-
-		return true;
-	});
-	return result;
-}
-
-template <typename ModelT>
-inline std::string make_fk()
-{
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
-	std::string table_name = ModelT::meta_table_name;
-	if (table_name.ends_with('s'))
-	{
-		table_name = table_name.substr(0, table_name.size() - 1);
-	}
-
-	auto pk_name = get_pk_name<ModelT>();
-	if (pk_name.empty())
-	{
-		throw QueryError("make_fk: model requires pk column", _ERROR_DETAILS_);
-	}
-
-	return table_name + "_" + pk_name;
-}
-
 template<class L, class R>
 struct typed_comparator {
 	bool operator()(const L &, const R &) const {
@@ -218,38 +188,6 @@ struct typed_comparator<O, O> {
 template<class L, class R>
 bool compare_any(const L &lhs, const R &rhs) {
 	return typed_comparator<L, R>()(lhs, rhs);
-}
-
-template <typename F, typename O>
-inline std::string get_column_name(F O::* member_pointer)
-{
-	std::string name;
-	util::tuple_for_each(O::meta_columns, [&name, member_pointer](auto& column)
-	{
-		if (util::compare_any(column.member_pointer, member_pointer))
-		{
-			name = column.name;
-			return false;
-		}
-
-		return true;
-	});
-
-	if (name.empty())
-	{
-		throw core::ValueError("column not found", _ERROR_DETAILS_);
-	}
-
-	return name;
-}
-
-template <typename ModelT>
-inline std::string get_table_name()
-{
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
-	return ModelT::meta_table_name;
 }
 
 // Checks constraints of the Model.

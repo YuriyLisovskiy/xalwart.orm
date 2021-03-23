@@ -6,8 +6,8 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/model.h"
 #include "../src/utility.h"
+#include "../src/model.h"
 
 using namespace xw;
 
@@ -71,6 +71,11 @@ TEST(TestCase_utility, as_std_string)
 	ASSERT_EQ(orm::util::as<std::string>("Hello, World"), std::string("Hello, World"));
 }
 
+TEST(TestCase_utility, as_std_c_string)
+{
+	ASSERT_EQ(orm::util::as<const char*>("Hello, World"), "Hello, World");
+}
+
 TEST(TestCase_utility, quote_str_AlreadyQuoted)
 {
 	ASSERT_EQ(orm::util::quote_str(R"("Hello")"), R"("Hello")");
@@ -79,57 +84,6 @@ TEST(TestCase_utility, quote_str_AlreadyQuoted)
 TEST(TestCase_utility, quote_str_NotQuoted)
 {
 	ASSERT_EQ(orm::util::quote_str("Hello"), R"("Hello")");
-}
-
-class TestCase_Model_utility : public ::testing::Test
-{
-protected:
-	class TestModel : public orm::Model<TestModel>
-	{
-	public:
-		int id{};
-		double non_existent_column;
-
-		static constexpr const char* meta_table_name = "test_models";
-
-		static const std::tuple<orm::column_meta_t<TestModel, int>> meta_columns;
-	};
-};
-
-const std::tuple<
-	orm::column_meta_t<TestCase_Model_utility::TestModel, int>
-> TestCase_Model_utility::TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCase_Model_utility::TestModel::id)
-};
-
-TEST_F(TestCase_Model_utility, get_table_name)
-{
-	ASSERT_EQ(orm::util::get_table_name<TestCase_Model_utility::TestModel>(), "test_models");
-}
-
-TEST_F(TestCase_Model_utility, get_pk_name)
-{
-	ASSERT_EQ(orm::util::get_pk_name<TestCase_Model_utility::TestModel>(), "id");
-}
-
-TEST_F(TestCase_Model_utility, make_fk_CutEndingS)
-{
-	auto expected = "test_model_id";
-	ASSERT_EQ(orm::util::make_fk<TestCase_Model_utility::TestModel>(), expected);
-}
-
-TEST_F(TestCase_Model_utility, get_column_name_FoundColumn)
-{
-	std::string expected = "id";
-	ASSERT_EQ(orm::util::get_column_name(&TestCase_Model_utility::TestModel::id), expected);
-}
-
-TEST_F(TestCase_Model_utility, get_column_name_ThrowsColumnNotFound)
-{
-	ASSERT_THROW(
-		orm::util::get_column_name(&TestCase_Model_utility::TestModel::non_existent_column),
-		core::ValueError
-	);
 }
 
 TEST(TestCase_utility, compare_any_True)
@@ -164,27 +118,11 @@ const std::tuple<orm::column_meta_t<TestM, int>> TestM::meta_columns = {
 	orm::make_pk_column_meta("custom_identifier", &TestM::custom_identifier)
 };
 
-TEST(TestCase_utility, make_fk)
-{
-	auto expected = "test_custom_identifier";
-	ASSERT_EQ(orm::util::make_fk<TestM>(), expected);
-}
-
 class TestModelWithoutPk : public orm::Model<TestModelWithoutPk>
 {
 public:
 	static constexpr const char* meta_table_name = "test_models_without_pk";
 };
-
-TEST(TestCase_utility, get_pk_name_Empty)
-{
-	ASSERT_EQ(orm::util::get_pk_name<TestModelWithoutPk>(), "");
-}
-
-TEST(TestCase_utility, make_fk_ThrowsPkRequired)
-{
-	ASSERT_THROW(orm::util::make_fk<TestModelWithoutPk>(), orm::QueryError);
-}
 
 TEST(TestCase_utility, check_model_Success)
 {

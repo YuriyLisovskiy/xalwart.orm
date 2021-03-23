@@ -340,15 +340,6 @@ TEST_F(SQLDriverBase_TestCase, make_update_query_ThrowsEmptyColumns)
 	);
 }
 
-
-
-
-
-
-
-
-
-
 TEST_F(SQLDriverBase_TestCase, make_delete_query_Full)
 {
 	auto expected = R"(DELETE FROM "test" WHERE "test"."id" = 1;)";

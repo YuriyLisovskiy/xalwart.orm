@@ -43,7 +43,7 @@ function(add_tests SUB_DIR SUB_NAME)
     endif()
 
     set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests/${SUB_DIR})
-    file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true ${TESTS_DIR}*.cpp)
+    file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true ${TESTS_DIR}*.h ${TESTS_DIR}*.cpp)
     foreach(entry ${SOURCES})
         if (IS_DIRECTORY ${entry})
             list(REMOVE_ITEM SOURCES ${entry})

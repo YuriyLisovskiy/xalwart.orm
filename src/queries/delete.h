@@ -29,7 +29,7 @@ protected:
 	// Driver to perform an access to the database.
 	abc::ISQLDriver* db = nullptr;
 
-	// Holds boolean condition for SQL 'WHERE' statement.
+	// Holds condition for SQL 'WHERE' statement.
 	q_value<condition_t> where_cond;
 
 	// List of primary keys to delete. It will be used by
@@ -98,7 +98,7 @@ public:
 		}
 
 		return this->db->make_delete_query(
-			util::get_table_name<ModelT>(), this->where_cond.value
+			meta::get_table_name<ModelT>(), this->where_cond.value
 		);
 	}
 
