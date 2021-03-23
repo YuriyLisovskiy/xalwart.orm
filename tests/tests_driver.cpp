@@ -303,3 +303,72 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedHaving)
 	);
 	ASSERT_EQ(expected, actual);
 }
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_Full)
+{
+	auto expected = R"(UPDATE "test" SET "test"."name" = 'Hello' WHERE "test"."id" = 1;)";
+	auto actual = this->driver->make_update_query(
+		TestDriver_TestModel::meta_table_name,
+		R"("test"."name" = 'Hello')",
+		orm::q::condition_t(R"("test"."id" = 1)")
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_WithoutCondition)
+{
+	auto expected = R"(UPDATE "test" SET "test"."name" = 'Hello';)";
+	auto actual = this->driver->make_update_query(
+		TestDriver_TestModel::meta_table_name, R"("test"."name" = 'Hello')", {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_ThrowsEmptyTableName)
+{
+	ASSERT_THROW(
+		auto _ = this->driver->make_update_query("", R"("test"."name" = 'Hello')", {}),
+		orm::QueryError
+	);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_ThrowsEmptyColumns)
+{
+	ASSERT_THROW(
+		auto _ = this->driver->make_update_query(TestDriver_TestModel::meta_table_name, "", {}),
+		orm::QueryError
+	);
+}
+
+
+
+
+
+
+
+
+
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_Full)
+{
+	auto expected = R"(DELETE FROM "test" WHERE "test"."id" = 1;)";
+	auto actual = this->driver->make_delete_query(
+		TestDriver_TestModel::meta_table_name,
+		orm::q::condition_t(R"("test"."id" = 1)")
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_WithoutCondition)
+{
+	auto expected = R"(DELETE FROM "test";)";
+	auto actual = this->driver->make_delete_query(
+		TestDriver_TestModel::meta_table_name, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_ThrowsEmptyTableName)
+{
+	ASSERT_THROW(auto _ = this->driver->make_delete_query("", {}), orm::QueryError);
+}
