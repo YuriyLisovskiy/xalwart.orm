@@ -35,7 +35,7 @@ class TestDriver : public orm::SQLDriverBase
 {
 public:
 	[[nodiscard]]
-	inline std::string run_insert(const std::string& query, bool bulk) const override { return ""; }
+	inline std::string run_insert(const std::string& query) const override { return ""; }
 
 	inline void run_select(
 		const std::string& query,
@@ -43,7 +43,7 @@ public:
 		void(*handle_row)(void* container, void* row_map)
 	) const override {}
 
-	inline void run_update(const std::string& query) const override {}
+	inline void run_update(const std::string& query, bool batch) const override {}
 
 	inline void run_delete(const std::string& query) const override {}
 

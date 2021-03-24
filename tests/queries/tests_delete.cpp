@@ -56,9 +56,9 @@ protected:
 	}
 };
 
-TEST_F(TestCaseF_Q_delete, exec_MissingDriverException)
+TEST_F(TestCaseF_Q_delete, commit_MissingDriverException)
 {
-	ASSERT_THROW(this->query->exec(), orm::QueryError);
+	ASSERT_THROW(this->query->commit(), orm::QueryError);
 }
 
 TEST_F(TestCaseF_Q_delete, query_MissingDriverException)
@@ -126,7 +126,7 @@ TEST_F(TestCaseF_Q_delete, query_MultipleModels)
 	ASSERT_EQ(expected, actual);
 }
 
-TEST_F(TestCaseF_Q_delete, exec_NoThrow)
+TEST_F(TestCaseF_Q_delete, commit_NoThrow)
 {
-	ASSERT_NO_THROW(this->query->use(this->driver).exec());
+	ASSERT_NO_THROW(this->query->use(this->driver).commit());
 }

@@ -20,7 +20,7 @@
 __Q_BEGIN__
 
 template <typename PkT, ModelBasedType ModelT>
-class delete_
+class delete_ final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
@@ -40,7 +40,7 @@ protected:
 	PkT ModelT::* pk_member_ptr;
 
 protected:
-	virtual inline void append_model(const ModelT& model)
+	inline void append_row(const ModelT& model)
 	{
 		if (model.is_null())
 		{
@@ -51,7 +51,7 @@ protected:
 	}
 
 public:
-	inline explicit delete_(PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
+	explicit delete_(PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
 	{
 		if (!this->pk_member_ptr)
 		{
@@ -60,18 +60,18 @@ public:
 	};
 
 	// Appends model's pk to deletion list.
-	inline explicit delete_(const ModelT& model, PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
+	explicit delete_(const ModelT& model, PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
 	{
 		if (!this->pk_member_ptr)
 		{
 			throw QueryError("delete: 'pk' member pointer is nullptr", _ERROR_DETAILS_);
 		}
 
-		this->append_model(model);
+		this->append_row(model);
 	};
 
 	// Sets SQL driver.
-	inline virtual delete_& use(abc::ISQLDriver* driver)
+	virtual delete_& use(abc::ISQLDriver* driver)
 	{
 		if (driver)
 		{
@@ -85,34 +85,35 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	virtual inline std::string query()
+	inline std::string query() const
 	{
 		if (!this->db)
 		{
 			throw QueryError("delete: database driver not set", _ERROR_DETAILS_);
 		}
 
-		if (!this->where_cond.is_set)
+		auto condition = this->where_cond;
+		if (!condition.is_set)
 		{
-			this->where_cond.set(in(this->pk_member_ptr, this->pks.begin(), this->pks.end()));
+			condition.set(in(this->pk_member_ptr, this->pks.begin(), this->pks.end()));
 		}
 
 		return this->db->make_delete_query(
-			meta::get_table_name<ModelT>(), this->where_cond.value
+			meta::get_table_name<ModelT>(), condition.value
 		);
 	}
 
 	// Appends model's pk to deletion list.
-	virtual inline delete_& model(const ModelT& model)
+	inline delete_& model(const ModelT& model)
 	{
-		this->append_model(model);
+		this->append_row(model);
 		return *this;
 	}
 
 	// Sets the condition for 'where' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual delete_& where(const condition_t& cond)
+	inline delete_& where(const condition_t& cond)
 	{
 		if (this->where_cond.is_set)
 		{
@@ -130,7 +131,7 @@ public:
 	// If no models were set, executes `DELETE` without
 	// condition, otherwise generates it from primary keys
 	// if it was not set manually.
-	inline virtual void exec()
+	inline void commit() const
 	{
 		auto query = this->query();
 		this->db->run_delete(query);

@@ -47,10 +47,22 @@ TEST(TestCase_Q_update, query_ThrowsDriverIsNotSet)
 	ASSERT_THROW(auto _ = orm::q::update(model).query(), orm::QueryError);
 }
 
-TEST(TestCase_Q_update, exec_ThrowsDriverIsNotSet)
+TEST(TestCase_Q_update, commit_one_ThrowsDriverIsNotSet)
 {
 	TestCase_Q_update_TestModel model;
-	ASSERT_THROW(orm::q::update(model).exec(), orm::QueryError);
+	ASSERT_THROW(orm::q::update(model).commit_one(), orm::QueryError);
+}
+
+TEST(TestCase_Q_update, commit_batch_ThrowsDriverIsNotSet)
+{
+	TestCase_Q_update_TestModel model;
+	ASSERT_THROW(orm::q::update(model).commit_batch(), orm::QueryError);
+}
+
+TEST(TestCase_Q_update, commit_one_ThrowsMultipleModelsWereSet)
+{
+	TestCase_Q_update_TestModel model_1, model_2;
+	ASSERT_THROW(orm::q::update(model_1).model(model_2).commit_one(), orm::QueryError);
 }
 
 class TestCaseF_Q_update : public ::testing::Test
@@ -69,7 +81,7 @@ protected:
 	}
 };
 
-TEST_F(TestCaseF_Q_update, query_Success)
+TEST_F(TestCaseF_Q_update, query_SingleRow)
 {
 	TestCase_Q_update_TestModel model;
 	model.id = 1;
@@ -80,11 +92,39 @@ TEST_F(TestCaseF_Q_update, query_Success)
 	ASSERT_EQ(expected, actual);
 }
 
-TEST_F(TestCaseF_Q_update, exec_NoThrow)
+TEST_F(TestCaseF_Q_update, query_MultipleRows)
+{
+	TestCase_Q_update_TestModel model_1;
+	model_1.id = 1;
+	model_1.name = "John";
+
+	TestCase_Q_update_TestModel model_2;
+	model_2.id = 2;
+	model_2.name = "Steve";
+
+	auto expected = R"(UPDATE "test" SET name = 'John' WHERE "test"."id" = 1; UPDATE "test" SET name = 'Steve' WHERE "test"."id" = 2;)";
+	auto actual = orm::q::update(model_1).model(model_2).use(this->driver).query();
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(TestCaseF_Q_update, commit_one_NoThrow)
 {
 	TestCase_Q_update_TestModel model;
 	model.id = 1;
 	model.name = "John";
 
-	ASSERT_NO_THROW(orm::q::update(model).use(this->driver).exec());
+	ASSERT_NO_THROW(orm::q::update(model).use(this->driver).commit_one());
+}
+
+TEST_F(TestCaseF_Q_update, commit_batch_NoThrow)
+{
+	TestCase_Q_update_TestModel model_1;
+	model_1.id = 1;
+	model_1.name = "John";
+
+	TestCase_Q_update_TestModel model_2;
+	model_2.id = 2;
+	model_2.name = "Steve";
+
+	ASSERT_NO_THROW(orm::q::update(model_1).model(model_2).use(this->driver).commit_batch());
 }

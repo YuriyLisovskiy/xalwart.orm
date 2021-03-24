@@ -47,7 +47,7 @@ public:
 
 	// insert row(s)
 	[[nodiscard]]
-	std::string run_insert(const std::string& query, bool bulk) const override;
+	std::string run_insert(const std::string& query) const override;
 
 	// select rows
 	void run_select(
@@ -57,7 +57,7 @@ public:
 	) const override;
 
 	// update row(s)
-	void run_update(const std::string& query) const override;
+	void run_update(const std::string& query, bool batch) const override;
 
 	// delete row(s)
 	void run_delete(const std::string& query) const override;

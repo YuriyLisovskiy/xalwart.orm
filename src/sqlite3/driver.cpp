@@ -45,7 +45,7 @@ Driver::Driver(const char* filename)
 	this->db = driver;
 }
 
-std::string Driver::run_insert(const std::string& query, bool bulk) const
+std::string Driver::run_insert(const std::string& query) const
 {
 	if (query.empty())
 	{
@@ -53,24 +53,19 @@ std::string Driver::run_insert(const std::string& query, bool bulk) const
 	}
 
 	char* message_error;
-	using data_t = std::pair<bool, std::string>;
-	data_t data(bulk, "");
-	auto extended_query = bulk ? query : (
-		"BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;"
-	);
+//	using data_t = std::pair<bool, std::string>;
+//	data_t data(batch, "");
+	std::string last_inserted_pk;
+	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;";
 	auto ret_val = sqlite3_exec(
 		this->db,
 		extended_query.c_str(),
 		[](void* data, int argc, char** argv, char** column_names) -> int {
-			auto& pair = *(data_t*)data;
-			if (!pair.first)
-			{
-				pair.second = argv[0];
-			}
-
+			auto& last_inserted_pk = *(std::string*)data;
+			last_inserted_pk = argv[0];
 			return 0;
 		},
-		&data,
+		&last_inserted_pk,
 		&message_error
 	);
 
@@ -81,7 +76,7 @@ std::string Driver::run_insert(const std::string& query, bool bulk) const
 		throw SQLError(message, _ERROR_DETAILS_);
 	}
 
-	return data.second;
+	return last_inserted_pk;
 }
 
 void Driver::run_select(
@@ -131,8 +126,9 @@ void Driver::run_select(
 	}
 }
 
-void Driver::run_update(const std::string& query) const
+void Driver::run_update(const std::string& query, bool batch) const
 {
+	// TODO: use batch mode
 	this->execute_query(query);
 }
 

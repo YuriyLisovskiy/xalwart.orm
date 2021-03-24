@@ -15,7 +15,7 @@ class MockedDriver : public orm::SQLDriverBase
 {
 public:
 	[[nodiscard]]
-	inline std::string run_insert(const std::string& query, bool bulk) const override
+	inline std::string run_insert(const std::string& query) const override
 	{
 		return "1";
 	}
@@ -28,7 +28,7 @@ public:
 	{
 	}
 
-	inline void run_update(const std::string& query) const override
+	inline void run_update(const std::string& query, bool batch) const override
 	{
 	}
 

@@ -38,16 +38,13 @@ protected:
 	// Collection of rows to insert.
 	std::vector<std::string> rows;
 
-	// Mark if bulk insert is used.
-	bool is_bulk = false;
-
 protected:
 
 	// Converts model into row (string) and appends it to `rows`.
 	//
 	// `is_first`: used to indicate if `append` is called for the
 	// first time. If true, than generates `columns_str`.
-	inline void append_model(const ModelT& model)
+	inline void append_row(const ModelT& model)
 	{
 		std::string row;
 		util::tuple_for_each(ModelT::meta_columns, [&row, model](auto& column)
@@ -110,7 +107,7 @@ public:
 
 		this->columns_str = columns;
 		str::rtrim(this->columns_str, ", ");
-		this->append_model(model);
+		this->append_row(model);
 	};
 
 	// Sets SQL driver.
@@ -152,8 +149,7 @@ public:
 			);
 		}
 
-		this->is_bulk = true;
-		this->append_model(model);
+		this->append_row(model);
 		return *this;
 	}
 
@@ -161,33 +157,33 @@ public:
 	//
 	// Throws 'QueryError' if more than one model was set.
 	[[nodiscard]]
-	inline std::string one() const
+	inline std::string commit_one() const
 	{
-		if (this->is_bulk)
+		if (this->rows.size() > 1)
 		{
 			throw QueryError(
-				"insert: unable to return inserted model, trying to insert multiple models",
+				"insert: trying to insert one model, but multiple models were set",
 				_ERROR_DETAILS_
 			);
 		}
 
 		auto query = this->query();
-		return this->db->run_insert(query, false);
+		return this->db->run_insert(query);
 	}
 
 	// Inserts one row and sets inserted primary key
 	// to `pk` as type T.
 	template <typename T>
-	inline void one(T& pk) const
+	inline void commit_one(T& pk) const
 	{
-		pk = util::as<T>(this->one().c_str());
+		pk = util::as<T>(this->commit_one().c_str());
 	}
 
 	// Inserts row(s) into database.
-	inline void bulk()
+	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_insert(query, true);
+		this->db->run_insert(query);
 	}
 };
 

@@ -40,7 +40,7 @@ public:
 	) const = 0;
 
 	[[nodiscard]]
-	virtual std::string run_insert(const std::string& query, bool bulk) const = 0;
+	virtual std::string run_insert(const std::string& query) const = 0;
 
 	// select rows
 	[[nodiscard]]
@@ -77,7 +77,7 @@ public:
 		const q::condition_t& condition
 	) const = 0;
 
-	virtual void run_update(const std::string& query) const = 0;
+	virtual void run_update(const std::string& query, bool batch) const = 0;
 
 	// delete row(s)
 	[[nodiscard]]

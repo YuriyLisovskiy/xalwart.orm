@@ -23,7 +23,7 @@ __Q_BEGIN__
 
 // TESTME: add tests with mocked driver
 template <ModelBasedType ModelT>
-class select
+class select final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
@@ -89,7 +89,7 @@ public:
 	};
 
 	// Sets SQL driver.
-	inline virtual select& use(abc::ISQLDriver* driver)
+	inline select& use(abc::ISQLDriver* driver)
 	{
 		if (driver)
 		{
@@ -103,7 +103,7 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	inline virtual std::string query() const
+	inline std::string query() const
 	{
 		if (!this->db)
 		{
@@ -131,7 +131,7 @@ public:
 	// Sets the distinct value.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& distinct()
+	inline select& distinct()
 	{
 		if (this->q_distinct.is_set)
 		{
@@ -264,7 +264,6 @@ public:
 		this->relations.push_back([
 			driver, first, second, t_name, fk_column, other_model_pk, pk_name_str
 		](ModelT& model) -> void {
-//			auto model_pk_val = "'" + model.__get_attr__(util::get_pk_name<ModelT>().c_str())->__str__() + "'";
 			auto model_pk_val = "'" + model.__get_attr__(pk_name_str.c_str())->__str__() + "'";
 			first(model, xw::Lazy<OtherModelT>(
 				[driver, first, second, t_name, fk_column, model_pk_val, other_model_pk]() -> OtherModelT {
@@ -416,7 +415,7 @@ public:
 	// Sets the condition for 'where' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& where(const q::condition_t& cond)
+	inline select& where(const q::condition_t& cond)
 	{
 		if (this->q_where.is_set)
 		{
@@ -434,7 +433,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with non-empty columns list.
-	inline virtual select& order_by(const std::initializer_list<q::ordering>& columns)
+	inline select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
 		if (this->q_order_by.is_set)
 		{
@@ -455,7 +454,7 @@ public:
 	// Sets the limit value.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& limit(size_t limit)
+	inline select& limit(size_t limit)
 	{
 		if (this->q_limit.is_set)
 		{
@@ -473,7 +472,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with positive value.
-	inline virtual select& offset(size_t offset)
+	inline select& offset(size_t offset)
 	{
 		if (this->q_offset.is_set)
 		{
@@ -495,7 +494,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with non-empty columns list.
-	inline virtual select& group_by(const std::initializer_list<std::string>& columns)
+	inline select& group_by(const std::initializer_list<std::string>& columns)
 	{
 		if (this->q_group_by.is_set)
 		{
@@ -516,7 +515,7 @@ public:
 	// Sets the condition for 'having' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& having(const q::condition_t& cond)
+	inline select& having(const q::condition_t& cond)
 	{
 		if (this->q_having.is_set)
 		{
@@ -536,7 +535,7 @@ public:
 	// vector, returns null-model.
 	//
 	// Throws 'QueryError' when driver is not set.
-	inline virtual ModelT first()
+	inline ModelT first()
 	{
 		// check if `limit(...)` was not called
 		if (!this->q_limit.is_set)
@@ -559,7 +558,7 @@ public:
 	// query and returns its result.
 	//
 	// Throws 'QueryError' when driver is not set.
-	inline virtual std::vector<ModelT> to_vector() const
+	inline std::vector<ModelT> to_vector() const
 	{
 		auto query = this->query();
 		using row_t = std::map<std::string, char*>;
