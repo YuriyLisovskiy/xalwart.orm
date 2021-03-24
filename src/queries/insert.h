@@ -58,17 +58,20 @@ protected:
 			}
 
 			using field_type = typename std::remove_reference<decltype(column)>::type;
-			using T = typename field_type::field_type;
-			if constexpr (std::is_fundamental_v<T>)
-			{
-				row += std::to_string(model.*column.member_pointer);
-			}
-			else if constexpr (std::is_same_v<T, std::string>)
-			{
-				row += "'" + model.*column.member_pointer + "'";
-			}
+//			using T = typename field_type::field_type;
 
-			row += ", ";
+			row += get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
+
+//			if constexpr (std::is_fundamental_v<T>)
+//			{
+//				row += std::to_string(model.*column.member_pointer);
+//			}
+//			else if constexpr (std::is_same_v<T, std::string>)
+//			{
+//				row += "'" + model.*column.member_pointer + "'";
+//			}
+
+//			row += ", ";
 			return true;
 		});
 

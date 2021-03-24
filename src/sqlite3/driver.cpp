@@ -128,8 +128,7 @@ void Driver::run_select(
 
 void Driver::run_update(const std::string& query, bool batch) const
 {
-	// TODO: use batch mode
-	this->execute_query(query);
+	this->execute_query(batch ? "BEGIN TRANSACTION; " + query + " COMMIT;" : query);
 }
 
 void Driver::run_delete(const std::string& query) const

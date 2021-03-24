@@ -37,7 +37,7 @@ class TestCaseF_Q_delete : public ::testing::Test
 {
 protected:
 	MockedDriver* driver;
-	orm::q::delete_<int, TestCaseF_Q_delete_TestModel>* query;
+	orm::q::delete_<TestCaseF_Q_delete_TestModel>* query;
 
 	void SetUp() override
 	{
@@ -46,7 +46,7 @@ protected:
 		TestCaseF_Q_delete_TestModel model;
 		model.id = 0;
 		model.name = "Steve";
-		this->query = new orm::q::delete_(model, &TestCaseF_Q_delete_TestModel::id);
+		this->query = new orm::q::delete_(model);
 	}
 
 	void TearDown() override
@@ -92,7 +92,7 @@ TEST(TestCase_Q_delete, constructor_ThrowsNullModel)
 	TestCaseF_Q_delete_TestModel null_model;
 	null_model.mark_as_null();
 	ASSERT_THROW(
-		auto _ = orm::q::delete_(null_model, &TestCaseF_Q_delete_TestModel::id),
+		auto _ = orm::q::delete_(null_model),
 		orm::QueryError
 	);
 }

@@ -19,7 +19,7 @@
 
 __Q_BEGIN__
 
-template <typename PkT, ModelBasedType ModelT>
+template <ModelBasedType ModelT>
 class delete_ final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -34,10 +34,7 @@ protected:
 
 	// List of primary keys to delete. It will be used by
 	// default if `where` is not called.
-	std::vector<PkT> pks{};
-
-	// Requires when generating condition.
-	PkT ModelT::* pk_member_ptr;
+	std::vector<std::string> pks{};
 
 protected:
 	inline void append_row(const ModelT& model)
@@ -47,26 +44,26 @@ protected:
 			throw QueryError("delete: unable to delete null model", _ERROR_DETAILS_);
 		}
 
-		this->pks.push_back(model.*this->pk_member_ptr);
+		util::tuple_for_each(ModelT::meta_columns, [this, model](auto& column)
+		{
+			if (column.is_pk)
+			{
+				using field_type = typename std::remove_reference<decltype(column)>::type;
+				this->pks.push_back(
+					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
+				);
+				return false;
+			}
+
+			return true;
+		});
 	}
 
 public:
-	explicit delete_(PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
-	{
-		if (!this->pk_member_ptr)
-		{
-			throw QueryError("delete: 'pk' member pointer is nullptr", _ERROR_DETAILS_);
-		}
-	};
 
 	// Appends model's pk to deletion list.
-	explicit delete_(const ModelT& model, PkT ModelT::* pk = &ModelT::id) : pk_member_ptr(pk)
+	explicit delete_(const ModelT& model)
 	{
-		if (!this->pk_member_ptr)
-		{
-			throw QueryError("delete: 'pk' member pointer is nullptr", _ERROR_DETAILS_);
-		}
-
 		this->append_row(model);
 	};
 
@@ -95,12 +92,23 @@ public:
 		auto condition = this->where_cond;
 		if (!condition.is_set)
 		{
-			condition.set(in(this->pk_member_ptr, this->pks.begin(), this->pks.end()));
+			util::tuple_for_each(ModelT::meta_columns, [this, &condition](auto& column)
+			{
+				if (column.is_pk)
+				{
+					condition.set(column_condition_t(
+						meta::get_table_name<ModelT>(),
+						column.name,
+						"IN (" + str::join(this->pks.begin(), this->pks.end(), ", ") + ")"
+					));
+					return false;
+				}
+
+				return true;
+			});
 		}
 
-		return this->db->make_delete_query(
-			meta::get_table_name<ModelT>(), condition.value
-		);
+		return this->db->make_delete_query(meta::get_table_name<ModelT>(), condition.value);
 	}
 
 	// Appends model's pk to deletion list.
