@@ -22,10 +22,9 @@
 __Q_BEGIN__
 
 template <ModelBasedType ModelT>
-class insert
+class insert final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
 
 protected:
 
@@ -39,45 +38,41 @@ protected:
 	// Collection of rows to insert.
 	std::vector<std::string> rows;
 
-	// Mark if bulk insert is used.
-	bool is_bulk = false;
-
 protected:
 
 	// Converts model into row (string) and appends it to `rows`.
 	//
 	// `is_first`: used to indicate if `append` is called for the
 	// first time. If true, than generates `columns_str`.
-	virtual inline void append_model(const ModelT& model, bool is_first)
+	inline void append_row(const ModelT& model)
 	{
 		std::string row;
-		for (auto attr = model.attrs_begin(); attr != model.attrs_end(); attr++)
+		util::tuple_for_each(ModelT::meta_columns, [&row, model](auto& column)
 		{
 			if constexpr (ModelT::meta_omit_pk)
 			{
-				if (attr->first == ModelT::meta_pk_name)
+				if (column.is_pk)
 				{
-					continue;
+					return true;
 				}
 			}
 
-			if (is_first)
+			using field_type = typename std::remove_reference<decltype(column)>::type;
+			using T = typename field_type::field_type;
+			if constexpr (std::is_fundamental_v<T>)
 			{
-				this->columns_str += attr->first;
+				row += std::to_string(model.*column.member_pointer);
+			}
+			else if constexpr (std::is_same_v<T, std::string>)
+			{
+				row += "'" + model.*column.member_pointer + "'";
 			}
 
-			row += attr->second.get()->__repr__();
-			if (std::next(attr) != model.attrs_end())
-			{
-				if (is_first)
-				{
-					this->columns_str += ", ";
-				}
+			row += ", ";
+			return true;
+		});
 
-				row += ", ";
-			}
-		}
-
+		str::rtrim(row, ", ");
 		this->rows.push_back(row);
 	}
 
@@ -95,17 +90,28 @@ public:
 			);
 		}
 
-		this->append_model(model, true);
-	};
+		std::string columns;
+		util::tuple_for_each(ModelT::meta_columns, [&columns](auto& column)
+		{
+			if constexpr (ModelT::meta_omit_pk)
+			{
+				if (column.is_pk)
+				{
+					return true;
+				}
+			}
 
-	// Sets SQL driver and appends model to insertion list.
-	inline explicit insert(abc::ISQLDriver* driver, const ModelT& model) : insert(model)
-	{
-		this->db = driver;
+			columns += column.name + ", ";
+			return true;
+		});
+
+		this->columns_str = columns;
+		str::rtrim(this->columns_str, ", ");
+		this->append_row(model);
 	};
 
 	// Sets SQL driver.
-	inline virtual insert& use(abc::ISQLDriver* driver)
+	virtual insert& use(abc::ISQLDriver* driver)
 	{
 		if (driver)
 		{
@@ -119,7 +125,7 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	virtual inline std::string query() const
+	inline std::string query() const
 	{
 		if (!this->db)
 		{
@@ -127,14 +133,14 @@ public:
 		}
 
 		return this->db->make_insert_query(
-			get_table_name<ModelT>(), this->columns_str, this->rows
+			meta::get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
 
 	// Appends model to insertion list.
 	//
 	// Throws 'QueryError' if model is null.
-	virtual inline insert& model(const ModelT& model)
+	inline insert& model(const ModelT& model)
 	{
 		if (model.is_null())
 		{
@@ -143,8 +149,7 @@ public:
 			);
 		}
 
-		this->is_bulk = true;
-		this->append_model(model, false);
+		this->append_row(model);
 		return *this;
 	}
 
@@ -152,33 +157,33 @@ public:
 	//
 	// Throws 'QueryError' if more than one model was set.
 	[[nodiscard]]
-	inline virtual std::string one() const
+	inline std::string commit_one() const
 	{
-		if (this->is_bulk)
+		if (this->rows.size() > 1)
 		{
 			throw QueryError(
-				"insert: unable to return inserted model, trying to insert multiple models",
+				"insert: trying to insert one model, but multiple models were set",
 				_ERROR_DETAILS_
 			);
 		}
 
 		auto query = this->query();
-		return this->db->run_insert(query, false);
+		return this->db->run_insert(query);
 	}
 
 	// Inserts one row and sets inserted primary key
 	// to `pk` as type T.
 	template <typename T>
-	inline void one(T& pk) const
+	inline void commit_one(T& pk) const
 	{
-		pk = util::as<T>(this->one().c_str());
+		pk = util::as<T>(this->commit_one().c_str());
 	}
 
 	// Inserts row(s) into database.
-	inline virtual void bulk()
+	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_insert(query, true);
+		this->db->run_insert(query);
 	}
 };
 

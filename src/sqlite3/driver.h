@@ -22,15 +22,18 @@
 
 __SQLITE3_BEGIN__
 
-class SQLite3Driver : public SQLDriverBase
+class Driver : public SQLDriverBase
 {
 protected:
 	::sqlite3* db = nullptr;
 
-public:
-	explicit SQLite3Driver(const char* filename);
+protected:
+	void execute_query(const std::string& query) const;
 
-	inline ~SQLite3Driver() override
+public:
+	explicit Driver(const char* filename);
+
+	inline ~Driver() override
 	{
 		sqlite3_close(this->db);
 		SQLDriverBase::~SQLDriverBase();
@@ -44,7 +47,7 @@ public:
 
 	// insert row(s)
 	[[nodiscard]]
-	std::string run_insert(const std::string& query, bool bulk) const override;
+	std::string run_insert(const std::string& query) const override;
 
 	// select rows
 	void run_select(
@@ -54,7 +57,7 @@ public:
 	) const override;
 
 	// update row(s)
-	void run_update(const std::string& query) const override;
+	void run_update(const std::string& query, bool batch) const override;
 
 	// delete row(s)
 	void run_delete(const std::string& query) const override;

@@ -48,7 +48,7 @@ std::string SQLDriverBase::make_insert_query(
 
 std::string SQLDriverBase::make_select_query(
 	const std::string& table_name,
-	const std::initializer_list<const char*>& columns,
+	const std::vector<std::string>& columns,
 	bool distinct,
 	const std::vector<q::join_t>& joins,
 	const q::condition_t& where_cond,
@@ -64,7 +64,7 @@ std::string SQLDriverBase::make_select_query(
 		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
-	if (!columns.size())
+	if (columns.empty())
 	{
 		this->throw_empty_arg("columns", _ERROR_DETAILS_);
 	}
@@ -172,9 +172,19 @@ std::string SQLDriverBase::make_update_query(
 		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
-	std::string query = "UPDATE " + table_name +
-		" SET " + columns_data + " WHERE " + (std::string)condition;
-	return query;
+	if (columns_data.empty())
+	{
+		this->throw_empty_arg("columns_data", _ERROR_DETAILS_);
+	}
+
+	std::string query = "UPDATE " + util::quote_str(table_name) + " SET " + columns_data;
+	auto cond_str = (std::string)condition;
+	if (!cond_str.empty())
+	{
+		query += " WHERE " + cond_str;
+	}
+
+	return query + ";";
 }
 
 std::string SQLDriverBase::make_delete_query(

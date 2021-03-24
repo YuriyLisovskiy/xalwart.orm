@@ -10,16 +10,32 @@
 
 using namespace xw;
 
-struct TestDriver_TestModel : public orm::Model
+struct TestDriver_TestModel : public orm::Model<TestDriver_TestModel>
 {
+	int id{};
+	std::string name;
+
 	static constexpr const char* meta_table_name = "test";
+
+	static const std::tuple<
+		orm::column_meta_t<TestDriver_TestModel, int>,
+		orm::column_meta_t<TestDriver_TestModel, std::string>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<TestDriver_TestModel, int>,
+	orm::column_meta_t<TestDriver_TestModel, std::string>
+> TestDriver_TestModel::meta_columns = {
+	orm::make_column_meta("id", &TestDriver_TestModel::id),
+	orm::make_column_meta("name", &TestDriver_TestModel::name)
 };
 
 class TestDriver : public orm::SQLDriverBase
 {
 public:
 	[[nodiscard]]
-	inline std::string run_insert(const std::string& query, bool bulk) const override { return ""; }
+	inline std::string run_insert(const std::string& query) const override { return ""; }
 
 	inline void run_select(
 		const std::string& query,
@@ -27,7 +43,7 @@ public:
 		void(*handle_row)(void* container, void* row_map)
 	) const override {}
 
-	inline void run_update(const std::string& query) const override {}
+	inline void run_update(const std::string& query, bool batch) const override {}
 
 	inline void run_delete(const std::string& query) const override {}
 
@@ -128,22 +144,52 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Distinct)
 	ASSERT_EQ(expected, actual);
 }
 
-class LeftTestModel : public orm::Model
+class LeftTestModel : public orm::Model<LeftTestModel>
 {
 public:
+	int id{};
+	std::string name;
+
 	static constexpr const char* meta_table_name = "left_model";
-	static constexpr std::initializer_list<const char*> meta_fields = {
-		"id", "name"
-	};
+
+	static const std::tuple<
+		orm::column_meta_t<LeftTestModel, int>,
+		orm::column_meta_t<LeftTestModel, std::string>
+	> meta_columns;
 };
 
-class RightTestModel : public orm::Model
+const std::tuple<
+	orm::column_meta_t<LeftTestModel, int>,
+	orm::column_meta_t<LeftTestModel, std::string>
+> LeftTestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &LeftTestModel::id),
+	orm::make_column_meta("name", &LeftTestModel::name)
+};
+
+class RightTestModel : public orm::Model<RightTestModel>
 {
 public:
+	int id{};
+	std::string name;
+	int left_id{};
+
 	static constexpr const char* meta_table_name = "right_model";
-	static constexpr std::initializer_list<const char*> meta_fields = {
-		"id", "name", "left_id"
-	};
+
+	static const std::tuple<
+		orm::column_meta_t<RightTestModel, int>,
+		orm::column_meta_t<RightTestModel, std::string>,
+		orm::column_meta_t<RightTestModel, int>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<RightTestModel, int>,
+	orm::column_meta_t<RightTestModel, std::string>,
+	orm::column_meta_t<RightTestModel, int>
+> RightTestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &RightTestModel::id),
+	orm::make_column_meta("name", &RightTestModel::name),
+	orm::make_column_meta("left_id", &RightTestModel::left_id)
 };
 
 TEST_F(SQLDriverBase_TestCase, make_select_query_Join)
@@ -162,7 +208,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Where)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE "test"."id" = 1;)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1
+			orm::q::c(&TestDriver_TestModel::id) == 1
 		}, {}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -173,7 +219,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedWhere)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE ("test"."id" = 1 AND "test"."name" < 'John');)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1 & orm::q::c<TestDriver_TestModel>("name") < "John"
+			orm::q::c(&TestDriver_TestModel::id) == 1 & orm::q::c(&TestDriver_TestModel::name) < "John"
 		}, {}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -184,7 +230,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_OrderBy)
 	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {
-			orm::q::asc<TestDriver_TestModel>("id"), orm::q::desc<TestDriver_TestModel>("name")
+			orm::q::asc(&TestDriver_TestModel::id), orm::q::desc(&TestDriver_TestModel::name)
 		}, -1, 0, {}, {}
 	);
 	ASSERT_EQ(expected, actual);
@@ -230,7 +276,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ThrowsHavingWithoutGroupBy)
 {
 	ASSERT_THROW(auto _ = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {}, {
-			orm::q::c<TestDriver_TestModel>("id") == 1
+			orm::q::c(&TestDriver_TestModel::id) == 1
 		}
 	), orm::QueryError);
 }
@@ -241,7 +287,7 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_Having)
 	auto actual = this->driver->make_select_query(
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0,
 		{"id"},
-		orm::q::c<TestDriver_TestModel>("id") == 1
+		orm::q::c(&TestDriver_TestModel::id) == 1
 	);
 	ASSERT_EQ(expected, actual);
 }
@@ -253,7 +299,67 @@ TEST_F(SQLDriverBase_TestCase, make_select_query_ComplicatedHaving)
 		TestDriver_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {
 			"id"
 		},
-		orm::q::c<TestDriver_TestModel>("id") == 1 & orm::q::c<TestDriver_TestModel>("name") < "John"
+		orm::q::c(&TestDriver_TestModel::id) == 1 & orm::q::c(&TestDriver_TestModel::name) < "John"
 	);
 	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_Full)
+{
+	auto expected = R"(UPDATE "test" SET "test"."name" = 'Hello' WHERE "test"."id" = 1;)";
+	auto actual = this->driver->make_update_query(
+		TestDriver_TestModel::meta_table_name,
+		R"("test"."name" = 'Hello')",
+		orm::q::condition_t(R"("test"."id" = 1)")
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_WithoutCondition)
+{
+	auto expected = R"(UPDATE "test" SET "test"."name" = 'Hello';)";
+	auto actual = this->driver->make_update_query(
+		TestDriver_TestModel::meta_table_name, R"("test"."name" = 'Hello')", {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_ThrowsEmptyTableName)
+{
+	ASSERT_THROW(
+		auto _ = this->driver->make_update_query("", R"("test"."name" = 'Hello')", {}),
+		orm::QueryError
+	);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_update_query_ThrowsEmptyColumns)
+{
+	ASSERT_THROW(
+		auto _ = this->driver->make_update_query(TestDriver_TestModel::meta_table_name, "", {}),
+		orm::QueryError
+	);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_Full)
+{
+	auto expected = R"(DELETE FROM "test" WHERE "test"."id" = 1;)";
+	auto actual = this->driver->make_delete_query(
+		TestDriver_TestModel::meta_table_name,
+		orm::q::condition_t(R"("test"."id" = 1)")
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_WithoutCondition)
+{
+	auto expected = R"(DELETE FROM "test";)";
+	auto actual = this->driver->make_delete_query(
+		TestDriver_TestModel::meta_table_name, {}
+	);
+	ASSERT_EQ(expected, actual);
+}
+
+TEST_F(SQLDriverBase_TestCase, make_delete_query_ThrowsEmptyTableName)
+{
+	ASSERT_THROW(auto _ = this->driver->make_delete_query("", {}), orm::QueryError);
 }

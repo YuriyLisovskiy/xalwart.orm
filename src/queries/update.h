@@ -18,59 +18,71 @@
 
 __Q_BEGIN__
 
-// TESTME: update
 template <ModelBasedType ModelT>
-class update
+class update final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
 
 protected:
 
 	// Driver to perform an access to the database.
 	abc::ISQLDriver* db = nullptr;
 
-	std::string columns_data;
+	// Name of the table which is retrieved from
+	// `ModelT::meta_table_name` static member.
+	std::string table_name;
 
-	q::condition_t condition;
+	// Holds rows to update.
+	//
+	// `first`: columns with new values separated by comma.
+	// Example: "name = 'Steve', age = 21".
+	//
+	// `second`: condition for 'WHERE' statement.
+	//	Indicates what rows should be updated.
+	std::vector<std::pair<std::string, q::condition_t>> rows;
 
-public:
-
-	// Prepares model's data.
-	inline explicit update(const ModelT& model)
+protected:
+	inline void append_row(const ModelT& model)
 	{
 		if (model.is_null())
 		{
 			throw QueryError("update: unable to update null model", _ERROR_DETAILS_);
 		}
 
-		for (auto attr = model.attrs_begin(); attr != model.attrs_end(); attr++)
+		std::string pk_name, pk_val;
+		std::pair<std::string, q::condition_t> row_data;
+		util::tuple_for_each(ModelT::meta_columns, [model, &pk_name, &pk_val, &row_data](auto& column)
 		{
-			if constexpr (ModelT::meta_omit_pk)
+			using field_type = typename std::remove_reference<decltype(column)>::type;
+			using T = typename field_type::field_type;
+
+			if (column.is_pk)
 			{
-				if (attr->first == ModelT::meta_pk_name)
+				pk_val = get_column_value_as_string<ModelT, T>(model, column);
+				pk_name = column.name;
+
+				if constexpr (ModelT::meta_omit_pk)
 				{
-					continue;
+					return true;
 				}
 			}
 
-			this->columns_data += attr->first + " = " + attr->second.get()->__repr__();
-			if (std::next(attr) != model.attrs_end())
-			{
-				this->columns_data += ", ";
-			}
-		}
+			row_data.first += column.name + " = " + get_column_value_as_string<ModelT, T>(model, column) + ", ";
+			return true;
+		});
 
-		std::string pk_name = get_pk_name<ModelT>();
-		this->condition = q::column_condition_t(
-			"", pk_name, "= " + model.__get_attr__(pk_name.c_str())->__repr__()
-		);
-	};
+		str::rtrim(row_data.first, ", ");
+		row_data.second = q::column_condition_t(this->table_name, pk_name, "= " + pk_val);
+		this->rows.push_back(row_data);
+	}
 
-	// Sets SQL driver and prepares model's data.
-	inline explicit update(abc::ISQLDriver* driver, const ModelT& model) : update(model)
+public:
+
+	// Prepares model's data.
+	inline explicit update(const ModelT& model)
 	{
-		this->db = driver;
+		this->table_name = meta::get_table_name<ModelT>();
+		this->append_row(model);
 	};
 
 	// Sets SQL driver.
@@ -95,16 +107,43 @@ public:
 			throw QueryError("update: database driver not set", _ERROR_DETAILS_);
 		}
 
-		return this->db->make_update_query(
-			get_table_name<ModelT>(), this->columns_data, this->condition
+		return str::join(
+			this->rows.begin(), this->rows.end(), " ",
+			[this](const auto& row) -> std::string {
+				return this->db->make_update_query(this->table_name, row.first, row.second);
+			}
 		);
 	}
 
-	// Update row(s) in database.
-	inline void exec()
+	// Appends model to updating list.
+	//
+	// Throws 'QueryError' if model is null.
+	inline update& model(const ModelT& model)
+	{
+		this->append_row(model);
+		return *this;
+	}
+
+	// Updates one row in database.
+	inline void commit_one() const
+	{
+		if (this->rows.size() > 1)
+		{
+			throw QueryError(
+				"update: trying to update one model, but multiple models were set",
+				_ERROR_DETAILS_
+			);
+		}
+
+		auto query = this->query();
+		this->db->run_update(query, false);
+	}
+
+	// Updates multiple rows in database.
+	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_update(query);
+		this->db->run_update(query, true);
 	}
 };
 

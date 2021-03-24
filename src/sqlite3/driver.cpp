@@ -14,7 +14,19 @@
 
 __SQLITE3_BEGIN__
 
-SQLite3Driver::SQLite3Driver(const char* filename)
+void Driver::execute_query(const std::string& query) const
+{
+	char* message_error;
+	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
+	if (exit != SQLITE_OK)
+	{
+		auto message = std::string(message_error);
+		sqlite3_free(message_error);
+		throw SQLError(message, _ERROR_DETAILS_);
+	}
+}
+
+Driver::Driver(const char* filename)
 {
 	if (!filename)
 	{
@@ -33,7 +45,7 @@ SQLite3Driver::SQLite3Driver(const char* filename)
 	this->db = driver;
 }
 
-std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
+std::string Driver::run_insert(const std::string& query) const
 {
 	if (query.empty())
 	{
@@ -41,24 +53,19 @@ std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
 	}
 
 	char* message_error;
-	using data_t = std::pair<bool, std::string>;
-	data_t data(bulk, "");
-	auto extended_query = bulk ? query : (
-		"BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;"
-	);
+//	using data_t = std::pair<bool, std::string>;
+//	data_t data(batch, "");
+	std::string last_inserted_pk;
+	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;";
 	auto ret_val = sqlite3_exec(
 		this->db,
 		extended_query.c_str(),
 		[](void* data, int argc, char** argv, char** column_names) -> int {
-			auto& pair = *(data_t*)data;
-			if (!pair.first)
-			{
-				pair.second = argv[0];
-			}
-
+			auto& last_inserted_pk = *(std::string*)data;
+			last_inserted_pk = argv[0];
 			return 0;
 		},
-		&data,
+		&last_inserted_pk,
 		&message_error
 	);
 
@@ -69,10 +76,10 @@ std::string SQLite3Driver::run_insert(const std::string& query, bool bulk) const
 		throw SQLError(message, _ERROR_DETAILS_);
 	}
 
-	return data.second;
+	return last_inserted_pk;
 }
 
-void SQLite3Driver::run_select(
+void Driver::run_select(
 	const std::string& query, void* container, void(*handle_row)(void*, void*)
 ) const
 {
@@ -119,28 +126,15 @@ void SQLite3Driver::run_select(
 	}
 }
 
-void SQLite3Driver::run_update(const std::string& query) const
+void Driver::run_update(const std::string& query, bool batch) const
 {
-	char* message_error;
-	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
-	if (exit != SQLITE_OK)
-	{
-		auto message = std::string(message_error);
-		sqlite3_free(message_error);
-		throw SQLError(message, _ERROR_DETAILS_);
-	}
+	// TODO: use batch mode
+	this->execute_query(query);
 }
 
-void SQLite3Driver::run_delete(const std::string& query) const
+void Driver::run_delete(const std::string& query) const
 {
-	char* message_error;
-	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
-	if (exit != SQLITE_OK)
-	{
-		auto message = std::string(message_error);
-		sqlite3_free(message_error);
-		throw SQLError(message, _ERROR_DETAILS_);
-	}
+	this->execute_query(query);
 }
 
 __SQLITE3_END__

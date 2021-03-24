@@ -25,6 +25,59 @@
 
 __ORM_BEGIN__
 
+template <typename T>
+concept column_field_type = std::is_fundamental_v<T> ||
+	std::is_same_v<std::string, T> ||
+	std::is_same_v<const char*, T>;
+
+template <typename ModelT, column_field_type FieldT>
+struct column_meta_t
+{
+	using field_type = FieldT;
+	using model_type = ModelT;
+
+	std::string name;
+	bool is_pk;
+
+	FieldT ModelT::* member_pointer;
+
+	column_meta_t() = default;
+
+	column_meta_t(std::string name, FieldT ModelT::* member_ptr, bool is_pk)
+		: name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk)
+	{
+	}
+
+	column_meta_t(const column_meta_t& other)
+	{
+		if (this != &other)
+		{
+			this->name = other.name;
+			this->is_pk = other.is_pk;
+			this->member_pointer = other.member_pointer;
+		}
+	}
+};
+
+template <typename ModelT, column_field_type FieldT>
+inline column_meta_t<ModelT, FieldT> make_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr
+)
+{
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
+}
+
+template <typename ModelT, column_field_type FieldT>
+inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr
+)
+{
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
+}
+
+// !IMPORTANT!
+// Currently Model supports single pk only.
+template <typename Derived, typename ...Columns>
 class Model : public object::Object
 {
 private:
@@ -39,17 +92,21 @@ public:
 	// Must be overwritten in child class.
 	static constexpr const char* meta_table_name = nullptr;
 
-	// Can be overwritten in child class.
-	static constexpr const char* meta_pk_name = "id";
-
 	// Omit primary key when inserting new models.
 	//
 	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
 
-	static constexpr std::initializer_list<const char*> meta_fields = {};
+	// Tuple of mapped columns. At least, primary key
+	// is required.
+	//
+	// Must be overwritten in child class.
+	static const std::tuple<Columns...> meta_columns;
 
 protected:
+
+	// Copies base class. Must be called when copy-constructor
+	// is overridden.
 	inline void copy_base(const Model& other)
 	{
 		this->_is_null_model = other._is_null_model;
@@ -82,12 +139,73 @@ public:
 	[[nodiscard]]
 	inline std::string __repr__() const override
 	{
-		if (this->_is_null_model)
+		return this->__str__();
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<Object> __get_attr__(const char* attr_name) override
+	{
+		std::shared_ptr<Object> obj;
+		util::tuple_for_each(Derived::meta_columns, [this, attr_name, &obj](auto& column)
 		{
-			return "Model{null}";
+			if (column.name == std::string(attr_name))
+			{
+				using field_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename field_type::model_type;
+				using T = typename field_type::field_type;
+				if constexpr (std::is_fundamental_v<T>)
+				{
+					obj = std::make_shared<types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
+				}
+				else if constexpr (std::is_same_v<T, std::string>)
+				{
+					obj = std::make_shared<types::String>(((model_type*)this)->*column.member_pointer);
+				}
+
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!obj)
+		{
+			throw core::AttributeError(
+				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
+				_ERROR_DETAILS_
+			);
 		}
 
-		return object::Object::__repr__();
+		return obj;
+	}
+
+	void __set_attr__(const char* attr_name, const void* data) override
+	{
+		bool is_set = false;
+		util::tuple_for_each(Derived::meta_columns, [this, attr_name, data, &is_set](auto& column)
+		{
+			if (column.name == std::string(attr_name))
+			{
+				using column_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename column_type::model_type;
+				using field_type = typename column_type::field_type;
+				size_t len = std::strlen((char*)data);
+				std::string str_val = {(char*)data, (char*)data + len + 1};
+				((model_type*)this)->*column.member_pointer = util::as<field_type>(str_val.c_str());
+				is_set = true;
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!is_set)
+		{
+			throw core::AttributeError(
+				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
+				_ERROR_DETAILS_
+			);
+		}
 	}
 
 	// Marks model as null-model. This action can not be undone.
@@ -116,82 +234,31 @@ public:
 	}
 };
 
+template <typename Derived, typename ...Cs>
+const std::tuple<Cs...> Model<Derived, Cs...>::meta_columns = {};
+
 // Used in templates where Model-based class is required.
 template <typename T>
-concept ModelBasedType = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+concept ModelBasedType = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
 
-// Retrieves table name of 'ModelT'. If ModelT::meta_table_name
-// is nullptr, uses 'utility::demangle(...)' method to complete
-// the operation.
-template <ModelBasedType ModelT>
-inline std::string get_table_name()
+template <typename M, column_field_type F>
+std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)
 {
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
-	return ModelT::meta_table_name;
-}
-
-template <ModelBasedType ModelT>
-inline std::string get_pk_name()
-{
-	static_assert(
-		ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized"
-	);
-	return ModelT::meta_pk_name;
-}
-
-template <types::fundamental_type F>
-inline object::Attribute field_accessor(F* field)
-{
-	return object::Attribute(
-		[field]() -> std::shared_ptr<object::Object> {
-			return std::make_shared<types::Fundamental<F>>(*field);
-		},
-		[field](const void* val) -> void {
-			size_t len = std::strlen((char*)val);
-			std::string str_val = {(char*)val, (char*)val + len + 1};
-			*field = util::as<F>(str_val.c_str());
-		}
-	);
-}
-
-inline object::Attribute field_accessor(std::string* field)
-{
-	return xw::object::Attribute(
-		[field]() -> std::shared_ptr<object::Object> {
-			return std::make_shared<types::String>(*field);
-		},
-		[field](const void* val) -> void {
-			size_t len = std::strlen((char*)val);
-			*field = {(char*)val, (char*)val + len + 1};
-		}
-	);
-}
-
-template <ModelBasedType F, LazyType<F> L>
-inline object::Attribute field_getter_lazy(L* field)
-{
-	return object::Attribute(
-		[field]() -> std::shared_ptr<object::Object> {
-			return std::make_shared<F>(field->value());
-		}
-	);
-}
-
-template <ModelBasedType ModelT>
-inline std::string make_fk()
-{
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
-	std::string table_name = ModelT::meta_table_name;
-	if (table_name.ends_with('s'))
+	std::string result;
+	if constexpr (std::is_fundamental_v<F>)
 	{
-		table_name = table_name.substr(0, table_name.size() - 1);
+		result = std::to_string(model.*column_meta.member_pointer);
+	}
+	else if constexpr (std::is_same_v<F, std::string>)
+	{
+		result = "'" + model.*column_meta.member_pointer + "'";
+	}
+	else if constexpr (std::is_same_v<F, const char*>)
+	{
+		result = "'" + std::string(model.*column_meta.member_pointer) + "'";
 	}
 
-	return table_name + "_" + ModelT::meta_pk_name;
+	return result;
 }
 
 __ORM_END__

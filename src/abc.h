@@ -40,13 +40,13 @@ public:
 	) const = 0;
 
 	[[nodiscard]]
-	virtual std::string run_insert(const std::string& query, bool bulk) const = 0;
+	virtual std::string run_insert(const std::string& query) const = 0;
 
 	// select rows
 	[[nodiscard]]
 	virtual std::string make_select_query(
 		const std::string& table_name,
-		const std::initializer_list<const char*>& columns,
+		const std::vector<std::string>& columns,
 		bool distinct,
 		const std::vector<q::join_t>& joins,
 		const q::condition_t& where_cond,
@@ -77,7 +77,7 @@ public:
 		const q::condition_t& condition
 	) const = 0;
 
-	virtual void run_update(const std::string& query) const = 0;
+	virtual void run_update(const std::string& query, bool batch) const = 0;
 
 	// delete row(s)
 	[[nodiscard]]

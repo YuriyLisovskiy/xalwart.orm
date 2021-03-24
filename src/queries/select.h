@@ -1,5 +1,5 @@
 /**
- * query/select.h
+ * queries/select.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -21,11 +21,11 @@
 
 __Q_BEGIN__
 
+// TESTME: add tests with mocked driver
 template <ModelBasedType ModelT>
-class select
+class select final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-	static_assert(ModelT::meta_pk_name != nullptr, "'meta_pk_name' is not initialized");
 
 protected:
 
@@ -76,21 +76,20 @@ public:
 	// Retrieves table name and sets the default values.
 	inline explicit select()
 	{
-		this->table_name = get_table_name<ModelT>();
-		this->pk_name = get_pk_name<ModelT>();
+		this->table_name = meta::get_table_name<ModelT>();
+		this->pk_name = meta::get_pk_name<ModelT>();
+		if (this->pk_name.empty())
+		{
+			throw QueryError("select: model requires pk column", _ERROR_DETAILS_);
+		}
+
 		this->q_distinct.value = false;
 		this->q_limit.value = -1;
 		this->q_offset.value = -1;
 	};
 
-	// Sets SQL driver and calls the default constructor.
-	inline explicit select(abc::ISQLDriver* driver) : select()
-	{
-		this->db = driver;
-	};
-
 	// Sets SQL driver.
-	inline virtual select& use(abc::ISQLDriver* driver)
+	inline select& use(abc::ISQLDriver* driver)
 	{
 		if (driver)
 		{
@@ -104,16 +103,20 @@ public:
 	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	inline virtual std::string query() const
+	inline std::string query() const
 	{
 		if (!this->db)
 		{
 			throw QueryError("select: database driver not set", _ERROR_DETAILS_);
 		}
 
+		std::vector<std::string> columns;
+		util::tuple_for_each(ModelT::meta_columns, [&columns](auto& column) {
+			columns.push_back(column.name);
+		});
 		return this->db->make_select_query(
 			this->table_name,
-			ModelT::meta_fields,
+			columns,
 			this->q_distinct.value,
 			this->joins,
 			this->q_where.value,
@@ -128,7 +131,7 @@ public:
 	// Sets the distinct value.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& distinct()
+	inline select& distinct()
 	{
 		if (this->q_distinct.is_set)
 		{
@@ -162,6 +165,9 @@ public:
 	// to each of the selected `OtherModelT` objects via an address to
 	// class field of `ModelT`.
 	//
+	// `model_pk`: member pointer to primary key field of ModelT.
+	// By default '&ModelT::id' is used.
+	//
 	// `foreign_key`: is used for joining of `ModelT` with `OtherModelT`.
 	// It is foreign key in `OtherModelT` to `ModelT` table.
 	// If `foreign_key` is empty it will be generated automatically using
@@ -169,28 +175,26 @@ public:
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	template <typename PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
+		PrimaryKeyT ModelT::* model_pk = &ModelT::id,
 		std::string foreign_key=""
 	)
 	{
-		if (foreign_key.empty())
-		{
-			foreign_key = this->table_name.substr(0, this->table_name.size() - 1) + "_id";
-		}
-
+		auto fk_column = foreign_key.empty() ? meta::make_fk<ModelT>() : foreign_key;
 		abc::ISQLDriver* driver = this->db;
-		this->relations.push_back([driver, foreign_key, first, second](ModelT& model) -> void {
-			auto pk_val = util::as<PrimaryKeyT>(
-				model.__get_attr__(ModelT::meta_pk_name)->__str__().c_str()
-			);
+		this->relations.push_back([driver, fk_column, first, second, model_pk](ModelT& model) -> void {
+			auto pk_val = "'" + model.__get_attr__(meta::get_column_name(model_pk).c_str())->__str__() + "'";
 			first(model, xw::Lazy<std::vector<OtherModelT>>(
-				[driver, foreign_key, pk_val, first, second]() -> std::vector<OtherModelT> {
+				[driver, fk_column, pk_val, first, second, model_pk]() -> std::vector<OtherModelT> {
 					return select<OtherModelT>().use(driver)
-						.template many_to_one<ModelT, PrimaryKeyT>(second, first, foreign_key)
-						.where(q::c<OtherModelT>(foreign_key) == pk_val)
+						.template many_to_one<PrimaryKeyT, ModelT>(second, first, model_pk, fk_column)
+						.where(q::column_condition_t(
+							meta::get_table_name<OtherModelT>(),
+							util::quote_str(fk_column), "= " + pk_val
+						))
 						.to_vector();
 				}
 			));
@@ -203,20 +207,22 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	template <typename PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
-		xw::Lazy<std::vector<OtherModelT>> ModelT::*left,
-		xw::Lazy<ModelT> OtherModelT::*right,
+		xw::Lazy<std::vector<OtherModelT>> ModelT::* left,
+		xw::Lazy<ModelT> OtherModelT::* right,
+		PrimaryKeyT ModelT::* model_pk = &ModelT::id,
 		std::string foreign_key=""
 	)
 	{
-		return this->template one_to_many<OtherModelT, PrimaryKeyT>(
+		return this->template one_to_many<PrimaryKeyT, OtherModelT>(
 			[left](ModelT& model, const xw::Lazy<std::vector<OtherModelT>>& value) {
 				model.*left = value;
 			},
 			[right](OtherModelT& model, const xw::Lazy<ModelT>& value) {
 				model.*right = value;
 			},
+			model_pk,
 			foreign_key
 		);
 	}
@@ -233,6 +239,9 @@ public:
 	// to each of the selected `OtherModelT` objects via an address to
 	// class field of `ModelT`.
 	//
+	// `other_model_pk`: member pointer to primary key field of OtherModelT.
+	// By default '&OtherModelT::id' is used.
+	//
 	// `foreign_key`: is used for joining of `ModelT` with `OtherModelT`.
 	// It is foreign key in `ModelT` to `OtherModelT` table.
 	// If `foreign_key` is empty it will be generated automatically using
@@ -240,31 +249,31 @@ public:
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <ModelBasedType OtherModelT, typename PrimaryKeyT>
+	template <typename PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::vector<ModelT>>&)>& second,
-		std::string foreign_key=""
+		PrimaryKeyT OtherModelT::* other_model_pk = &OtherModelT::id,
+		const std::string& foreign_key=""
 	)
 	{
-		if (foreign_key.empty())
-		{
-			std::string other_table_name = OtherModelT::meta_table_name;
-			foreign_key = other_table_name.substr(0, other_table_name.size() - 1) + "_id";
-		}
-
+		auto fk_column = foreign_key.empty() ? meta::make_fk<OtherModelT>() : foreign_key;
 		abc::ISQLDriver* driver = this->db;
 		auto t_name = this->table_name;
-		this->relations.push_back([driver, first, second, t_name, foreign_key](ModelT& model) -> void {
-			auto model_pk_val = util::as<PrimaryKeyT>(model.__get_attr__(
-				ModelT::meta_pk_name)->__str__().c_str()
-			);
+		auto pk_name_str = this->pk_name;
+		this->relations.push_back([
+			driver, first, second, t_name, fk_column, other_model_pk, pk_name_str
+		](ModelT& model) -> void {
+			auto model_pk_val = "'" + model.__get_attr__(pk_name_str.c_str())->__str__() + "'";
 			first(model, xw::Lazy<OtherModelT>(
-				[driver, first, second, t_name, foreign_key, model_pk_val]() -> OtherModelT {
+				[driver, first, second, t_name, fk_column, model_pk_val, other_model_pk]() -> OtherModelT {
 					return select<OtherModelT>().use(driver)
-						.join(q::left_on<OtherModelT, ModelT>(foreign_key))
-						.template one_to_many<ModelT, PrimaryKeyT>(second, first, foreign_key)
-						.where(q::c<ModelT>(ModelT::meta_pk_name) == model_pk_val)
+						.join(q::left_on<OtherModelT, ModelT>(fk_column))
+						.template one_to_many<PrimaryKeyT, ModelT>(second, first, other_model_pk, fk_column)
+						.where(q::column_condition_t(
+							meta::get_table_name<ModelT>(),
+							util::quote_str(meta::get_column_name(other_model_pk).c_str()), "= " + model_pk_val
+						))
 						.first();
 				}
 			));
@@ -277,20 +286,22 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT, ModelBasedType OtherModelT>
+	template <typename PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
-		xw::Lazy<OtherModelT> ModelT::*left,
-		xw::Lazy<std::vector<ModelT>> OtherModelT::*right,
+		xw::Lazy<OtherModelT> ModelT::* left,
+		xw::Lazy<std::vector<ModelT>> OtherModelT::* right,
+		PrimaryKeyT OtherModelT::* other_model_pk = &OtherModelT::id,
 		std::string foreign_key=""
 	)
 	{
-		return this->template many_to_one<OtherModelT, PrimaryKeyT>(
+		return this->template many_to_one<PrimaryKeyT, OtherModelT>(
 			[left](ModelT& model, const xw::Lazy<OtherModelT>& value) {
 				model.*left = value;
 			},
 			[right](OtherModelT& model, const xw::Lazy<std::vector<ModelT>>& value) {
 				model.*right = value;
 			},
+			other_model_pk,
 			foreign_key
 		);
 	}
@@ -329,11 +340,11 @@ public:
 	// by underscore ('_'). For example:
 	//   `ModelT::meta_table_name` is 'persons' and `OtherModelT::meta_table_name`
 	//   is 'cars', so, the result will be 'cars_persons'.
-	template <ModelBasedType OtherModelT>
+	template <typename OtherModelT>
 	inline select& many_to_many(
 		const std::function<void(ModelT&, const Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const Lazy<std::vector<ModelT>>&)>& second,
-		std::string left_fk="", std::string right_fk="", std::string mid_table=""
+		std::string left_fk="", std::string right_fk="", std::string intermediate_table=""
 	)
 	{
 		abc::ISQLDriver* driver = this->db;
@@ -341,14 +352,14 @@ public:
 		auto first_pk_name = this->pk_name;
 		this->relations.push_back(
 			[
-				driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, mid_table
+				driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, intermediate_table
 			](ModelT& model) -> void {
 				first(model, Lazy<std::vector<OtherModelT>>(
 					[
-						driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, mid_table
+						driver, first_t_name, first_pk_name, left_fk, right_fk, first, second, intermediate_table
 					]() -> std::vector<OtherModelT> {
 						std::string second_t_name = OtherModelT::meta_table_name;
-						std::string m_table = mid_table;
+						std::string m_table = intermediate_table;
 						if (m_table.empty())
 						{
 							if (first_t_name < second_t_name)
@@ -361,18 +372,8 @@ public:
 							}
 						}
 
-						std::string s_pk = left_fk;
-						if (s_pk.empty())
-						{
-							s_pk = first_t_name.substr(0, first_t_name.size() - 1) + "_id";
-						}
-
-						std::string o_pk = right_fk;
-						if (o_pk.empty())
-						{
-							o_pk = second_t_name.substr(0, second_t_name.size() - 1) + "_id";
-						}
-
+						std::string s_pk = left_fk.empty() ? meta::make_fk<ModelT>() : left_fk;
+						std::string o_pk = right_fk.empty() ? meta::make_fk<OtherModelT>() : right_fk;
 						auto cond_str = '"' + second_t_name + "\".\"" + first_pk_name
 							+ "\" = \"" + m_table + "\".\"" + s_pk + '"';
 
@@ -393,11 +394,11 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <ModelBasedType OtherModelT>
+	template <typename OtherModelT>
 	inline select& many_to_many(
 		Lazy<std::vector<OtherModelT>> ModelT::*left,
 		Lazy<std::vector<ModelT>> OtherModelT::*right,
-		std::string left_fk="", std::string right_fk="", std::string mid_table=""
+		std::string left_fk="", std::string right_fk="", std::string intermediate_table=""
 	)
 	{
 		return this->template many_to_many<OtherModelT>(
@@ -407,14 +408,14 @@ public:
 			[right](OtherModelT& model, const Lazy<std::vector<ModelT>>& value) {
 				model.*right = value;
 			},
-			left_fk, right_fk, mid_table
+			left_fk, right_fk, intermediate_table
 		);
 	}
 
 	// Sets the condition for 'where' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& where(const q::condition_t& cond)
+	inline select& where(const q::condition_t& cond)
 	{
 		if (this->q_where.is_set)
 		{
@@ -432,7 +433,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with non-empty columns list.
-	inline virtual select& order_by(const std::initializer_list<q::ordering>& columns)
+	inline select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
 		if (this->q_order_by.is_set)
 		{
@@ -453,7 +454,7 @@ public:
 	// Sets the limit value.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& limit(size_t limit)
+	inline select& limit(size_t limit)
 	{
 		if (this->q_limit.is_set)
 		{
@@ -471,7 +472,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with positive value.
-	inline virtual select& offset(size_t offset)
+	inline select& offset(size_t offset)
 	{
 		if (this->q_offset.is_set)
 		{
@@ -493,7 +494,7 @@ public:
 	//
 	// Throws 'QueryError' if this method is called
 	// more than once with non-empty columns list.
-	inline virtual select& group_by(const std::initializer_list<std::string>& columns)
+	inline select& group_by(const std::initializer_list<std::string>& columns)
 	{
 		if (this->q_group_by.is_set)
 		{
@@ -514,7 +515,7 @@ public:
 	// Sets the condition for 'having' filtering.
 	//
 	// Throws 'QueryError' if this method is called more than once.
-	inline virtual select& having(const q::condition_t& cond)
+	inline select& having(const q::condition_t& cond)
 	{
 		if (this->q_having.is_set)
 		{
@@ -534,7 +535,7 @@ public:
 	// vector, returns null-model.
 	//
 	// Throws 'QueryError' when driver is not set.
-	inline virtual ModelT first()
+	inline ModelT first()
 	{
 		// check if `limit(...)` was not called
 		if (!this->q_limit.is_set)
@@ -557,7 +558,7 @@ public:
 	// query and returns its result.
 	//
 	// Throws 'QueryError' when driver is not set.
-	inline virtual std::vector<ModelT> to_vector() const
+	inline std::vector<ModelT> to_vector() const
 	{
 		auto query = this->query();
 		using row_t = std::map<std::string, char*>;

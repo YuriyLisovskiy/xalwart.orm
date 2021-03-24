@@ -10,91 +10,97 @@
 
 using namespace xw;
 
+class TestCase_Model_TestModel : public orm::Model<TestCase_Model_TestModel>
+{
+public:
+	int id{};
+	std::string name;
+	const char* info;
+
+	static const std::tuple<
+		orm::column_meta_t<TestCase_Model_TestModel, int>,
+		orm::column_meta_t<TestCase_Model_TestModel, std::string>,
+		orm::column_meta_t<TestCase_Model_TestModel, const char*>
+	> meta_columns;
+};
+
+const std::tuple<
+	orm::column_meta_t<TestCase_Model_TestModel, int>,
+	orm::column_meta_t<TestCase_Model_TestModel, std::string>,
+	orm::column_meta_t<TestCase_Model_TestModel, const char*>
+> TestCase_Model_TestModel::meta_columns = {
+	orm::make_pk_column_meta("id", &TestCase_Model_TestModel::id),
+	orm::make_column_meta("name", &TestCase_Model_TestModel::name),
+	orm::make_column_meta("info", &TestCase_Model_TestModel::info)
+};
+
 TEST(TestCase_Model, __cmp___throws_NotImplementedException)
 {
-	auto left = orm::Model();
-	auto right = orm::Model();
+	auto left = TestCase_Model_TestModel();
+	auto right = TestCase_Model_TestModel();
 	ASSERT_THROW(auto res = left.__cmp__(&right), core::NotImplementedException);
 }
 
 TEST(TestCase_Model, is_null_False)
 {
-	orm::Model model;
+	TestCase_Model_TestModel model;
 	ASSERT_FALSE(model.is_null());
 }
 
 TEST(TestCase_Model, is_null_True)
 {
-	orm::Model model;
+	TestCase_Model_TestModel model;
 	model.mark_as_null();
 	ASSERT_TRUE(model.is_null());
 }
 
 TEST(TestCase_Model, __str___NullModel)
 {
-	orm::Model model;
+	TestCase_Model_TestModel model;
 	model.mark_as_null();
 	ASSERT_EQ(model.__str__(), "null");
 }
 
 TEST(TestCase_Model, __repr___NullModel)
 {
-	orm::Model model;
+	TestCase_Model_TestModel model;
 	model.mark_as_null();
-	ASSERT_EQ(model.__repr__(), "Model{null}");
+	ASSERT_EQ(model.__repr__(), "null");
 }
 
 TEST(TestCase_Model, meta_table_name_Default_IsNullptr)
 {
-	ASSERT_EQ(orm::Model::meta_table_name, nullptr);
-}
-
-TEST(TestCase_Model, meta_pk_name_Default_IsId)
-{
-	ASSERT_EQ(orm::Model::meta_pk_name, "id");
+	ASSERT_EQ(TestCase_Model_TestModel::meta_table_name, nullptr);
 }
 
 TEST(TestCase_Model, meta_omit_pk_Default_IsTrue)
 {
-	ASSERT_TRUE(orm::Model::meta_omit_pk);
+	ASSERT_TRUE(TestCase_Model_TestModel::meta_omit_pk);
 }
 
-class Model_TestCase : public ::testing::Test
+TEST(TestCase_Model, get_column_value_as_string_GetNum)
 {
-protected:
-	class TestModel : public orm::Model
-	{
-	public:
-		static constexpr const char* meta_table_name = "test_models";
-		static constexpr const char* meta_pk_name = "id";
-	};
-};
-
-TEST_F(Model_TestCase, get_table_name)
-{
-	ASSERT_EQ(orm::get_table_name<Model_TestCase::TestModel>(), "test_models");
+	auto model = TestCase_Model_TestModel();
+	model.id = 10;
+	ASSERT_EQ(orm::get_column_value_as_string(
+		model, std::get<0>(TestCase_Model_TestModel::meta_columns)
+	), "10");
 }
 
-TEST_F(Model_TestCase, get_pk_name)
+TEST(TestCase_Model, get_column_value_as_string_GetString)
 {
-	ASSERT_EQ(orm::get_pk_name<Model_TestCase::TestModel>(), "id");
+	auto model = TestCase_Model_TestModel();
+	model.name = "Steve";
+	ASSERT_EQ(orm::get_column_value_as_string(
+		model, std::get<1>(TestCase_Model_TestModel::meta_columns)
+	), "'Steve'");
 }
 
-TEST_F(Model_TestCase, make_fk_CutEndingS)
+TEST(TestCase_Model, get_column_value_as_string_GetCString)
 {
-	auto expected = "test_model_id";
-	ASSERT_EQ(orm::make_fk<Model_TestCase::TestModel>(), expected);
-}
-
-class TestM : public orm::Model
-{
-public:
-	static constexpr const char* meta_table_name = "test";
-	static constexpr const char* meta_pk_name = "custom_identifier";
-};
-
-TEST(ModelUnitlity_TestCase, make_fk)
-{
-	auto expected = "test_custom_identifier";
-	ASSERT_EQ(orm::make_fk<TestM>(), expected);
+	auto model = TestCase_Model_TestModel();
+	model.info = "NoNe";
+	ASSERT_EQ(orm::get_column_value_as_string(
+		model, std::get<2>(TestCase_Model_TestModel::meta_columns)
+	), "'NoNe'");
 }
