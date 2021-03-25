@@ -78,7 +78,7 @@ inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
 // !IMPORTANT!
 // Currently Model supports single pk only.
 template <typename Derived, typename ...Columns>
-class Model : public object::Object
+class Model : public obj::Object
 {
 private:
 
@@ -133,7 +133,7 @@ public:
 			return "null";
 		}
 
-		return object::Object::__str__();
+		return obj::Object::__str__();
 	}
 
 	[[nodiscard]]
