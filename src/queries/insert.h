@@ -75,8 +75,7 @@ protected:
 			return true;
 		});
 
-		str::rtrim(row, ", ");
-		this->rows.push_back(row);
+		this->rows.push_back(str::rtrim(row, ", "));
 	}
 
 public:
@@ -108,8 +107,7 @@ public:
 			return true;
 		});
 
-		this->columns_str = columns;
-		str::rtrim(this->columns_str, ", ");
+		this->columns_str = str::rtrim(columns, ", ");
 		this->append_row(model);
 	};
 

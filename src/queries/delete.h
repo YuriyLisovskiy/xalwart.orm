@@ -99,7 +99,7 @@ public:
 					condition.set(column_condition_t(
 						meta::get_table_name<ModelT>(),
 						column.name,
-						"IN (" + str::join(this->pks.begin(), this->pks.end(), ", ") + ")"
+						"IN (" + str::join(", ", this->pks.begin(), this->pks.end()) + ")"
 					));
 					return false;
 				}

@@ -334,7 +334,7 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	}
 
 	std::string condition = "IN (" + str::join(
-		begin, end, ", ", [](const ColumnT& item) -> std::string { return std::to_string(item); }
+		", ", begin, end, [](const ColumnT& item) -> std::string { return std::to_string(item); }
 	) + ")";
 	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(column), condition);
 }
@@ -358,7 +358,7 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	}
 
 	std::string condition = "IN (" + str::join(
-		begin, end, ", ", [](const ColumnT& item) -> std::string {
+		", ", begin, end, [](const ColumnT& item) -> std::string {
 			if constexpr (std::is_same_v<ColumnT, const char*>)
 			{
 				return "'" + std::string(item) + "'";

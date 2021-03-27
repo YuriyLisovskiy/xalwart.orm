@@ -53,8 +53,6 @@ std::string Driver::run_insert(const std::string& query) const
 	}
 
 	char* message_error;
-//	using data_t = std::pair<bool, std::string>;
-//	data_t data(batch, "");
 	std::string last_inserted_pk;
 	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;";
 	auto ret_val = sqlite3_exec(
@@ -100,13 +98,11 @@ void Driver::run_select(
 				std::map<std::string, char*> row;
 				for (int i = 0; i < argc; i++)
 				{
-					auto column = str::lsplit_one(column_names[i], '.');
-					if (column.second.empty())
+					auto column = str::split(column_names[i], '.', 1);
+					if (!column.empty())
 					{
-						column.second = column.first;
+						row[column.back()] = argv[i];
 					}
-
-					row[column.second] = argv[i];
 				}
 
 				pair.second(pair.first, &row);

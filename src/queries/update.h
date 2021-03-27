@@ -71,7 +71,7 @@ protected:
 			return true;
 		});
 
-		str::rtrim(row_data.first, ", ");
+		row_data.first = str::rtrim(row_data.first, ", ");
 		row_data.second = q::column_condition_t(this->table_name, pk_name, "= " + pk_val);
 		this->rows.push_back(row_data);
 	}
@@ -108,7 +108,7 @@ public:
 		}
 
 		return str::join(
-			this->rows.begin(), this->rows.end(), " ",
+			" ", this->rows.begin(), this->rows.end(),
 			[this](const auto& row) -> std::string {
 				return this->db->make_update_query(this->table_name, row.first, row.second);
 			}

@@ -37,7 +37,7 @@ std::string SQLDriverBase::make_insert_query(
 		this->throw_empty_arg("columns", _ERROR_DETAILS_);
 	}
 
-	auto values = str::join(rows.begin(), rows.end(), "), (");
+	auto values = str::join("), (", rows.begin(), rows.end());
 	if (values.empty())
 	{
 		this->throw_empty_arg("rows", _ERROR_DETAILS_);
@@ -99,7 +99,7 @@ std::string SQLDriverBase::make_select_query(
 	if (order_by_cols.size())
 	{
 		query += " ORDER BY " + str::join(
-			order_by_cols.begin(), order_by_cols.end(), ", ",
+			", ", order_by_cols.begin(), order_by_cols.end(),
 			[](const q::ordering& ob_column) -> std::string {
 				return (std::string)ob_column;
 			}
