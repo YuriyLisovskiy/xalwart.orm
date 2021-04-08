@@ -23,7 +23,7 @@ jobs:
                             --build-arg alpine_version=${{ matrix.alpine_version }} \
                             --build-arg GH_ACCESS_TOKEN=${{ secrets.GH_ACCESS_TOKEN }} \
                             -f docker/alpine/clang.Dockerfile \
-                            --tag=xalwart.orm-test:alpine-gcc
+                            --tag=test-alpine:gcc
       - name: Run Tests
         run: |
-          sudo docker run xalwart.orm-test:alpine-gcc
+          sudo docker run test-alpine:gcc
