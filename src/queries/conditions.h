@@ -1,9 +1,9 @@
 /**
- * query/operations.h
+ * queries/operations.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: set of SQL arithmetic and logical operations.
+ * Set of SQL arithmetic and logical operations.
  */
 
 #pragma once

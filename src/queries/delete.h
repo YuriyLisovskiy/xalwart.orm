@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: wrapper for SQL 'DELETE' statement.
+ * Wrapper for SQL 'DELETE' statement.
  */
 
 #pragma once

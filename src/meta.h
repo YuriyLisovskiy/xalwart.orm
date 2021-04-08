@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: utilities for retrieving model's meta information.
+ * Utilities for retrieving model's meta information.
  */
 
 #pragma once

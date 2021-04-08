@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: ORM helpers.
+ * ORM helpers.
  */
 
 #pragma once

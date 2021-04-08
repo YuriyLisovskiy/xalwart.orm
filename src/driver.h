@@ -3,8 +3,8 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: base driver implements generation of common SQL queries
- * 	which can be overwritten.
+ * Base driver implements generation of common SQL queries
+ * which can be overwritten.
  */
 
 #pragma once

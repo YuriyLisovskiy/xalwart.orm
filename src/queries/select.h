@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: wrapper for SQL 'SELECT' statement.
+ * Wrapper for SQL 'SELECT' statement.
  */
 
 #pragma once

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: sqlite3 module's definitions.
+ * Definitions of `sqlite3` module.
  */
 
 #pragma once

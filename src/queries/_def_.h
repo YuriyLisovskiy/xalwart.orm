@@ -1,9 +1,9 @@
 /**
- * query/_def_.h
+ * queries/_def_.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: queries module's definitions.
+ * Definitions of `queries` module.
  */
 
 #pragma once

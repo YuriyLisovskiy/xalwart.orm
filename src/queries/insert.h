@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: wrapper for SQL 'INSERT' statement.
+ * Wrapper for SQL 'INSERT' statement.
  */
 
 #pragma once

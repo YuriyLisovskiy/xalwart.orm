@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: wrapper for SQL 'UPDATE' statement.
+ * Wrapper for SQL 'UPDATE' statement.
  */
 
 #pragma once

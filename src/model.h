@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: base class for representing the database model.
+ * Base class for representing the database model.
  */
 
 #pragma once

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: abstract base classes for orm library.
+ * Abstract base classes for ORM library.
  */
 
 #pragma once

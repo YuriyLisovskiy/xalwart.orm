@@ -3,8 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: database client which uses SQL driver for
- * 	accessing the database.
+ * Database client which uses SQL driver for accessing the database.
  */
 
 #pragma once
@@ -22,6 +21,7 @@
 
 __ORM_BEGIN__
 
+// TESTME: Client
 class Client final
 {
 protected:
@@ -77,11 +77,15 @@ public:
 		return q::insert<ModelT>(model).use(this->db.get());
 	}
 
-	// TODO: check if begin != end
 	// Inserts the list of models to the database.
 	template <typename IterBegin, typename IterEnd>
 	inline void insert(IterBegin begin, IterEnd end) const
 	{
+		if (begin == end)
+		{
+			return;
+		}
+
 		using ModelT = typename std::iterator_traits<IterBegin>::value_type;
 		auto query = q::insert<ModelT>(*begin++).use(this->db.get());
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {

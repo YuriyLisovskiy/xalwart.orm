@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Purpose: provides common methods for accessing the 'sqlite3' database.
+ * Common methods for accessing the 'sqlite3' database.
  */
 
 #pragma once
