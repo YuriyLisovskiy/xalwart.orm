@@ -22,7 +22,7 @@ jobs:
           sudo docker build . \
                             --build-arg alpine_version=${{ matrix.alpine_version }} \
                             --build-arg GH_ACCESS_TOKEN=${{ secrets.GH_ACCESS_TOKEN }} \
-                            -f docker/alpine/clang.Dockerfile \
+                            -f docker/alpine/gcc.Dockerfile \
                             --tag=test-alpine:gcc
       - name: Run Tests
         run: |
