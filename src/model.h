@@ -143,7 +143,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Object> __get_attr__(const char* attr_name) override
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
 		std::shared_ptr<Object> obj;
 		util::tuple_for_each(Derived::meta_columns, [this, attr_name, &obj](auto& column)
@@ -231,6 +231,44 @@ public:
 				this->__set_attr__(field.first.c_str(), field.second);
 			}
 		}
+	}
+
+	// Operator equals.
+	inline bool operator== (const Model& other) const
+	{
+		return this->__cmp__(&other) == 0;
+	}
+
+	// Operator not equals.
+	inline bool operator!= (const Model& other) const
+	{
+		return this->__cmp__(&other) != 0;
+	}
+
+	// Operator less.
+	inline bool operator< (const Model& other) const
+	{
+		return this->__cmp__(&other) == -1;
+	}
+
+	// Operator less or equals.
+	inline bool operator<= (const Model& other) const
+	{
+		auto res = this->__cmp__(&other);
+		return res == 0 || res == -1;
+	}
+
+	// Operator greater.
+	inline bool operator> (const Model& other) const
+	{
+		return this->__cmp__(&other) == 1;
+	}
+
+	// Operator greater or equals.
+	inline bool operator>= (const Model& other) const
+	{
+		auto res = this->__cmp__(&other);
+		return res == 0 || res == 1;
 	}
 };
 

@@ -34,11 +34,16 @@ set(CMAKE_CXX_FLAGS "-pthread")
 
 set(BINARY unittests)
 
+if (NOT DEFINED DB_DRIVER)
+    set(DB_DRIVER none)
+endif()
+
 function(add_tests SUB_DIR SUB_NAME)
-    # Use sqlite3 driver.
-    if (DEFINED USE_SQLITE3)
+    if (${DB_DRIVER} STREQUAL "sqlite")
+        # Use sqlite3 driver.
         add_compile_definitions(USE_SQLITE3)
-    elseif(DEFINED USE_POSTGRESQL)
+    elseif(${DB_DRIVER} STREQUAL "postgres")
+        # Use postgres driver.
         add_compile_definitions(USE_POSTGRESQL)
     endif()
 
@@ -52,7 +57,14 @@ function(add_tests SUB_DIR SUB_NAME)
     list(FILTER SOURCES EXCLUDE REGEX ".*main.cpp$")
     set(FULL_BIN ${BINARY}-${SUB_NAME})
     add_executable(${FULL_BIN} ${LIB_SOURCES} ${SOURCES} ${TESTS_DIR}/main.cpp)
-    target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs sqlite3)
+    target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs)
+
+    if (${DB_DRIVER} STREQUAL "sqlite")
+        target_link_libraries(${FULL_BIN} PUBLIC sqlite3)
+    elseif(${DB_DRIVER} STREQUAL "postgres")
+        # link postgres
+    endif()
+
     target_link_libraries(${FULL_BIN} PUBLIC gtest ${FRAMEWORK_NAME}.core-0.0.1)
 endfunction()
 

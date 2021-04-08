@@ -45,11 +45,6 @@ build/
 include/
 lib/
 
-# Additional stuff
-Dockerfile*
-.dockerignore
-Makefile
-
 # Manual testing stuff
 tests/tests.cpp
 tests/benchmark*

@@ -53,12 +53,12 @@ TEST(TestCase_utility, as_unsigned_long_long_int)
 
 TEST(TestCase_utility, as_float)
 {
-	ASSERT_EQ(orm::util::as<float>("128.8765f"), 128.8765f);
+	ASSERT_EQ(orm::util::as<float>("128.0f"), 128.0f);
 }
 
 TEST(TestCase_utility, as_double)
 {
-	ASSERT_EQ(orm::util::as<double>("87654345.3456789"), 87654345.3456789);
+	ASSERT_EQ(orm::util::as<double>("87654345.0"), 87654345.0);
 }
 
 TEST(TestCase_utility, as_long_double)

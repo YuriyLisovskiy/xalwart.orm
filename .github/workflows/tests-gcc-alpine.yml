@@ -1,0 +1,29 @@
+name: "alpine-gcc"
+on:
+  push:
+    branches:
+      - 'dev'
+      - '!master'
+  pull_request:
+    branches:
+      - '**'
+jobs:
+  build:
+    name: "alpine-${{ matrix.alpine_version }} [gcc-10]"
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        alpine_version: [3.13]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Container
+        run: |
+          sudo docker build . \
+                            --build-arg alpine_version=${{ matrix.alpine_version }} \
+                            --build-arg GH_ACCESS_TOKEN=${{ secrets.GH_ACCESS_TOKEN }} \
+                            -f docker/alpine/clang.Dockerfile \
+                            --tag=xalwart.orm-test:alpine-gcc
+      - name: Run Tests
+        run: |
+          sudo docker run xalwart.orm-test:alpine-gcc
