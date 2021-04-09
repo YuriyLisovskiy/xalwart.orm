@@ -28,9 +28,19 @@ list(LENGTH SOURCES SOURCES_COUNT)
 message(STATUS "[INFO] Sources found: ${SOURCES_COUNT}")
 
 if (NOT ${SOURCES_COUNT} EQUAL 0)
+    if (NOT DEFINED USE_SQLITE3)
+        set(USE_SQLITE3 no)
+    endif()
+
     # Build shared library.
     set(FULL_LIBRARY_NAME ${LIBRARY_NAME}-${LIBRARY_VERSION})
     add_library(${FULL_LIBRARY_NAME} SHARED ${SOURCES})
+
+    if (USE_SQLITE3)
+        # Use sqlite3 driver.
+        add_compile_definitions(USE_SQLITE3)
+        target_link_libraries(${FULL_LIBRARY_NAME} PUBLIC sqlite3)
+    endif()
 
     # Install library.
     install(
