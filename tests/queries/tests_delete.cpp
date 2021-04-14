@@ -78,13 +78,13 @@ TEST_F(TestCaseF_Q_delete, model_ThrowsNullModel)
 	ASSERT_THROW(this->query->model(null_model), orm::QueryError);
 }
 
-TEST_F(TestCaseF_Q_delete, where_ThrowsCalledMoreThanOnce)
+TEST_F(TestCaseF_Q_delete, where_CalledMoreThanOnce)
 {
-	ASSERT_THROW(
-		this->query->where(orm::q::c(&TestCaseF_Q_delete_TestModel::id) == 1)
-			.where(orm::q::like(&TestCaseF_Q_delete_TestModel::name, "%hn")),
-		orm::QueryError
-	);
+	auto expected = R"(DELETE FROM "test_models" WHERE ("test_models"."id" = 1 AND "test_models"."name" LIKE '%hn');)";
+	auto actual = this->query->use(this->driver)
+		.where(orm::q::c(&TestCaseF_Q_delete_TestModel::id) == 1)
+		.where(orm::q::like(&TestCaseF_Q_delete_TestModel::name, "%hn")).query();
+	ASSERT_EQ(expected, actual);
 }
 
 TEST(TestCase_Q_delete, constructor_ThrowsNullModel)

@@ -18,7 +18,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <model_based_type_c ModelT>
 class update final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");

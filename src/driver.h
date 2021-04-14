@@ -41,9 +41,31 @@ public:
 		const std::vector<std::string>& rows
 	) const override;
 
+	// Builds 'SELECT' query to string from parts.
+	//
+	// !IMPORTANT!
+	// This method do not prepare columns to select.
+	//
+	// 'table_name' must be non-empty string.
+	// 'columns' must be non-empty string.
+	[[nodiscard]]
+	std::string compose_select_query(
+		const std::string& table_name,
+		const std::string& columns,
+		bool distinct,
+		const std::vector<q::join_t>& joins,
+		const q::condition_t& where_cond,
+		const std::list<q::ordering>& order_by_cols,
+		long int limit,
+		long int offset,
+		const std::list<std::string>& group_by_cols,
+		const q::condition_t& having_cond
+	) const override;
+
 	// Generates 'SELECT' query as string.
 	//
 	// 'table_name' must be non-empty string.
+	// 'columns' must be non-empty vector.
 	[[nodiscard]]
 	std::string make_select_query(
 		const std::string& table_name,
@@ -51,10 +73,10 @@ public:
 		bool distinct,
 		const std::vector<q::join_t>& joins,
 		const q::condition_t& where_cond,
-		const std::initializer_list<q::ordering>& order_by_cols,
+		const std::list<q::ordering>& order_by_cols,
 		long int limit,
 		long int offset,
-		const std::initializer_list<std::string>& group_by_cols,
+		const std::list<std::string>& group_by_cols,
 		const q::condition_t& having_cond
 	) const override;
 

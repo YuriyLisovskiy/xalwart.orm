@@ -46,16 +46,16 @@ std::string SQLDriverBase::make_insert_query(
 	return "INSERT INTO " + util::quote_str(table_name) + " (" + columns + ") VALUES (" + values + ");";
 }
 
-std::string SQLDriverBase::make_select_query(
+std::string SQLDriverBase::compose_select_query(
 	const std::string& table_name,
-	const std::vector<std::string>& columns,
+	const std::string& columns,
 	bool distinct,
 	const std::vector<q::join_t>& joins,
 	const q::condition_t& where_cond,
-	const std::initializer_list<q::ordering>& order_by_cols,
+	const std::list<q::ordering>& order_by_cols,
 	long int limit,
 	long int offset,
-	const std::initializer_list<std::string>& group_by_cols,
+	const std::list<std::string>& group_by_cols,
 	const q::condition_t& having_cond
 ) const
 {
@@ -69,21 +69,8 @@ std::string SQLDriverBase::make_select_query(
 		this->throw_empty_arg("columns", _ERROR_DETAILS_);
 	}
 
-	auto raw_prefix = table_name + ".";
-	auto prefix = util::quote_str(table_name) + ".";
-	std::string columns_str;
-	for (auto column = columns.begin(); column != columns.end(); column++)
-	{
-		auto column_str = std::string(*column);
-		columns_str += prefix + util::quote_str(column_str);
-		columns_str += " AS " + util::quote_str(raw_prefix + column_str);
-		if (std::next(column) != columns.end())
-		{
-			columns_str += ", ";
-		}
-	}
-
-	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns_str + " FROM " + util::quote_str(table_name);
+	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns +
+		" FROM " + util::quote_str(table_name);
 
 	for (const auto& join_row : joins)
 	{
@@ -96,11 +83,12 @@ std::string SQLDriverBase::make_select_query(
 		query += " WHERE " + where_str;
 	}
 
-	if (order_by_cols.size())
+	if (!order_by_cols.empty())
 	{
 		query += " ORDER BY " + str::join(
 			", ", order_by_cols.begin(), order_by_cols.end(),
-			[](const q::ordering& ob_column) -> std::string {
+			[](const auto& ob_column) -> auto
+			{
 				return (std::string)ob_column;
 			}
 		);
@@ -123,32 +111,27 @@ std::string SQLDriverBase::make_select_query(
 		query += " OFFSET " + std::to_string(offset);
 	}
 
-	if (group_by_cols.size())
+	if (!group_by_cols.empty())
 	{
-		query += " GROUP BY ";
-		for (auto it = group_by_cols.begin(); it != group_by_cols.end(); it++)
-		{
-			auto gb_col = *it;
-			if (gb_col.find('.') == std::string::npos)
+		auto prefix = util::quote_str(table_name) + ".";
+		query += " GROUP BY " + str::join(
+			", ", group_by_cols.begin(), group_by_cols.end(),
+			[prefix](const auto& gb_col) -> auto
 			{
-				query += prefix + util::quote_str(gb_col);
-			}
-			else
-			{
-				query += gb_col;
-			}
+				if (gb_col.find('.') == std::string::npos)
+				{
+					return prefix + util::quote_str(gb_col);
+				}
 
-			if (std::next(it) != group_by_cols.end())
-			{
-				query += ", ";
+				return gb_col;
 			}
-		}
+		);
 	}
 
 	auto having_str = (std::string)having_cond;
 	if (!having_str.empty())
 	{
-		if (!group_by_cols.size())
+		if (group_by_cols.empty())
 		{
 			throw QueryError(
 				this->name() + ": 'having' is used without 'group by'", _ERROR_DETAILS_
@@ -159,6 +142,39 @@ std::string SQLDriverBase::make_select_query(
 	}
 
 	return query + ";";
+}
+
+std::string SQLDriverBase::make_select_query(
+	const std::string& table_name,
+	const std::vector<std::string>& columns,
+	bool distinct,
+	const std::vector<q::join_t>& joins,
+	const q::condition_t& where_cond,
+	const std::list<q::ordering>& order_by_cols,
+	long int limit,
+	long int offset,
+	const std::list<std::string>& group_by_cols,
+	const q::condition_t& having_cond
+) const
+{
+	auto raw_prefix = table_name + ".";
+	auto prefix = util::quote_str(table_name) + ".";
+	std::string columns_str;
+	for (auto column = columns.begin(); column != columns.end(); column++)
+	{
+		auto column_str = std::string(*column);
+		columns_str += prefix + util::quote_str(column_str);
+		columns_str += " AS " + util::quote_str(raw_prefix + column_str);
+		if (std::next(column) != columns.end())
+		{
+			columns_str += ", ";
+		}
+	}
+
+	return this->compose_select_query(
+		table_name, columns_str, distinct, joins, where_cond,
+		order_by_cols, limit, offset, group_by_cols, having_cond
+	);
 }
 
 std::string SQLDriverBase::make_update_query(

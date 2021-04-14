@@ -8,6 +8,9 @@
 
 #pragma once
 
+// C++ libraries.
+#include <list>
+
 // Core libraries.
 #include <xalwart.core/types/string.h>
 #include <xalwart.core/lazy.h>
@@ -17,12 +20,13 @@
 
 // Orm libraries.
 #include "../abc.h"
+#include "./functions.h"
 
 
 __Q_BEGIN__
 
 // TESTME: add tests with mocked driver
-template <ModelBasedType ModelT>
+template <model_based_type_c ModelT>
 class select final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -41,22 +45,22 @@ protected:
 
 	// Indicates whether to use distinction or not in SQL statement.
 	// The default is false.
-	q_value<bool> q_distinct;
+	bool q_distinct;
 
 	// Holds boolean condition for SQL 'WHERE' statement.
 	q_value<q::condition_t> q_where;
 
 	// Holds columns list for SQL 'ORDER BY' statement.
-	q_value<std::initializer_list<q::ordering>> q_order_by;
+	std::list<q::ordering> q_order_by;
 
 	// Holds value for SQL 'LIMIT'. The default is -1.
-	q_value<long int> q_limit;
+	long int q_limit;
 
 	// Holds value for SQL 'OFFSET'. The default is -1.
-	q_value<long int> q_offset;
+	long int q_offset;
 
 	// Holds columns list for SQL 'GROUP BY' statement.
-	q_value<std::initializer_list<std::string>> q_group_by;
+	std::list<std::string> q_group_by;
 
 	// Holds boolean condition for SQL 'HAVING' statement.
 	q_value<q::condition_t> q_having;
@@ -83,9 +87,9 @@ public:
 			throw QueryError("select: model requires pk column", _ERROR_DETAILS_);
 		}
 
-		this->q_distinct.value = false;
-		this->q_limit.value = -1;
-		this->q_offset.value = -1;
+		this->q_distinct = false;
+		this->q_limit = -1;
+		this->q_offset = -1;
 	};
 
 	// Sets SQL driver.
@@ -117,31 +121,107 @@ public:
 		return this->db->make_select_query(
 			this->table_name,
 			columns,
-			this->q_distinct.value,
+			this->q_distinct,
 			this->joins,
 			this->q_where.value,
-			this->q_order_by.value,
-			this->q_limit.value,
-			this->q_offset.value,
-			this->q_group_by.value,
+			this->q_order_by,
+			this->q_limit,
+			this->q_offset,
+			this->q_group_by,
 			this->q_having.value
 		);
 	}
 
-	// Sets the distinct value.
+	// TESTME: aggregate
+	// Runs aggregate function for selected rows.
 	//
-	// Throws 'QueryError' if this method is called more than once.
-	inline select& distinct()
+	// Throws 'QueryError' when driver is not set.
+	template <typename ReturnT>
+	[[nodiscard]]
+	inline ReturnT aggregate(const aggregate_function_t<ReturnT>& func) const
 	{
-		if (this->q_distinct.is_set)
+		if (!this->db)
 		{
-			throw QueryError(
-				"select: 'distinct' value is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
+			throw QueryError("select > " + func.name + ": database driver not set", _ERROR_DETAILS_);
 		}
 
-		this->q_distinct.set(true);
+		auto query = this->db->compose_select_query(
+			this->table_name,
+			(std::string)func + " AS agg_result",
+			this->q_distinct,
+			this->joins,
+			this->q_where.value,
+			this->q_order_by,
+			this->q_limit,
+			this->q_offset,
+			this->q_group_by,
+			this->q_having.value
+		);
+
+		using row_t = std::map<std::string, char*>;
+		ReturnT result;
+		this->db->run_select(query, &result, [](void* result_ptr, void* row_ptr) -> void {
+			auto& row = *(row_t *)row_ptr;
+			*(ReturnT *)result_ptr = util::as<ReturnT>(row["agg_result"]);
+		});
+
+		return result;
+	}
+
+	// TESTME: avg
+	// Calculates average value of given column in selected rows.
+	//
+	// Throws 'QueryError' when driver is not set.
+	template <column_type_c ColumnT>
+	inline auto avg(ColumnT ModelT::* column) const
+	{
+		return this->template aggregate<double>(q::avg(column));
+	}
+
+	// TESTME: count
+	// Calculates selected rows.
+	//
+	// Throws 'QueryError' when driver is not set.
+	[[nodiscard]]
+	inline auto count() const
+	{
+		return this->template aggregate<size_t>(q::count());
+	}
+
+	// TESTME: min
+	// Calculates minimum value of given column in selected rows.
+	//
+	// Throws 'QueryError' when driver is not set.
+	template <column_type_c ColumnT>
+	inline auto min(ColumnT ModelT::* column) const
+	{
+		return this->template aggregate<ColumnT>(q::min(column));
+	}
+
+	// TESTME: max
+	// Calculates maximum value of given column in selected rows.
+	//
+	// Throws 'QueryError' when driver is not set.
+	template <column_type_c ColumnT>
+	inline auto max(ColumnT ModelT::* column) const
+	{
+		return this->template aggregate<ColumnT>(q::max(column));
+	}
+
+	// TESTME: sum
+	// Calculates sum by column of selected rows.
+	//
+	// Throws 'QueryError' when driver is not set.
+	template <column_type_c ColumnT>
+	inline auto sum(ColumnT ModelT::* column) const
+	{
+		return this->template aggregate<ColumnT>(q::sum(column));
+	}
+
+	// Sets the distinct value.
+	inline select& distinct(bool v = true)
+	{
+		this->q_distinct = v;
 		return *this;
 	}
 
@@ -175,7 +255,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <typename PrimaryKeyT = size_t, typename OtherModelT>
+	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::vector<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
@@ -207,7 +287,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT = size_t, typename OtherModelT>
+	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		xw::Lazy<std::vector<OtherModelT>> ModelT::* left,
 		xw::Lazy<ModelT> OtherModelT::* right,
@@ -249,7 +329,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <typename PrimaryKeyT = size_t, typename OtherModelT>
+	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::vector<ModelT>>&)>& second,
@@ -286,7 +366,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <typename PrimaryKeyT = size_t, typename OtherModelT>
+	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		xw::Lazy<OtherModelT> ModelT::* left,
 		xw::Lazy<std::vector<ModelT>> OtherModelT::* right,
@@ -413,119 +493,72 @@ public:
 	}
 
 	// Sets the condition for 'where' filtering.
-	//
-	// Throws 'QueryError' if this method is called more than once.
 	inline select& where(const q::condition_t& cond)
 	{
 		if (this->q_where.is_set)
 		{
-			throw QueryError(
-				"select: 'where' condition is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
+			this->q_where.set(this->q_where.value & cond);
+		}
+		else
+		{
+			this->q_where.set(cond);
 		}
 
-		this->q_where.set(cond);
 		return *this;
 	}
 
 	// Sets columns for ordering.
-	//
-	// Throws 'QueryError' if this method is called
-	// more than once with non-empty columns list.
 	inline select& order_by(const std::initializer_list<q::ordering>& columns)
 	{
-		if (this->q_order_by.is_set)
-		{
-			throw QueryError(
-				"select: columns for ordering is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
-		}
-
 		if (columns.size())
 		{
-			this->q_order_by.set(columns);
+			this->q_order_by.insert(this->q_order_by.end(), columns.begin(), columns.end());
 		}
 
 		return *this;
 	}
 
 	// Sets the limit value.
-	//
-	// Throws 'QueryError' if this method is called more than once.
 	inline select& limit(size_t limit)
 	{
-		if (this->q_limit.is_set)
-		{
-			throw QueryError(
-				"select: 'limit' value is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
-		}
-
-		this->q_limit.set(limit);
+		this->q_limit = limit;
 		return *this;
 	}
 
 	// Sets the offset value.
-	//
-	// Throws 'QueryError' if this method is called
-	// more than once with positive value.
 	inline select& offset(size_t offset)
 	{
-		if (this->q_offset.is_set)
-		{
-			throw QueryError(
-				"select: 'offset' value is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
-		}
-
 		if (offset > 0)
 		{
-			this->q_offset.set(offset);
+			this->q_offset = offset;
 		}
 
 		return *this;
 	}
 
 	// Sets columns for grouping.
-	//
-	// Throws 'QueryError' if this method is called
-	// more than once with non-empty columns list.
 	inline select& group_by(const std::initializer_list<std::string>& columns)
 	{
-		if (this->q_group_by.is_set)
-		{
-			throw QueryError(
-				"select: columns for grouping is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
-		}
-
 		if (columns.size())
 		{
-			this->q_group_by.set(columns);
+			this->q_group_by.insert(this->q_group_by.end(), columns.begin(), columns.end());
 		}
 
 		return *this;
 	}
 
 	// Sets the condition for 'having' filtering.
-	//
-	// Throws 'QueryError' if this method is called more than once.
 	inline select& having(const q::condition_t& cond)
 	{
 		if (this->q_having.is_set)
 		{
-			throw QueryError(
-				"select: 'having' condition is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
+			this->q_having.set(this->q_having.value & cond);
+		}
+		else
+		{
+			this->q_having.set(cond);
 		}
 
-		this->q_having.set(cond);
 		return *this;
 	}
 
@@ -537,12 +570,7 @@ public:
 	// Throws 'QueryError' when driver is not set.
 	inline ModelT first()
 	{
-		// check if `limit(...)` was not called
-		if (!this->q_limit.is_set)
-		{
-			this->limit(1);
-		}
-
+		this->limit(1);
 		auto values = this->to_vector();
 		if (values.empty())
 		{

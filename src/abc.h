@@ -12,6 +12,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <list>
 
 // Module definitions.
 #include "./_def_.h"
@@ -39,10 +40,23 @@ public:
 		const std::vector<std::string>& rows
 	) const = 0;
 
-	[[nodiscard]]
 	virtual std::string run_insert(const std::string& query) const = 0;
 
 	// select rows
+	[[nodiscard]]
+	virtual std::string compose_select_query(
+		const std::string& table_name,
+		const std::string& columns,
+		bool distinct,
+		const std::vector<q::join_t>& joins,
+		const q::condition_t& where_cond,
+		const std::list<q::ordering>& order_by_cols,
+		long int limit,
+		long int offset,
+		const std::list<std::string>& group_by_cols,
+		const q::condition_t& having_cond
+	) const = 0;
+
 	[[nodiscard]]
 	virtual std::string make_select_query(
 		const std::string& table_name,
@@ -50,10 +64,10 @@ public:
 		bool distinct,
 		const std::vector<q::join_t>& joins,
 		const q::condition_t& where_cond,
-		const std::initializer_list<q::ordering>& order_by_cols,
+		const std::list<q::ordering>& order_by_cols,
 		long int limit,
 		long int offset,
-		const std::initializer_list<std::string>& group_by_cols,
+		const std::list<std::string>& group_by_cols,
 		const q::condition_t& having_cond
 	) const = 0;
 
