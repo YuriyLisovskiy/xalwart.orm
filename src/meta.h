@@ -57,7 +57,7 @@ inline std::string make_fk()
 }
 
 template <typename F, typename O>
-inline std::string get_column_name(F O::* member_pointer)
+inline std::string get_column_name(F O::* member_pointer, bool quote=false)
 {
 	std::string name;
 	util::tuple_for_each(O::meta_columns, [&name, member_pointer](auto& column)
@@ -76,16 +76,16 @@ inline std::string get_column_name(F O::* member_pointer)
 		throw core::ValueError("column not found", _ERROR_DETAILS_);
 	}
 
-	return name;
+	return quote ? util::quote_str(name) : name;
 }
 
 template <typename ModelT>
-inline std::string get_table_name()
+inline std::string get_table_name(bool quote=false)
 {
 	static_assert(
 		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
 	);
-	return ModelT::meta_table_name;
+	return quote ? util::quote_str(ModelT::meta_table_name) : ModelT::meta_table_name;
 }
 
 __ORM_META_END__

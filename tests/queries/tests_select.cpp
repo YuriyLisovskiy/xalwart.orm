@@ -112,45 +112,42 @@ TEST_F(TestCase_Q_select, query_ThrowsClientNotSet)
 	ASSERT_THROW(auto _ = this->query->query(), orm::QueryError);
 }
 
-TEST_F(TestCase_Q_select, distinct_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, distinct_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(this->query->distinct().distinct(), orm::QueryError);
+	ASSERT_NO_THROW(this->query->distinct().distinct());
 }
 
-TEST_F(TestCase_Q_select, where_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, where_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(this->query->where(orm::q::c(&TestCase_Q_TestModel::id) == 1)
-		.where(orm::q::c(&TestCase_Q_TestModel::name) == "John"), orm::QueryError);
+	ASSERT_NO_THROW(this->query->where(orm::q::c(&TestCase_Q_TestModel::id) == 1)
+		.where(orm::q::c(&TestCase_Q_TestModel::name) == "John"));
 }
 
-TEST_F(TestCase_Q_select, order_by_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, order_by_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(
+	ASSERT_NO_THROW(
 		this->query->order_by({orm::q::asc(&TestCase_Q_TestModel::id)})
-			.order_by({orm::q::desc(&TestCase_Q_TestModel::name)}),
-		orm::QueryError
+			.order_by({orm::q::desc(&TestCase_Q_TestModel::name)})
 	);
 }
 
-TEST_F(TestCase_Q_select, limit_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, limit_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(this->query->limit(1).limit(2), orm::QueryError);
+	ASSERT_NO_THROW(this->query->limit(1).limit(2));
 }
 
-TEST_F(TestCase_Q_select, offset_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, offset_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(this->query->offset(1).offset(2), orm::QueryError);
+	ASSERT_NO_THROW(this->query->offset(1).offset(2));
 }
 
-TEST_F(TestCase_Q_select, group_by_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, group_by_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(
-		this->query->group_by({"id"}).group_by({"name"}), orm::QueryError
-	);
+	ASSERT_NO_THROW(this->query->group_by({"id"}).group_by({"name"}));
 }
 
-TEST_F(TestCase_Q_select, having_Throws_MultipleCallsException)
+TEST_F(TestCase_Q_select, having_NoThrow_MultipleCalls)
 {
-	ASSERT_THROW(this->query->having(orm::q::c(&TestCase_Q_TestModel::id) == 1)
-		.having(orm::q::c(&TestCase_Q_TestModel::name) == "John"), orm::QueryError);
+	ASSERT_NO_THROW(this->query->having(orm::q::c(&TestCase_Q_TestModel::id) == 1)
+		.having(orm::q::c(&TestCase_Q_TestModel::name) == "John"));
 }
