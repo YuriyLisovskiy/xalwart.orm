@@ -21,7 +21,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <model_based_type_c ModelT>
 class insert final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -58,20 +58,7 @@ protected:
 			}
 
 			using field_type = typename std::remove_reference<decltype(column)>::type;
-//			using T = typename field_type::field_type;
-
 			row += get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
-
-//			if constexpr (std::is_fundamental_v<T>)
-//			{
-//				row += std::to_string(model.*column.member_pointer);
-//			}
-//			else if constexpr (std::is_same_v<T, std::string>)
-//			{
-//				row += "'" + model.*column.member_pointer + "'";
-//			}
-
-//			row += ", ";
 			return true;
 		});
 
@@ -174,7 +161,7 @@ public:
 
 	// Inserts one row and sets inserted primary key
 	// to `pk` as type T.
-	template <typename T>
+	template <column_type_c T>
 	inline void commit_one(T& pk) const
 	{
 		pk = util::as<T>(this->commit_one().c_str());

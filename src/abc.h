@@ -40,7 +40,6 @@ public:
 		const std::vector<std::string>& rows
 	) const = 0;
 
-	[[nodiscard]]
 	virtual std::string run_insert(const std::string& query) const = 0;
 
 	// select rows

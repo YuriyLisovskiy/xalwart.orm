@@ -19,7 +19,7 @@
 
 __Q_BEGIN__
 
-template <ModelBasedType ModelT>
+template <model_based_type_c ModelT>
 class delete_ final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -119,19 +119,17 @@ public:
 	}
 
 	// Sets the condition for 'where' filtering.
-	//
-	// Throws 'QueryError' if this method is called more than once.
 	inline delete_& where(const condition_t& cond)
 	{
 		if (this->where_cond.is_set)
 		{
-			throw QueryError(
-				"delete: 'where' condition is already set, check method call sequence",
-				_ERROR_DETAILS_
-			);
+			this->where_cond.set(this->where_cond.value & cond);
+		}
+		else
+		{
+			this->where_cond.set(cond);
 		}
 
-		this->where_cond.set(cond);
 		return *this;
 	}
 

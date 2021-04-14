@@ -23,10 +23,6 @@
 
 __Q_BEGIN__
 
-template <typename T>
-concept OperatorValueType = std::is_fundamental_v<T> ||
-	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
-
 struct ordering final
 {
 private:
@@ -65,7 +61,7 @@ public:
 	}
 };
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline ordering asc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -73,7 +69,7 @@ inline ordering asc(ColumnT ModelT::* column)
 	return ordering(ModelT::meta_table_name, meta::get_column_name(column), true);
 }
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline ordering desc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -125,7 +121,7 @@ public:
 	}
 };
 
-template <typename ModelT, OperatorValueType T>
+template <typename ModelT, column_type_c ColumnT>
 struct comparison_op_t : public column_condition_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -134,7 +130,7 @@ public:
 	inline comparison_op_t() = default;
 
 	inline explicit comparison_op_t(
-		const std::string& column_name, const std::string& op, T value
+		const std::string& column_name, const std::string& op, ColumnT value
 	) : column_condition_t(
 		ModelT::meta_table_name, column_name, op + " " + std::to_string(value)
 	)
@@ -175,7 +171,7 @@ public:
 };
 
 // SQL comparison operators for columns.
-template <typename ModelT, typename ValueT>
+template <typename ModelT, column_type_c ColumnT>
 struct column_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -190,44 +186,44 @@ public:
 	{
 	}
 
-	comparison_op_t<ModelT, ValueT> operator== (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator== (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, "=", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, "=", val);
 	}
 
-	comparison_op_t<ModelT, ValueT> operator!= (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator!= (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, "!=", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, "!=", val);
 	}
 
-	comparison_op_t<ModelT, ValueT> operator< (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator< (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, "<", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, "<", val);
 	}
 
-	comparison_op_t<ModelT, ValueT> operator> (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator> (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, ">", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, ">", val);
 	}
 
-	comparison_op_t<ModelT, ValueT> operator<= (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator<= (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, "<=", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, "<=", val);
 	}
 
-	comparison_op_t<ModelT, ValueT> operator>= (ValueT val)
+	comparison_op_t<ModelT, ColumnT> operator>= (ColumnT val)
 	{
-		return comparison_op_t<ModelT, ValueT>(this->name, ">=", val);
+		return comparison_op_t<ModelT, ColumnT>(this->name, ">=", val);
 	}
 };
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline column_t<ModelT, ColumnT> c(ColumnT ModelT::* member_pointer)
 {
 	return column_t<ModelT, ColumnT>(meta::get_column_name(member_pointer));
 }
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline column_condition_t is_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -235,7 +231,7 @@ inline column_condition_t is_null(ColumnT ModelT::* member_pointer)
 	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(member_pointer), "IS NULL");
 }
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline column_condition_t is_not_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -263,7 +259,7 @@ inline condition_t operator~ (const condition_t& cond)
 	return condition_t("NOT (" + (std::string)cond + ")");
 }
 
-template <typename ColumnT, typename ModelT>
+template <types::fundamental_type ColumnT, typename ModelT>
 inline column_condition_t between(ColumnT ModelT::* column, ColumnT lower, ColumnT upper)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -300,7 +296,7 @@ inline column_condition_t between(
 	);
 }
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline column_condition_t like(ColumnT ModelT::* column, const std::string& pattern)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -310,7 +306,7 @@ inline column_condition_t like(ColumnT ModelT::* column, const std::string& patt
 	);
 }
 
-template <typename ColumnT, typename ModelT>
+template <column_type_c ColumnT, typename ModelT>
 inline column_condition_t like(
 	ColumnT ModelT::* column, const std::string& pattern, const std::string& escape
 )
@@ -323,7 +319,7 @@ inline column_condition_t like(
 	);
 }
 
-template <types::fundamental_type ColumnT, typename IteratorT, typename ModelT>
+template <types::fundamental_type ColumnT, fundamental_iterator_type_c IteratorT, typename ModelT>
 inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, IteratorT end)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -339,7 +335,7 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(column), condition);
 }
 
-template <typename ColumnT, types::fundamental_type RangeValueT, typename ModelT>
+template <types::fundamental_type ColumnT, types::fundamental_type RangeValueT, typename ModelT>
 inline column_condition_t in(ColumnT ModelT::* column, const std::initializer_list<RangeValueT>& values)
 {
 	return in<ColumnT, typename std::initializer_list<RangeValueT>::const_iterator, ModelT>(
@@ -347,7 +343,7 @@ inline column_condition_t in(ColumnT ModelT::* column, const std::initializer_li
 	);
 }
 
-template <typename ColumnT, StringIterType IteratorT, typename ModelT>
+template <string_type_c ColumnT, string_iterator_type_c IteratorT, typename ModelT>
 inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, IteratorT end)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -372,18 +368,10 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	return column_condition_t(ModelT::meta_table_name, meta::get_column_name(column), condition);
 }
 
-template <typename ModelT>
-inline column_condition_t in(std::string ModelT::* column, const std::initializer_list<std::string>& values)
+template <string_type_c ColumnT, typename ModelT>
+inline column_condition_t in(ColumnT ModelT::* column, const std::initializer_list<ColumnT>& values)
 {
-	return in<std::string, std::initializer_list<std::string>::const_iterator, ModelT>(
-		column, values.begin(), values.end()
-	);
-}
-
-template <typename ModelT>
-inline column_condition_t in(const char* ModelT::* column, const std::initializer_list<const char*>& values)
-{
-	return in<const char*, std::initializer_list<const char*>::const_iterator, ModelT>(
+	return in<ColumnT, typename std::initializer_list<ColumnT>::const_iterator, ModelT>(
 		column, values.begin(), values.end()
 	);
 }

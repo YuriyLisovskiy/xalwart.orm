@@ -277,9 +277,9 @@ const std::tuple<Cs...> Model<Derived, Cs...>::meta_columns = {};
 
 // Used in templates where Model-based class is required.
 template <typename T>
-concept ModelBasedType = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
+concept model_based_type_c = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
 
-template <typename M, column_field_type F>
+template <model_based_type_c M, column_field_type F>
 std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)
 {
 	std::string result;
