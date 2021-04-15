@@ -14,6 +14,10 @@ using namespace xw;
 class MockedDriver : public orm::SQLDriverBase
 {
 public:
+	inline void execute_query(const std::string&) const override
+	{
+	}
+
 	[[nodiscard]]
 	inline std::string run_insert(const std::string& query) const override
 	{
@@ -34,6 +38,11 @@ public:
 
 	inline void run_delete(const std::string& query) const override
 	{
+	}
+
+	inline bool run_transaction(const std::function<bool()>&) const override
+	{
+		return false;
 	}
 
 	[[nodiscard]]

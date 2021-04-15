@@ -34,6 +34,10 @@ const std::tuple<
 class TestDriver : public orm::SQLDriverBase
 {
 public:
+	inline void execute_query(const std::string&) const override
+	{
+	}
+
 	[[nodiscard]]
 	inline std::string run_insert(const std::string& query) const override { return ""; }
 
@@ -46,6 +50,8 @@ public:
 	inline void run_update(const std::string& query, bool batch) const override {}
 
 	inline void run_delete(const std::string& query) const override {}
+
+	inline bool run_transaction(const std::function<bool()>&) const override { return false; }
 
 	[[nodiscard]]
 	inline std::string name() const override { return "test"; }

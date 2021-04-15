@@ -19,6 +19,7 @@
 
 // Orm libraries.
 #include "./queries/conditions.h"
+#include "./db/abc.h"
 
 
 __ABC_BEGIN__
@@ -31,6 +32,13 @@ public:
 	// Returns the name of SQL driver.
 	[[nodiscard]]
 	virtual std::string name() const = 0;
+
+	// Returns schema editor related to driver.
+	[[nodiscard]]
+	virtual db::abc::ISchemaEditor* schema_editor() const = 0;
+
+	// execute query
+	virtual void execute_query(const std::string& query) const = 0;
 
 	// insert row(s)
 	[[nodiscard]]
@@ -100,6 +108,9 @@ public:
 	) const = 0;
 
 	virtual void run_delete(const std::string& query) const = 0;
+
+	// transaction
+	virtual bool run_transaction(const std::function<bool()>& func) const = 0;
 };
 
 __ABC_END__

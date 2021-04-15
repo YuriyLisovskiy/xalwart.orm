@@ -14,6 +14,7 @@
 
 // Orm libraries.
 #include "./abc.h"
+#include "./db/schema_editor.h"
 
 
 __ORM_BEGIN__
@@ -22,6 +23,9 @@ class SQLDriverBase : public abc::ISQLDriver
 {
 protected:
 
+	// Schema editor related to SQL driver.
+	mutable std::shared_ptr<db::abc::ISchemaEditor> schema_editor_;
+
 	// Helper method which throws 'QueryError' with message and
 	// location for 'arg' argument name.
 	void throw_empty_arg(
@@ -29,6 +33,20 @@ protected:
 	) const;
 
 public:
+
+	// TESTME: schema_editor
+	// Instantiates default schema editor if it was not
+	// done yet and returns it.
+	[[nodiscard]]
+	inline db::abc::ISchemaEditor* schema_editor() const override
+	{
+		if (!this->schema_editor_)
+		{
+			this->schema_editor_ = std::make_shared<db::DefaultSchemaEditor>((ISQLDriver*) this);
+		}
+
+		return this->schema_editor_.get();
+	}
 
 	// Generates 'INSERT' query as string.
 	//

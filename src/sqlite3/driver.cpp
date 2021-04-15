@@ -4,27 +4,15 @@
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
-#ifdef USE_SQLITE3
-
 #include "./driver.h"
+
+#ifdef USE_SQLITE3
 
 // Core libraries.
 #include <xalwart.core/string_utils.h>
 
 
 __SQLITE3_BEGIN__
-
-void Driver::execute_query(const std::string& query) const
-{
-	char* message_error;
-	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
-	if (exit != SQLITE_OK)
-	{
-		auto message = std::string(message_error);
-		sqlite3_free(message_error);
-		throw SQLError(message, _ERROR_DETAILS_);
-	}
-}
 
 Driver::Driver(const char* filename)
 {
@@ -45,6 +33,18 @@ Driver::Driver(const char* filename)
 	this->db = driver;
 }
 
+void Driver::execute_query(const std::string& query) const
+{
+	char* message_error;
+	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
+	if (exit != SQLITE_OK)
+	{
+		auto message = std::string(message_error);
+		sqlite3_free(message_error);
+		throw SQLError(message, _ERROR_DETAILS_);
+	}
+}
+
 std::string Driver::run_insert(const std::string& query) const
 {
 	if (query.empty())
@@ -54,7 +54,7 @@ std::string Driver::run_insert(const std::string& query) const
 
 	char* message_error;
 	std::string last_inserted_pk;
-	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT;";
+	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT TRANSACTION;";
 	auto ret_val = sqlite3_exec(
 		this->db,
 		extended_query.c_str(),
@@ -130,6 +130,22 @@ void Driver::run_update(const std::string& query, bool batch) const
 void Driver::run_delete(const std::string& query) const
 {
 	this->execute_query(query);
+}
+
+bool Driver::run_transaction(const std::function<bool()>& func) const
+{
+	this->execute_query("BEGIN TRANSACTION;");
+	auto commit = func();
+	if (commit)
+	{
+		this->execute_query("COMMIT TRANSACTION;");
+	}
+	else
+	{
+		this->execute_query("ROLLBACK TRANSACTION;");
+	}
+
+	return commit;
 }
 
 __SQLITE3_END__
