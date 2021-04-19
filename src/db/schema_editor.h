@@ -19,7 +19,7 @@
 __DB_BEGIN__
 
 // TESTME: DefaultSchemaEditor
-class DefaultSchemaEditor : public abc::ISchemaEditor
+class DefaultSQLSchemaEditor : public abc::ISQLSchemaEditor
 {
 protected:
 	orm::abc::ISQLDriver* db;
@@ -37,7 +37,7 @@ protected:
 	) const;
 
 public:
-	inline explicit DefaultSchemaEditor(orm::abc::ISQLDriver* db) : db(db)
+	inline explicit DefaultSQLSchemaEditor(orm::abc::ISQLDriver* db) : db(db)
 	{
 		if (!this->db)
 		{
@@ -81,12 +81,12 @@ public:
 			str::join(", ", columns.begin(), columns.end()) +
 			(s_constraints.empty() ? "" : ", " + s_constraints) +
 		");";
-		this->db->execute_query(query);
+		this->db->run_query(query);
 	}
 
 	inline void drop_table(const std::string& name) const override
 	{
-		this->db->execute_query("DROP TABLE " + name + ";");
+		this->db->run_query("DROP TABLE " + name + ";");
 	}
 };
 

@@ -9,7 +9,7 @@
 
 __DB_BEGIN__
 
-std::string DefaultSchemaEditor::sql_type_to_string(sql_column_type type) const
+std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) const
 {
 	switch (type)
 	{
@@ -42,7 +42,7 @@ std::string DefaultSchemaEditor::sql_type_to_string(sql_column_type type) const
 	throw core::ValueError("unknown SQL data type", _ERROR_DETAILS_);
 }
 
-std::string DefaultSchemaEditor::sql_on_action_to_string(on_action action) const
+std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) const
 {
 	switch (action)
 	{
@@ -61,7 +61,7 @@ std::string DefaultSchemaEditor::sql_on_action_to_string(on_action action) const
 	throw core::ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
 }
 
-std::string DefaultSchemaEditor::sql_constraints(
+std::string DefaultSQLSchemaEditor::sql_constraints(
 	bool null, bool primary_key, bool unique, const std::string& check
 ) const
 {
@@ -89,7 +89,7 @@ std::string DefaultSchemaEditor::sql_constraints(
 	return result;
 }
 
-std::string DefaultSchemaEditor::sql_foreign_key(
+std::string DefaultSQLSchemaEditor::sql_foreign_key(
 	const std::string& name,
 	const std::string& parent, const std::string& parent_key,
 	on_action on_delete, on_action on_update
@@ -117,7 +117,7 @@ std::string DefaultSchemaEditor::sql_foreign_key(
 	return result;
 }
 
-std::string DefaultSchemaEditor::sql_text_column(
+std::string DefaultSQLSchemaEditor::sql_text_column(
 	sql_column_type type, const std::string& name, long int max_len,
 	bool null, bool primary_key, bool unique, const std::string& check
 ) const

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * TODO: description
+ * Abstract base classes for `db` module.
  */
 
 #pragma once
@@ -36,7 +36,7 @@ __DB_END__
 
 __DB_ABC_BEGIN__
 
-class ISchemaEditor
+class ISQLSchemaEditor
 {
 public:
 	// SQL builders.
@@ -72,9 +72,9 @@ public:
 class IOperation
 {
 public:
-	virtual void up(ISchemaEditor* editor) const = 0;
+	virtual void up(ISQLSchemaEditor* editor) const = 0;
 
-	virtual void down(ISchemaEditor* editor) const = 0;
+	virtual void down(ISQLSchemaEditor* editor) const = 0;
 };
 
 __DB_ABC_END__

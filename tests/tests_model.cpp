@@ -10,28 +10,29 @@
 
 using namespace xw;
 
-class TestCase_Model_TestModel : public orm::Model<TestCase_Model_TestModel>
+class TestCase_Model_TestModel : public orm::Model
 {
 public:
 	int id{};
 	std::string name;
 	const char* info;
 
-	static const std::tuple<
-		orm::column_meta_t<TestCase_Model_TestModel, int>,
-		orm::column_meta_t<TestCase_Model_TestModel, std::string>,
-		orm::column_meta_t<TestCase_Model_TestModel, const char*>
-	> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::make_pk_column_meta("id", &TestCase_Model_TestModel::id),
+		orm::make_column_meta("name", &TestCase_Model_TestModel::name),
+		orm::make_column_meta("info", &TestCase_Model_TestModel::info)
+	};
 
-const std::tuple<
-	orm::column_meta_t<TestCase_Model_TestModel, int>,
-	orm::column_meta_t<TestCase_Model_TestModel, std::string>,
-	orm::column_meta_t<TestCase_Model_TestModel, const char*>
-> TestCase_Model_TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCase_Model_TestModel::id),
-	orm::make_column_meta("name", &TestCase_Model_TestModel::name),
-	orm::make_column_meta("info", &TestCase_Model_TestModel::info)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_for<TestCase_Model_TestModel>(TestCase_Model_TestModel::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from<TestCase_Model_TestModel>(TestCase_Model_TestModel::meta_columns, attr_name);
+	}
 };
 
 TEST(TestCase_Model, __cmp___throws_NotImplementedException)

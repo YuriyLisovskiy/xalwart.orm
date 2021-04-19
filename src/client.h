@@ -22,11 +22,6 @@
 
 __ORM_BEGIN__
 
-template <typename T>
-concept model_based_iterator_type_c =
-	std::is_base_of_v<Model<iterator_v_type<T>>, iterator_v_type<T>> &&
-	std::is_default_constructible_v<iterator_v_type<T>>;
-
 class Client final
 {
 protected:

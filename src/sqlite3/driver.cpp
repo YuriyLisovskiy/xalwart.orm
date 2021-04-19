@@ -33,7 +33,7 @@ Driver::Driver(const char* filename)
 	this->db = driver;
 }
 
-void Driver::execute_query(const std::string& query) const
+void Driver::run_query(const std::string& query) const
 {
 	char* message_error;
 	auto exit = sqlite3_exec(this->db, query.c_str(), nullptr, nullptr, &message_error);
@@ -124,25 +124,25 @@ void Driver::run_select(
 
 void Driver::run_update(const std::string& query, bool batch) const
 {
-	this->execute_query(batch ? "BEGIN TRANSACTION; " + query + " COMMIT;" : query);
+	this->run_query(batch ? "BEGIN TRANSACTION; " + query + " COMMIT TRANSACTION;" : query);
 }
 
 void Driver::run_delete(const std::string& query) const
 {
-	this->execute_query(query);
+	this->run_query(query);
 }
 
 bool Driver::run_transaction(const std::function<bool()>& func) const
 {
-	this->execute_query("BEGIN TRANSACTION;");
+	this->run_query("BEGIN TRANSACTION;");
 	auto commit = func();
 	if (commit)
 	{
-		this->execute_query("COMMIT TRANSACTION;");
+		this->run_query("COMMIT TRANSACTION;");
 	}
 	else
 	{
-		this->execute_query("ROLLBACK TRANSACTION;");
+		this->run_query("ROLLBACK TRANSACTION;");
 	}
 
 	return commit;

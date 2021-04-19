@@ -77,7 +77,6 @@ inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
 
 // !IMPORTANT!
 // Currently Model supports single pk only.
-template <typename Derived, typename ...Columns>
 class Model : public obj::Object
 {
 private:
@@ -93,15 +92,13 @@ public:
 	static constexpr const char* meta_table_name = nullptr;
 
 	// Omit primary key when inserting new models.
-	//
-	// Can be overwritten in child class.
 	static constexpr bool meta_omit_pk = true;
 
 	// Tuple of mapped columns. At least, primary key
 	// is required.
 	//
 	// Must be overwritten in child class.
-	static const std::tuple<Columns...> meta_columns;
+	inline static constexpr std::tuple<> meta_columns = {};
 
 protected:
 
@@ -110,6 +107,77 @@ protected:
 	inline void copy_base(const Model& other)
 	{
 		this->_is_null_model = other._is_null_model;
+	}
+
+	template <typename TargetT, typename ...Columns>
+	inline std::shared_ptr<const Object> get_attribute_from(
+		const std::tuple<Columns...>& columns, const char* attr_name
+	) const
+	{
+		std::shared_ptr<Object> obj;
+		xw::orm::util::tuple_for_each(columns, [this, attr_name, &obj](auto& column)
+		{
+			if (column.name == std::string(attr_name))
+			{
+				using field_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename field_type::model_type;
+				using T = typename field_type::field_type;
+				if constexpr (std::is_fundamental_v<T>)
+				{
+					obj = std::make_shared<xw::types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
+				}
+				else if constexpr (std::is_same_v<T, std::string>)
+				{
+					obj = std::make_shared<xw::types::String>(((model_type*)this)->*column.member_pointer);
+				}
+
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!obj)
+		{
+			throw xw::core::AttributeError(
+				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
+				_ERROR_DETAILS_
+			);
+		}
+
+		return obj;
+	}
+
+	template <typename TargetT, typename ...Columns>
+	void set_attribute_for(
+		const std::tuple<Columns...>& columns, const char* attr_name, const void* data
+	)
+	{
+		bool is_set = false;
+		xw::orm::util::tuple_for_each(columns, [this, attr_name, data, &is_set](auto& column)
+		{
+			if (column.name == std::string(attr_name))
+			{
+				using column_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename column_type::model_type;
+				using field_type = typename column_type::field_type;
+				size_t len = std::strlen((char*)data);
+				std::string str_val = {(char*)data, (char*)data + len + 1};
+				((model_type*)this)->*column.member_pointer = xw::orm::util::as<field_type>(str_val.c_str());
+				is_set = true;
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!is_set)
+		{
+			throw xw::core::AttributeError(
+				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
+				_ERROR_DETAILS_
+			);
+		}
 	}
 
 public:
@@ -140,72 +208,6 @@ public:
 	inline std::string __repr__() const override
 	{
 		return this->__str__();
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		std::shared_ptr<Object> obj;
-		util::tuple_for_each(Derived::meta_columns, [this, attr_name, &obj](auto& column)
-		{
-			if (column.name == std::string(attr_name))
-			{
-				using field_type = typename std::remove_reference<decltype(column)>::type;
-				using model_type = typename field_type::model_type;
-				using T = typename field_type::field_type;
-				if constexpr (std::is_fundamental_v<T>)
-				{
-					obj = std::make_shared<types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
-				}
-				else if constexpr (std::is_same_v<T, std::string>)
-				{
-					obj = std::make_shared<types::String>(((model_type*)this)->*column.member_pointer);
-				}
-
-				return false;
-			}
-
-			return true;
-		});
-
-		if (!obj)
-		{
-			throw core::AttributeError(
-				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
-				_ERROR_DETAILS_
-			);
-		}
-
-		return obj;
-	}
-
-	void __set_attr__(const char* attr_name, const void* data) override
-	{
-		bool is_set = false;
-		util::tuple_for_each(Derived::meta_columns, [this, attr_name, data, &is_set](auto& column)
-		{
-			if (column.name == std::string(attr_name))
-			{
-				using column_type = typename std::remove_reference<decltype(column)>::type;
-				using model_type = typename column_type::model_type;
-				using field_type = typename column_type::field_type;
-				size_t len = std::strlen((char*)data);
-				std::string str_val = {(char*)data, (char*)data + len + 1};
-				((model_type*)this)->*column.member_pointer = util::as<field_type>(str_val.c_str());
-				is_set = true;
-				return false;
-			}
-
-			return true;
-		});
-
-		if (!is_set)
-		{
-			throw core::AttributeError(
-				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
-				_ERROR_DETAILS_
-			);
-		}
 	}
 
 	// Marks model as null-model. This action can not be undone.
@@ -272,12 +274,13 @@ public:
 	}
 };
 
-template <typename Derived, typename ...Cs>
-const std::tuple<Cs...> Model<Derived, Cs...>::meta_columns = {};
-
 // Used in templates where Model-based class is required.
 template <typename T>
-concept model_based_type_c = std::is_base_of_v<Model<T>, T> && std::is_default_constructible_v<T>;
+concept model_based_type_c = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+
+template <typename T>
+concept model_based_iterator_type_c = std::is_base_of_v<Model, iterator_v_type<T>> &&
+	std::is_default_constructible_v<iterator_v_type<T>>;
 
 template <model_based_type_c M, column_field_type F>
 std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)

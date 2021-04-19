@@ -26,7 +26,7 @@ class update final
 protected:
 
 	// Driver to perform an access to the database.
-	abc::ISQLDriver* db = nullptr;
+	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Name of the table which is retrieved from
 	// `ModelT::meta_table_name` static member.
@@ -90,7 +90,7 @@ public:
 	{
 		if (driver)
 		{
-			this->db = driver;
+			this->sql_driver = driver;
 		}
 
 		return *this;
@@ -102,15 +102,21 @@ public:
 	[[nodiscard]]
 	inline std::string query() const
 	{
-		if (!this->db)
+		if (!this->sql_driver)
 		{
 			throw QueryError("update: database driver not set", _ERROR_DETAILS_);
 		}
 
+		auto sql_builder = this->sql_driver->query_builder();
+		if (!sql_builder)
+		{
+			throw QueryError("update: SQL query builder is not initialized", _ERROR_DETAILS_);
+		}
+
 		return str::join(
 			" ", this->rows.begin(), this->rows.end(),
-			[this](const auto& row) -> std::string {
-				return this->db->make_update_query(this->table_name, row.first, row.second);
+			[this, sql_builder](const auto& row) -> std::string {
+				return sql_builder->sql_update(this->table_name, row.first, row.second);
 			}
 		);
 	}
@@ -136,14 +142,14 @@ public:
 		}
 
 		auto query = this->query();
-		this->db->run_update(query, false);
+		this->sql_driver->run_update(query, false);
 	}
 
 	// Updates multiple rows in database.
 	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_update(query, true);
+		this->sql_driver->run_update(query, true);
 	}
 };
 

@@ -23,7 +23,7 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 			return "BIGINT";
 	}
 
-	return db::DefaultSchemaEditor::sql_type_to_string(type);
+	return db::DefaultSQLSchemaEditor::sql_type_to_string(type);
 }
 
 std::string SchemaEditor::sql_data_column(

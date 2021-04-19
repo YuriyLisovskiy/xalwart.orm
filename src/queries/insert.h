@@ -29,14 +29,14 @@ class insert final
 protected:
 
 	// Driver to perform an access to the database.
-	abc::ISQLDriver* db = nullptr;
+	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Holds columns names.
 	// Generates during the first model appending.
 	std::string columns_str;
 
 	// Collection of rows to insert.
-	std::vector<std::string> rows;
+	std::list<std::string> rows;
 
 protected:
 
@@ -103,7 +103,7 @@ public:
 	{
 		if (driver)
 		{
-			this->db = driver;
+			this->sql_driver = driver;
 		}
 
 		return *this;
@@ -115,12 +115,18 @@ public:
 	[[nodiscard]]
 	inline std::string query() const
 	{
-		if (!this->db)
+		if (!this->sql_driver)
 		{
-			throw QueryError("insert: database driver not set", _ERROR_DETAILS_);
+			throw QueryError("insert: SQL driver is not set", _ERROR_DETAILS_);
 		}
 
-		return this->db->make_insert_query(
+		auto sql_builder = this->sql_driver->query_builder();
+		if (!sql_builder)
+		{
+			throw QueryError("insert: SQL query builder is initialized", _ERROR_DETAILS_);
+		}
+
+		return sql_builder->sql_insert(
 			meta::get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
@@ -156,7 +162,7 @@ public:
 		}
 
 		auto query = this->query();
-		return this->db->run_insert(query);
+		return this->sql_driver->run_insert(query);
 	}
 
 	// Inserts one row and sets inserted primary key
@@ -171,7 +177,7 @@ public:
 	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_insert(query);
+		this->sql_driver->run_insert(query);
 	}
 };
 

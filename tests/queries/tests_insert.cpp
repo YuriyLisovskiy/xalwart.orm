@@ -12,25 +12,28 @@
 
 using namespace xw;
 
-struct TestCase_Q_insert_TestModel : public orm::Model<TestCase_Q_insert_TestModel>
+struct TestCase_Q_insert_TestModel : public orm::Model
 {
 	int id{};
 	std::string name;
 
 	static constexpr const char* meta_table_name = "test_models";
 
-	static const std::tuple<
-		orm::column_meta_t<TestCase_Q_insert_TestModel, int>,
-		orm::column_meta_t<TestCase_Q_insert_TestModel, std::string>
-	> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::make_pk_column_meta("id", &TestCase_Q_insert_TestModel::id),
+		orm::make_column_meta("name", &TestCase_Q_insert_TestModel::name)
+	};
 
-const std::tuple<
-	orm::column_meta_t<TestCase_Q_insert_TestModel, int>,
-	orm::column_meta_t<TestCase_Q_insert_TestModel, std::string>
-> TestCase_Q_insert_TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCase_Q_insert_TestModel::id),
-	orm::make_column_meta("name", &TestCase_Q_insert_TestModel::name)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_for<TestCase_Q_insert_TestModel>(TestCase_Q_insert_TestModel::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from<TestCase_Q_insert_TestModel>(TestCase_Q_insert_TestModel::meta_columns, attr_name);
+	}
 };
 
 class TestCase_Q_insert_One : public ::testing::Test

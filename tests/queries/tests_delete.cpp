@@ -12,25 +12,28 @@
 
 using namespace xw;
 
-struct TestCaseF_Q_delete_TestModel : public orm::Model<TestCaseF_Q_delete_TestModel>
+struct TestCaseF_Q_delete_TestModel : public orm::Model
 {
 	int id{};
 	std::string name;
 
 	static constexpr const char* meta_table_name = "test_models";
 
-	static const std::tuple<
-		orm::column_meta_t<TestCaseF_Q_delete_TestModel, int>,
-		orm::column_meta_t<TestCaseF_Q_delete_TestModel, std::string>
-	> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::make_pk_column_meta("id", &TestCaseF_Q_delete_TestModel::id),
+		orm::make_column_meta("name", &TestCaseF_Q_delete_TestModel::name)
+	};
 
-const std::tuple<
-	orm::column_meta_t<TestCaseF_Q_delete_TestModel, int>,
-	orm::column_meta_t<TestCaseF_Q_delete_TestModel, std::string>
-> TestCaseF_Q_delete_TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCaseF_Q_delete_TestModel::id),
-	orm::make_column_meta("name", &TestCaseF_Q_delete_TestModel::name)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_for<TestCaseF_Q_delete_TestModel>(TestCaseF_Q_delete_TestModel::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from<TestCaseF_Q_delete_TestModel>(TestCaseF_Q_delete_TestModel::meta_columns, attr_name);
+	}
 };
 
 class TestCaseF_Q_delete : public ::testing::Test

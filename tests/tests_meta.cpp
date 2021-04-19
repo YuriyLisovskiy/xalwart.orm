@@ -14,7 +14,7 @@ using namespace xw;
 class TestCase_Model_meta : public ::testing::Test
 {
 protected:
-	class TestModel : public orm::Model<TestModel>
+	class TestModel : public orm::Model
 	{
 	public:
 		int id{};
@@ -22,14 +22,21 @@ protected:
 
 		static constexpr const char* meta_table_name = "test_models";
 
-		static const std::tuple<orm::column_meta_t<TestModel, int>> meta_columns;
-	};
-};
+		inline static const std::tuple meta_columns = {
+			orm::make_pk_column_meta("id", &TestCase_Model_meta::TestModel::id)
+		};
 
-const std::tuple<
-	orm::column_meta_t<TestCase_Model_meta::TestModel, int>
-> TestCase_Model_meta::TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCase_Model_meta::TestModel::id)
+		inline void __set_attr__(const char* attr_name, const void* data) override
+		{
+			this->set_attribute_for<TestModel>(TestModel::meta_columns, attr_name, data);
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+		{
+			return this->get_attribute_from<TestModel>(TestModel::meta_columns, attr_name);
+		}
+	};
 };
 
 TEST_F(TestCase_Model_meta, get_table_name)
@@ -62,17 +69,26 @@ TEST_F(TestCase_Model_meta, get_column_name_ThrowsColumnNotFound)
 	);
 }
 
-class TestCase_meta_TestM : public orm::Model<TestCase_meta_TestM>
+class TestCase_meta_TestM : public orm::Model
 {
 public:
 	int custom_identifier{};
 
 	static constexpr const char* meta_table_name = "test";
-	static const std::tuple<orm::column_meta_t<TestCase_meta_TestM, int>> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::make_pk_column_meta("custom_identifier", &TestCase_meta_TestM::custom_identifier)
+	};
 
-const std::tuple<orm::column_meta_t<TestCase_meta_TestM, int>> TestCase_meta_TestM::meta_columns = {
-	orm::make_pk_column_meta("custom_identifier", &TestCase_meta_TestM::custom_identifier)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_for<TestCase_meta_TestM>(TestCase_meta_TestM::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from<TestCase_meta_TestM>(TestCase_meta_TestM::meta_columns, attr_name);
+	}
 };
 
 TEST(TestCase_utility, make_fk)
@@ -81,10 +97,11 @@ TEST(TestCase_utility, make_fk)
 	ASSERT_EQ(orm::meta::make_fk<TestCase_meta_TestM>(), expected);
 }
 
-class TestModelWithoutPk : public orm::Model<TestModelWithoutPk>
+class TestModelWithoutPk : public orm::Model
 {
 public:
 	static constexpr const char* meta_table_name = "test_models_without_pk";
+	inline static std::tuple<> meta_columns;
 };
 
 TEST(TestCase_meta, get_pk_name_Empty)

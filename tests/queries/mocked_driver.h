@@ -6,15 +6,15 @@
 
 #pragma once
 
-#include "../../src/driver.h"
+#include "../../src/sql_driver.h"
 
 using namespace xw;
 
 
-class MockedDriver : public orm::SQLDriverBase
+class MockedDriver : public orm::DefaultSQLDriver
 {
 public:
-	inline void execute_query(const std::string&) const override
+	inline void run_query(const std::string&) const override
 	{
 	}
 

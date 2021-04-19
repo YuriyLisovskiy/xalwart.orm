@@ -17,17 +17,27 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../driver.h"
+#include "../sql_driver.h"
 #include "./schema_editor.h"
 
 
 __SQLITE3_BEGIN__
 
 // TESTME: Driver
-class Driver : public SQLDriverBase
+class Driver : public DefaultSQLDriver
 {
 protected:
 	::sqlite3* db = nullptr;
+
+protected:
+	// Helper method which throws 'QueryError' with message and
+	// location for 'arg' argument name.
+	inline void throw_empty_arg(
+		const std::string& arg, int line, const char* function, const char* file
+	) const
+	{
+		throw QueryError(this->name() + ": '" + arg + "' is required", line, function, file);
+	}
 
 public:
 	explicit Driver(const char* filename);
@@ -35,7 +45,7 @@ public:
 	inline ~Driver() override
 	{
 		sqlite3_close(this->db);
-		SQLDriverBase::~SQLDriverBase();
+		DefaultSQLDriver::~DefaultSQLDriver();
 	}
 
 	[[nodiscard]]
@@ -47,18 +57,18 @@ public:
 	// Instantiates SQLite3 schema editor if it was not
 	// done yet and returns it.
 	[[nodiscard]]
-	inline db::abc::ISchemaEditor* schema_editor() const override
+	inline db::abc::ISQLSchemaEditor* schema_editor() const override
 	{
-		if (!this->schema_editor_)
+		if (!this->sql_schema_editor)
 		{
-			this->schema_editor_ = std::make_shared<SchemaEditor>((ISQLDriver*) this);
+			this->sql_schema_editor = std::make_shared<SchemaEditor>((ISQLDriver*) this);
 		}
 
-		return this->schema_editor_.get();
+		return this->sql_schema_editor.get();
 	}
 
 	// execute query
-	void execute_query(const std::string& query) const override;
+	void run_query(const std::string& query) const override;
 
 	// insert row(s)
 	[[nodiscard]]

@@ -27,7 +27,7 @@ class delete_ final
 protected:
 
 	// Driver to perform an access to the database.
-	abc::ISQLDriver* db = nullptr;
+	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Holds condition for SQL 'WHERE' statement.
 	q_value<condition_t> where_cond;
@@ -72,7 +72,7 @@ public:
 	{
 		if (driver)
 		{
-			this->db = driver;
+			this->sql_driver = driver;
 		}
 
 		return *this;
@@ -84,7 +84,7 @@ public:
 	[[nodiscard]]
 	inline std::string query() const
 	{
-		if (!this->db)
+		if (!this->sql_driver)
 		{
 			throw QueryError("delete: database driver not set", _ERROR_DETAILS_);
 		}
@@ -108,7 +108,13 @@ public:
 			});
 		}
 
-		return this->db->make_delete_query(meta::get_table_name<ModelT>(), condition.value);
+		auto sql_builder = this->sql_driver->query_builder();
+		if (!sql_builder)
+		{
+			throw QueryError("delete: SQL builder is not initialized", _ERROR_DETAILS_);
+		}
+
+		return sql_builder->sql_delete(meta::get_table_name<ModelT>(), condition.value);
 	}
 
 	// Appends model's pk to deletion list.
@@ -140,7 +146,7 @@ public:
 	inline void commit() const
 	{
 		auto query = this->query();
-		this->db->run_delete(query);
+		this->sql_driver->run_delete(query);
 	}
 };
 

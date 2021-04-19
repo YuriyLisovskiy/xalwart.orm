@@ -20,14 +20,14 @@
 __SQLITE3_BEGIN__
 
 // TESTME: SchemaEditor
-class SchemaEditor : public db::DefaultSchemaEditor
+class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
 protected:
 	[[nodiscard]]
 	std::string sql_type_to_string(db::sql_column_type type) const override;
 
 public:
-	inline explicit SchemaEditor(orm::abc::ISQLDriver* db) : db::DefaultSchemaEditor(db)
+	inline explicit SchemaEditor(orm::abc::ISQLDriver* db) : db::DefaultSQLSchemaEditor(db)
 	{
 	}
 

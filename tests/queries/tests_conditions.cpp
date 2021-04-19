@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-class TestModel : public orm::Model<TestModel>
+class TestModel : public orm::Model
 {
 public:
 	static constexpr const char* meta_table_name = "test_model";
@@ -19,21 +19,22 @@ public:
 	std::string name;
 	const char* name_c_str;
 
-	static const std::tuple<
-		orm::column_meta_t<TestModel, long>,
-		orm::column_meta_t<TestModel, std::string>,
-		orm::column_meta_t<TestModel, const char*>
-	> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::make_pk_column_meta("id", &TestModel::id),
+		orm::make_column_meta("name", &TestModel::name),
+		orm::make_column_meta("name_c_str", &TestModel::name_c_str)
+	};
 
-const std::tuple<
-	orm::column_meta_t<TestModel, long>,
-	orm::column_meta_t<TestModel, std::string>,
-	orm::column_meta_t<TestModel, const char*>
-> TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestModel::id),
-	orm::make_column_meta("name", &TestModel::name),
-	orm::make_column_meta("name_c_str", &TestModel::name_c_str)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_for<TestModel>(TestModel::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from<TestModel>(TestModel::meta_columns, attr_name);
+	}
 };
 
 TEST(TestCase_Conditions, ordering_Ascending)
@@ -296,7 +297,7 @@ TEST(TestCase_Conditions, in_CStringInitializerList_ThrowsEmptyRange)
 	);
 }
 
-class OtherTestModel : public orm::Model<OtherTestModel>
+class OtherTestModel : public orm::Model
 {
 public:
 	static constexpr const char* meta_table_name = "other_test_models";

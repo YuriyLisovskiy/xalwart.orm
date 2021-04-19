@@ -9,9 +9,9 @@
 
 __DB_BEGIN__
 
-bool Migration::up(abc::ISchemaEditor* schema_editor) const
+bool Migration::up(abc::ISQLSchemaEditor* editor) const
 {
-	if (!schema_editor)
+	if (!editor)
 	{
 		throw core::NullPointerException(
 			"xw::orm::db::Migration: schema editor is nullptr",
@@ -19,20 +19,20 @@ bool Migration::up(abc::ISchemaEditor* schema_editor) const
 		);
 	}
 
-	auto func = [this, schema_editor]() -> bool
+	auto func = [this, editor]() -> bool
 	{
 		for (const auto& operation : this->operations)
 		{
-			operation->up(schema_editor);
+			operation->up(editor);
 		}
 
 		return true;
 	};
 
 	bool result;
-	if (this->atomic && this->db)
+	if (this->atomic && this->sql_driver)
 	{
-		result = this->db->run_transaction(func);
+		result = this->sql_driver->run_transaction(func);
 	}
 	else
 	{
@@ -42,9 +42,9 @@ bool Migration::up(abc::ISchemaEditor* schema_editor) const
 	return result;
 }
 
-bool Migration::down(abc::ISchemaEditor* schema_editor) const
+bool Migration::down(abc::ISQLSchemaEditor* editor) const
 {
-	if (!schema_editor)
+	if (!editor)
 	{
 		throw core::NullPointerException(
 			"xw::orm::db::Migration: schema editor is nullptr",
@@ -52,20 +52,20 @@ bool Migration::down(abc::ISchemaEditor* schema_editor) const
 		);
 	}
 
-	auto func = [this, schema_editor]() -> bool
+	auto func = [this, editor]() -> bool
 	{
 		for (const auto& operation : this->operations)
 		{
-			operation->down(schema_editor);
+			operation->down(editor);
 		}
 
 		return true;
 	};
 
 	bool result;
-	if (this->atomic && this->db)
+	if (this->atomic && this->sql_driver)
 	{
-		result = this->db->run_transaction(func);
+		result = this->sql_driver->run_transaction(func);
 	}
 	else
 	{
