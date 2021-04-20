@@ -58,7 +58,7 @@ protected:
 			}
 
 			using field_type = typename std::remove_reference<decltype(column)>::type;
-			row += get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
+			row += db::get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
 			return true;
 		});
 
