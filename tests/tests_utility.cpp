@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "../src/utility.h"
-#include "../src/model.h"
+#include "../src/db/model.h"
 
 using namespace xw;
 
@@ -105,14 +105,14 @@ TEST(TestCase_utility, compare_any_FalseWithDifferentTypes)
 	ASSERT_FALSE(orm::util::compare_any(a, s));
 }
 
-class TestM : public orm::Model
+class TestM : public orm::db::Model
 {
 public:
 	int custom_identifier{};
 
 	static constexpr const char* meta_table_name = "test";
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("custom_identifier", &TestM::custom_identifier)
+		orm::db::make_pk_column_meta("custom_identifier", &TestM::custom_identifier)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -127,7 +127,7 @@ public:
 	}
 };
 
-class TestModelWithoutPk : public orm::Model
+class TestModelWithoutPk : public orm::db::Model
 {
 public:
 	static constexpr const char* meta_table_name = "test_models_without_pk";
@@ -144,7 +144,7 @@ TEST(TestCase_utility, check_model_ThrowsPkNotFound)
 	ASSERT_THROW(orm::util::check_model<TestModelWithoutPk>(), orm::ModelError);
 }
 
-class MultiPkModel : public orm::Model
+class MultiPkModel : public orm::db::Model
 {
 public:
 	int id{};
@@ -152,8 +152,8 @@ public:
 
 	static constexpr const char* meta_table_name = "test";
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &MultiPkModel::id),
-		orm::make_pk_column_meta("another_id", &MultiPkModel::another_id)
+		orm::db::make_pk_column_meta("id", &MultiPkModel::id),
+		orm::db::make_pk_column_meta("another_id", &MultiPkModel::another_id)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override

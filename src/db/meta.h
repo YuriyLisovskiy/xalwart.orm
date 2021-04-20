@@ -1,9 +1,9 @@
 /**
- * meta.h
+ * db/meta.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Utilities for retrieving model's meta information.
+ * Utilities for Model based types.
  */
 
 #pragma once
@@ -12,11 +12,11 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./exceptions.h"
-#include "./utility.h"
+#include "../exceptions.h"
+#include "../utility.h"
 
 
-__ORM_META_BEGIN__
+__ORM_DB_BEGIN__
 
 template <typename ModelT>
 inline std::string get_pk_name()
@@ -88,4 +88,54 @@ inline std::string get_table_name(bool quote=false)
 	return quote ? util::quote_str(ModelT::meta_table_name) : ModelT::meta_table_name;
 }
 
-__ORM_META_END__
+template <typename T>
+concept column_field_type_c = std::is_fundamental_v<T> ||
+	std::is_same_v<std::string, T> ||
+	std::is_same_v<const char*, T>;
+
+template <typename ModelT, column_field_type_c FieldT>
+struct column_meta_t
+{
+	using field_type = FieldT;
+	using model_type = ModelT;
+
+	std::string name;
+	bool is_pk;
+
+	FieldT ModelT::* member_pointer;
+
+	column_meta_t() = default;
+
+	column_meta_t(std::string name, FieldT ModelT::* member_ptr, bool is_pk) :
+		name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk)
+	{
+	}
+
+	column_meta_t(const column_meta_t& other)
+	{
+		if (this != &other)
+		{
+			this->name = other.name;
+			this->is_pk = other.is_pk;
+			this->member_pointer = other.member_pointer;
+		}
+	}
+};
+
+template <typename ModelT, column_field_type_c FieldT>
+inline column_meta_t<ModelT, FieldT> make_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr
+)
+{
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
+}
+
+template <typename ModelT, column_field_type_c FieldT>
+inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr
+)
+{
+	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
+}
+
+__ORM_DB_END__

@@ -15,11 +15,10 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../meta.h"
-#include "../utility.h"
+#include "../db/meta.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
 // Base structure for SQL function.
 struct function_t
@@ -59,7 +58,7 @@ struct aggregate_function_t : public function_t
 	inline explicit aggregate_function_t(const std::string& name, ColumnT ModelT::* column)
 	{
 		this->name = name;
-		this->args = meta::get_table_name<ModelT>(true) + "." + meta::get_column_name(column, true);
+		this->args = db::get_table_name<ModelT>(true) + "." + db::get_column_name(column, true);
 	}
 };
 
@@ -102,4 +101,4 @@ inline auto sum(ColumnT ModelT::* column)
 	return aggregate_function_t<ColumnT>{"sum", column};
 }
 
-__Q_END__
+__ORM_Q_END__

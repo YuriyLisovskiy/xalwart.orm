@@ -12,7 +12,7 @@
 #include <xalwart.core/string_utils.h>
 
 
-__SQLITE3_BEGIN__
+__ORM_SQLITE3_BEGIN__
 
 Driver::Driver(const char* filename)
 {
@@ -31,6 +31,32 @@ Driver::Driver(const char* filename)
 	}
 
 	this->db = driver;
+}
+
+std::vector<std::string> Driver::table_names() const
+{
+	const char* query = "SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%'";
+	char* message_error;
+	using result_t = std::vector<std::string>;
+	result_t result;
+	auto ret_val = sqlite3_exec(
+		this->db, query,
+		[](void* data, int argc, char** argv, char** column_names) -> int {
+			(*(result_t*)data).emplace_back(argv[0]);
+			return 0;
+		},
+		&result,
+		&message_error
+	);
+
+	if (ret_val != SQLITE_OK)
+	{
+		auto message = std::string(message_error);
+		sqlite3_free(message_error);
+		throw SQLError(message, _ERROR_DETAILS_);
+	}
+
+	return result;
 }
 
 void Driver::run_query(const std::string& query) const
@@ -148,6 +174,6 @@ bool Driver::run_transaction(const std::function<bool()>& func) const
 	return commit;
 }
 
-__SQLITE3_END__
+__ORM_SQLITE3_END__
 
 #endif // USE_SQLITE3

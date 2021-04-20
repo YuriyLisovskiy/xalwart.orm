@@ -6,15 +6,15 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/meta.h"
-#include "../src/model.h"
+#include "../../src/db/meta.h"
+#include "../../src/db/model.h"
 
 using namespace xw;
 
 class TestCase_Model_meta : public ::testing::Test
 {
 protected:
-	class TestModel : public orm::Model
+	class TestModel : public orm::db::Model
 	{
 	public:
 		int id{};
@@ -23,7 +23,7 @@ protected:
 		static constexpr const char* meta_table_name = "test_models";
 
 		inline static const std::tuple meta_columns = {
-			orm::make_pk_column_meta("id", &TestCase_Model_meta::TestModel::id)
+			orm::db::make_pk_column_meta("id", &TestCase_Model_meta::TestModel::id)
 		};
 
 		inline void __set_attr__(const char* attr_name, const void* data) override
@@ -41,42 +41,42 @@ protected:
 
 TEST_F(TestCase_Model_meta, get_table_name)
 {
-	ASSERT_EQ(orm::meta::get_table_name<TestCase_Model_meta::TestModel>(), "test_models");
+	ASSERT_EQ(orm::db::get_table_name<TestCase_Model_meta::TestModel>(), "test_models");
 }
 
 TEST_F(TestCase_Model_meta, get_pk_name)
 {
-	ASSERT_EQ(orm::meta::get_pk_name<TestCase_Model_meta::TestModel>(), "id");
+	ASSERT_EQ(orm::db::get_pk_name<TestCase_Model_meta::TestModel>(), "id");
 }
 
 TEST_F(TestCase_Model_meta, make_fk_CutEndingS)
 {
 	auto expected = "test_model_id";
-	ASSERT_EQ(orm::meta::make_fk<TestCase_Model_meta::TestModel>(), expected);
+	ASSERT_EQ(orm::db::make_fk<TestCase_Model_meta::TestModel>(), expected);
 }
 
 TEST_F(TestCase_Model_meta, get_column_name_FoundColumn)
 {
 	std::string expected = "id";
-	ASSERT_EQ(orm::meta::get_column_name(&TestCase_Model_meta::TestModel::id), expected);
+	ASSERT_EQ(orm::db::get_column_name(&TestCase_Model_meta::TestModel::id), expected);
 }
 
 TEST_F(TestCase_Model_meta, get_column_name_ThrowsColumnNotFound)
 {
 	ASSERT_THROW(
-		orm::meta::get_column_name(&TestCase_Model_meta::TestModel::non_existent_column),
+		orm::db::get_column_name(&TestCase_Model_meta::TestModel::non_existent_column),
 		core::ValueError
 	);
 }
 
-class TestCase_meta_TestM : public orm::Model
+class TestCase_meta_TestM : public orm::db::Model
 {
 public:
 	int custom_identifier{};
 
 	static constexpr const char* meta_table_name = "test";
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("custom_identifier", &TestCase_meta_TestM::custom_identifier)
+		orm::db::make_pk_column_meta("custom_identifier", &TestCase_meta_TestM::custom_identifier)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -94,10 +94,10 @@ public:
 TEST(TestCase_utility, make_fk)
 {
 	auto expected = "test_custom_identifier";
-	ASSERT_EQ(orm::meta::make_fk<TestCase_meta_TestM>(), expected);
+	ASSERT_EQ(orm::db::make_fk<TestCase_meta_TestM>(), expected);
 }
 
-class TestModelWithoutPk : public orm::Model
+class TestModelWithoutPk : public orm::db::Model
 {
 public:
 	static constexpr const char* meta_table_name = "test_models_without_pk";
@@ -106,10 +106,10 @@ public:
 
 TEST(TestCase_meta, get_pk_name_Empty)
 {
-	ASSERT_EQ(orm::meta::get_pk_name<TestModelWithoutPk>(), "");
+	ASSERT_EQ(orm::db::get_pk_name<TestModelWithoutPk>(), "");
 }
 
 TEST(TestCase_meta, make_fk_ThrowsPkRequired)
 {
-	ASSERT_THROW(orm::meta::make_fk<TestModelWithoutPk>(), orm::QueryError);
+	ASSERT_THROW(orm::db::make_fk<TestModelWithoutPk>(), orm::QueryError);
 }

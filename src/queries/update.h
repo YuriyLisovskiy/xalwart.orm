@@ -16,9 +16,9 @@
 #include "../exceptions.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
-template <model_based_type_c ModelT>
+template <db::model_based_type_c ModelT>
 class update final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -81,7 +81,7 @@ public:
 	// Prepares model's data.
 	inline explicit update(const ModelT& model)
 	{
-		this->table_name = meta::get_table_name<ModelT>();
+		this->table_name = db::get_table_name<ModelT>();
 		this->append_row(model);
 	};
 
@@ -153,4 +153,4 @@ public:
 	}
 };
 
-__Q_END__
+__ORM_Q_END__

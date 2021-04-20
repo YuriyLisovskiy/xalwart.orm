@@ -9,7 +9,7 @@
 #ifdef USE_SQLITE3
 
 
-__SQLITE3_BEGIN__
+__ORM_SQLITE3_BEGIN__
 
 std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 {
@@ -21,9 +21,9 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 			return "INT";
 		case db::BIG_SERIAL_T:
 			return "BIGINT";
+		default:
+			return db::DefaultSQLSchemaEditor::sql_type_to_string(type);
 	}
-
-	return db::DefaultSQLSchemaEditor::sql_type_to_string(type);
 }
 
 std::string SchemaEditor::sql_data_column(
@@ -73,6 +73,6 @@ std::string SchemaEditor::sql_data_column(
 	return result;
 }
 
-__SQLITE3_END__
+__ORM_SQLITE3_END__
 
 #endif // USE_SQLITE3

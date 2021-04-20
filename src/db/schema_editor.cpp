@@ -7,7 +7,7 @@
 #include "./schema_editor.h"
 
 
-__DB_BEGIN__
+__ORM_DB_BEGIN__
 
 std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) const
 {
@@ -137,4 +137,4 @@ std::string DefaultSQLSchemaEditor::sql_text_column(
 	) + this->sql_constraints(null, primary_key, unique, check);
 }
 
-__DB_END__
+__ORM_DB_END__

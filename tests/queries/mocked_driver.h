@@ -14,6 +14,11 @@ using namespace xw;
 class MockedDriver : public orm::DefaultSQLDriver
 {
 public:
+	std::vector<std::string> table_names() const override
+	{
+		return {};
+	}
+
 	inline void run_query(const std::string&) const override
 	{
 	}

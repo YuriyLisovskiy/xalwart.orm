@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-struct TestCase_Q_TestModel : public orm::Model
+struct TestCase_Q_TestModel : public orm::db::Model
 {
 	static constexpr const char* meta_table_name = "test_model";
 
@@ -18,8 +18,8 @@ struct TestCase_Q_TestModel : public orm::Model
 	std::string name;
 
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &TestCase_Q_TestModel::id),
-		orm::make_column_meta("name", &TestCase_Q_TestModel::name)
+		orm::db::make_pk_column_meta("id", &TestCase_Q_TestModel::id),
+		orm::db::make_column_meta("name", &TestCase_Q_TestModel::name)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override

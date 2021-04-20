@@ -17,9 +17,9 @@
 #include "./conditions.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
-template <model_based_type_c ModelT>
+template <db::model_based_type_c ModelT>
 class delete_ final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -97,7 +97,7 @@ public:
 				if (column.is_pk)
 				{
 					condition.set(column_condition_t(
-						meta::get_table_name<ModelT>(),
+						db::get_table_name<ModelT>(),
 						column.name,
 						"IN (" + str::join(", ", this->pks.begin(), this->pks.end()) + ")"
 					));
@@ -114,7 +114,7 @@ public:
 			throw QueryError("delete: SQL builder is not initialized", _ERROR_DETAILS_);
 		}
 
-		return sql_builder->sql_delete(meta::get_table_name<ModelT>(), condition.value);
+		return sql_builder->sql_delete(db::get_table_name<ModelT>(), condition.value);
 	}
 
 	// Appends model's pk to deletion list.
@@ -150,4 +150,4 @@ public:
 	}
 };
 
-__Q_END__
+__ORM_Q_END__

@@ -1,5 +1,5 @@
 /**
- * model.h
+ * db/model.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -7,6 +7,9 @@
  */
 
 #pragma once
+
+// C++ libraries.
+#include <map>
 
 // Core libraries.
 #include <xalwart.core/object/object.h>
@@ -20,60 +23,10 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./utility.h"
+#include "./meta.h"
 
 
-__ORM_BEGIN__
-
-template <typename T>
-concept column_field_type = std::is_fundamental_v<T> ||
-	std::is_same_v<std::string, T> ||
-	std::is_same_v<const char*, T>;
-
-template <typename ModelT, column_field_type FieldT>
-struct column_meta_t
-{
-	using field_type = FieldT;
-	using model_type = ModelT;
-
-	std::string name;
-	bool is_pk;
-
-	FieldT ModelT::* member_pointer;
-
-	column_meta_t() = default;
-
-	column_meta_t(std::string name, FieldT ModelT::* member_ptr, bool is_pk)
-		: name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk)
-	{
-	}
-
-	column_meta_t(const column_meta_t& other)
-	{
-		if (this != &other)
-		{
-			this->name = other.name;
-			this->is_pk = other.is_pk;
-			this->member_pointer = other.member_pointer;
-		}
-	}
-};
-
-template <typename ModelT, column_field_type FieldT>
-inline column_meta_t<ModelT, FieldT> make_column_meta(
-	const std::string& name, FieldT ModelT::* member_ptr
-)
-{
-	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
-}
-
-template <typename ModelT, column_field_type FieldT>
-inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
-	const std::string& name, FieldT ModelT::* member_ptr
-)
-{
-	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
-}
+__ORM_DB_BEGIN__
 
 // !IMPORTANT!
 // Currently Model supports single pk only.
@@ -282,7 +235,7 @@ template <typename T>
 concept model_based_iterator_type_c = std::is_base_of_v<Model, iterator_v_type<T>> &&
 	std::is_default_constructible_v<iterator_v_type<T>>;
 
-template <model_based_type_c M, column_field_type F>
+template <model_based_type_c M, column_field_type_c F>
 std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)
 {
 	std::string result;
@@ -302,4 +255,4 @@ std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>
 	return result;
 }
 
-__ORM_END__
+__ORM_DB_END__

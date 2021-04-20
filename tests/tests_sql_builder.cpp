@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-struct TestBuilder_TestModel : public orm::Model
+struct TestBuilder_TestModel : public orm::db::Model
 {
 	int id{};
 	std::string name;
@@ -18,8 +18,8 @@ struct TestBuilder_TestModel : public orm::Model
 	static constexpr const char* meta_table_name = "test";
 
 	inline static const std::tuple meta_columns = {
-		orm::make_column_meta("id", &TestBuilder_TestModel::id),
-		orm::make_column_meta("name", &TestBuilder_TestModel::name)
+		orm::db::make_column_meta("id", &TestBuilder_TestModel::id),
+		orm::db::make_column_meta("name", &TestBuilder_TestModel::name)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -117,7 +117,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Distinct)
 	ASSERT_EQ(expected, actual);
 }
 
-class LeftTestModel : public orm::Model
+class LeftTestModel : public orm::db::Model
 {
 public:
 	int id{};
@@ -126,8 +126,8 @@ public:
 	static constexpr const char* meta_table_name = "left_model";
 
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &LeftTestModel::id),
-		orm::make_column_meta("name", &LeftTestModel::name)
+		orm::db::make_pk_column_meta("id", &LeftTestModel::id),
+		orm::db::make_column_meta("name", &LeftTestModel::name)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -142,7 +142,7 @@ public:
 	}
 };
 
-class RightTestModel : public orm::Model
+class RightTestModel : public orm::db::Model
 {
 public:
 	int id{};
@@ -152,9 +152,9 @@ public:
 	static constexpr const char* meta_table_name = "right_model";
 
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &RightTestModel::id),
-		orm::make_column_meta("name", &RightTestModel::name),
-		orm::make_column_meta("left_id", &RightTestModel::left_id)
+		orm::db::make_pk_column_meta("id", &RightTestModel::id),
+		orm::db::make_column_meta("name", &RightTestModel::name),
+		orm::db::make_column_meta("left_id", &RightTestModel::left_id)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override

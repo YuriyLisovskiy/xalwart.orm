@@ -16,7 +16,7 @@
 #include "../abc.h"
 
 
-__DB_BEGIN__
+__ORM_DB_BEGIN__
 
 // TESTME: DefaultSchemaEditor
 class DefaultSQLSchemaEditor : public abc::ISQLSchemaEditor
@@ -90,4 +90,4 @@ public:
 	}
 };
 
-__DB_END__
+__ORM_DB_END__

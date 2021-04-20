@@ -21,7 +21,7 @@
 #include "./schema_editor.h"
 
 
-__SQLITE3_BEGIN__
+__ORM_SQLITE3_BEGIN__
 
 // TESTME: Driver
 class Driver : public DefaultSQLDriver
@@ -67,6 +67,9 @@ public:
 		return this->sql_schema_editor.get();
 	}
 
+	[[nodiscard]]
+	std::vector<std::string> table_names() const override;
+
 	// execute query
 	void run_query(const std::string& query) const override;
 
@@ -75,6 +78,12 @@ public:
 	std::string run_insert(const std::string& query) const override;
 
 	// select rows
+
+	// In function 'handler_row(void*, void*)':
+	// - `container` is initial container which is passed here as
+	//   the second parameter;
+	// - `row_map` is row of type std::map<std::string, char*>
+	//   which contains pairs (column_name, column_value).
 	void run_select(
 		const std::string& query,
 		void* container,
@@ -91,6 +100,6 @@ public:
 	bool run_transaction(const std::function<bool()>& func) const override;
 };
 
-__SQLITE3_END__
+__ORM_SQLITE3_END__
 
 #endif // USE_SQLITE3

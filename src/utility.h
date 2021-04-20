@@ -3,13 +3,10 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * ORM helpers.
+ * ORM utilities.
  */
 
 #pragma once
-
-// Core libraries.
-#include <xalwart.core/exceptions.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -18,7 +15,7 @@
 #include "./exceptions.h"
 
 
-__ORM_UTIL_BEGIN__
+__ORM_UTILITY_BEGIN__
 
 template<typename T>
 struct item_return{ typedef T type; };
@@ -202,7 +199,7 @@ inline void check_model()
 {
 	// Checks if only one primary key is present.
 	bool has_pk = false;
-	util::tuple_for_each(ModelT::meta_columns, [&has_pk](auto& column)
+	tuple_for_each(ModelT::meta_columns, [&has_pk](auto& column)
 	{
 		if (column.is_pk)
 		{
@@ -223,4 +220,4 @@ inline void check_model()
 	}
 }
 
-__ORM_UTIL_END__
+__ORM_UTILITY_END__

@@ -10,7 +10,7 @@
 
 using namespace xw;
 
-class TestModel : public orm::Model
+class TestModel : public orm::db::Model
 {
 public:
 	static constexpr const char* meta_table_name = "test_model";
@@ -20,9 +20,9 @@ public:
 	const char* name_c_str;
 
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &TestModel::id),
-		orm::make_column_meta("name", &TestModel::name),
-		orm::make_column_meta("name_c_str", &TestModel::name_c_str)
+		orm::db::make_pk_column_meta("id", &TestModel::id),
+		orm::db::make_column_meta("name", &TestModel::name),
+		orm::db::make_column_meta("name_c_str", &TestModel::name_c_str)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -297,7 +297,7 @@ TEST(TestCase_Conditions, in_CStringInitializerList_ThrowsEmptyRange)
 	);
 }
 
-class OtherTestModel : public orm::Model
+class OtherTestModel : public orm::db::Model
 {
 public:
 	static constexpr const char* meta_table_name = "other_test_models";

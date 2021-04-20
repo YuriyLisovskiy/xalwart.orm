@@ -7,7 +7,7 @@
 #include "./migration.h"
 
 
-__DB_BEGIN__
+__ORM_DB_BEGIN__
 
 bool Migration::up(abc::ISQLSchemaEditor* editor) const
 {
@@ -75,4 +75,4 @@ bool Migration::down(abc::ISQLSchemaEditor* editor) const
 	return result;
 }
 
-__DB_END__
+__ORM_DB_END__

@@ -22,7 +22,7 @@
 #include "./db/abc.h"
 
 
-__ABC_BEGIN__
+__ORM_ABC_BEGIN__
 
 class ISQLQueryBuilder
 {
@@ -97,6 +97,9 @@ public:
 	[[nodiscard]]
 	virtual ISQLQueryBuilder* query_builder() const = 0;
 
+	[[nodiscard]]
+	virtual std::vector<std::string> table_names() const = 0;
+
 	// Runs any SQL query.
 	virtual void run_query(const std::string& query) const = 0;
 
@@ -128,4 +131,4 @@ public:
 	virtual bool run_transaction(const std::function<bool()>& func) const = 0;
 };
 
-__ABC_END__
+__ORM_ABC_END__

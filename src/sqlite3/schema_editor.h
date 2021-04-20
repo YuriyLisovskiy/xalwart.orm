@@ -17,7 +17,7 @@
 #include "../db/schema_editor.h"
 
 
-__SQLITE3_BEGIN__
+__ORM_SQLITE3_BEGIN__
 
 // TESTME: SchemaEditor
 class SchemaEditor : public db::DefaultSQLSchemaEditor
@@ -38,6 +38,6 @@ public:
 	) const override;
 };
 
-__SQLITE3_END__
+__ORM_SQLITE3_END__
 
 #endif // USE_SQLITE3

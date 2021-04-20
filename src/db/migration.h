@@ -20,7 +20,7 @@
 #include "./operations/table.h"
 
 
-__DB_BEGIN__
+__ORM_DB_BEGIN__
 
 // TESTME: Migration
 class Migration
@@ -83,11 +83,11 @@ public:
 	// Operations.
 	void create_table(
 		const std::string& name,
-		const std::function<void(CreateTableOperation&)>& build_columns,
-		const std::function<void(CreateTableOperation&)>& build_constraints=nullptr
+		const std::function<void(ops::CreateTableOperation&)>& build_columns,
+		const std::function<void(ops::CreateTableOperation&)>& build_constraints=nullptr
 	)
 	{
-		CreateTableOperation table_op(name, this->sql_schema_editor);
+		ops::CreateTableOperation table_op(name, this->sql_schema_editor);
 		if (!build_columns)
 		{
 			throw core::NullPointerException(
@@ -102,8 +102,8 @@ public:
 			build_constraints(table_op);
 		}
 
-		this->operations.push_back(std::make_shared<CreateTableOperation>(table_op));
+		this->operations.push_back(std::make_shared<ops::CreateTableOperation>(table_op));
 	}
 };
 
-__DB_END__
+__ORM_DB_END__

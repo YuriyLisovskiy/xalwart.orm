@@ -19,9 +19,9 @@
 #include "../exceptions.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
-template <model_based_type_c ModelT>
+template <db::model_based_type_c ModelT>
 class insert final
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -127,7 +127,7 @@ public:
 		}
 
 		return sql_builder->sql_insert(
-			meta::get_table_name<ModelT>(), this->columns_str, this->rows
+			db::get_table_name<ModelT>(), this->columns_str, this->rows
 		);
 	}
 
@@ -150,7 +150,6 @@ public:
 	// Inserts one row and returns inserted pk as string.
 	//
 	// Throws 'QueryError' if more than one model was set.
-	[[nodiscard]]
 	inline std::string commit_one() const
 	{
 		if (this->rows.size() > 1)
@@ -181,4 +180,4 @@ public:
 	}
 };
 
-__Q_END__
+__ORM_Q_END__

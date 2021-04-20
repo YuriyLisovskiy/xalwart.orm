@@ -15,7 +15,7 @@
 #include "./_def_.h"
 
 
-__DB_BEGIN__
+__ORM_DB_BEGIN__
 
 enum sql_column_type
 {
@@ -31,10 +31,10 @@ enum on_action
 	SET_NULL, SET_DEFAULT, RESTRICT, NO_ACTION, CASCADE
 };
 
-__DB_END__
+__ORM_DB_END__
 
 
-__DB_ABC_BEGIN__
+__ORM_DB_ABC_BEGIN__
 
 class ISQLSchemaEditor
 {
@@ -77,4 +77,4 @@ public:
 	virtual void down(ISQLSchemaEditor* editor) const = 0;
 };
 
-__DB_ABC_END__
+__ORM_DB_ABC_END__

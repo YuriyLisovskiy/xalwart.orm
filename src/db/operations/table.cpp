@@ -7,8 +7,8 @@
 #include "./table.h"
 
 
-__DB_BEGIN__
+__ORM_DB_OPERATIONS_BEGIN__
 
 
 
-__DB_END__
+__ORM_DB_OPERATIONS_END__

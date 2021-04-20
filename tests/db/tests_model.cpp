@@ -6,11 +6,11 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/model.h"
+#include "../../src/db/model.h"
 
 using namespace xw;
 
-class TestCase_Model_TestModel : public orm::Model
+class TestCase_Model_TestModel : public orm::db::Model
 {
 public:
 	int id{};
@@ -18,9 +18,9 @@ public:
 	const char* info;
 
 	inline static const std::tuple meta_columns = {
-		orm::make_pk_column_meta("id", &TestCase_Model_TestModel::id),
-		orm::make_column_meta("name", &TestCase_Model_TestModel::name),
-		orm::make_column_meta("info", &TestCase_Model_TestModel::info)
+		orm::db::make_pk_column_meta("id", &TestCase_Model_TestModel::id),
+		orm::db::make_column_meta("name", &TestCase_Model_TestModel::name),
+		orm::db::make_column_meta("info", &TestCase_Model_TestModel::info)
 	};
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
@@ -83,7 +83,7 @@ TEST(TestCase_Model, get_column_value_as_string_GetNum)
 {
 	auto model = TestCase_Model_TestModel();
 	model.id = 10;
-	ASSERT_EQ(orm::get_column_value_as_string(
+	ASSERT_EQ(orm::db::get_column_value_as_string(
 		model, std::get<0>(TestCase_Model_TestModel::meta_columns)
 	), "10");
 }
@@ -92,7 +92,7 @@ TEST(TestCase_Model, get_column_value_as_string_GetString)
 {
 	auto model = TestCase_Model_TestModel();
 	model.name = "Steve";
-	ASSERT_EQ(orm::get_column_value_as_string(
+	ASSERT_EQ(orm::db::get_column_value_as_string(
 		model, std::get<1>(TestCase_Model_TestModel::meta_columns)
 	), "'Steve'");
 }
@@ -101,7 +101,7 @@ TEST(TestCase_Model, get_column_value_as_string_GetCString)
 {
 	auto model = TestCase_Model_TestModel();
 	model.info = "NoNe";
-	ASSERT_EQ(orm::get_column_value_as_string(
+	ASSERT_EQ(orm::db::get_column_value_as_string(
 		model, std::get<2>(TestCase_Model_TestModel::meta_columns)
 	), "'NoNe'");
 }

@@ -11,13 +11,12 @@
 // Module definitions.
 #include "../_def_.h"
 
-
 // xw::orm::q
-#define __Q_BEGIN__ __ORM_BEGIN__ namespace q {
-#define __Q_END__ } __ORM_END__
+#define __ORM_Q_BEGIN__ __ORM_BEGIN__ namespace q {
+#define __ORM_Q_END__ } __ORM_END__
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
 // Holds pair {value, is_set}:
 //  - value: actual value which will be forwarded to query generator;
@@ -49,4 +48,4 @@ concept column_type_c = std::is_fundamental_v<T> ||
 template <typename T>
 concept string_type_c = std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
 
-__Q_END__
+__ORM_Q_END__

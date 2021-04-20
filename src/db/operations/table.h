@@ -9,7 +9,7 @@
 #pragma once
 
 // Module definitions.
-#include "../_def_.h"
+#include "./_def_.h"
 
 // Core libraries.
 #include <xalwart.core/exceptions.h>
@@ -18,7 +18,7 @@
 #include "../abc.h"
 
 
-__DB_BEGIN__
+__ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: TableOperation
 // Base class for migration operations.
@@ -195,4 +195,4 @@ public:
 	}
 };
 
-__DB_END__
+__ORM_DB_OPERATIONS_END__
