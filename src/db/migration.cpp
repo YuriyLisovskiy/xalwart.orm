@@ -13,7 +13,7 @@ bool Migration::up(abc::ISQLSchemaEditor* editor) const
 {
 	if (!editor)
 	{
-		throw core::NullPointerException(
+		throw NullPointerException(
 			"xw::orm::db::Migration: schema editor is nullptr",
 			_ERROR_DETAILS_
 		);
@@ -46,7 +46,7 @@ bool Migration::down(abc::ISQLSchemaEditor* editor) const
 {
 	if (!editor)
 	{
-		throw core::NullPointerException(
+		throw NullPointerException(
 			"xw::orm::db::Migration: schema editor is nullptr",
 			_ERROR_DETAILS_
 		);

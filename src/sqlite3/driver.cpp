@@ -24,7 +24,7 @@ Driver::Driver(const char* filename)
 	::sqlite3* driver;
 	if (sqlite3_open(filename, &driver))
 	{
-		throw core::RuntimeError(
+		throw RuntimeError(
 			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
 			_ERROR_DETAILS_
 		);

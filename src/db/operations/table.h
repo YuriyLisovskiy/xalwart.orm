@@ -97,7 +97,7 @@ public:
 	{
 		if (!editor)
 		{
-			throw core::NullPointerException(
+			throw NullPointerException(
 				"xw::orm::db::CreateModel: schema editor is nullptr",
 				_ERROR_DETAILS_
 			);
@@ -110,7 +110,7 @@ public:
 	{
 		if (!editor)
 		{
-			throw core::NullPointerException(
+			throw NullPointerException(
 				"xw::orm::db::CreateModel: schema editor is nullptr",
 				_ERROR_DETAILS_
 			);

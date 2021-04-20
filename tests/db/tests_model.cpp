@@ -39,7 +39,7 @@ TEST(TestCase_Model, __cmp___throws_NotImplementedException)
 {
 	auto left = TestCase_Model_TestModel();
 	auto right = TestCase_Model_TestModel();
-	ASSERT_THROW(auto res = left.__cmp__(&right), core::NotImplementedException);
+	ASSERT_THROW(auto res = left.__cmp__(&right), NotImplementedException);
 }
 
 TEST(TestCase_Model, is_null_False)

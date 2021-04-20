@@ -65,7 +65,7 @@ TEST_F(TestCase_Model_meta, get_column_name_ThrowsColumnNotFound)
 {
 	ASSERT_THROW(
 		orm::db::get_column_name(&TestCase_Model_meta::TestModel::non_existent_column),
-		core::ValueError
+		ValueError
 	);
 }
 

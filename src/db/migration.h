@@ -48,7 +48,7 @@ public:
 	{
 		if (!this->sql_driver)
 		{
-			throw core::NullPointerException(
+			throw NullPointerException(
 				"xw::orm::db::Migration: SQL driver is not initialized",
 				_ERROR_DETAILS_
 			);
@@ -57,7 +57,7 @@ public:
 		this->sql_schema_editor = this->sql_driver->schema_editor();
 		if (!this->sql_schema_editor)
 		{
-			throw core::NullPointerException(
+			throw NullPointerException(
 				"xw::orm::db::Migration: SQL schema editor is nullptr",
 				_ERROR_DETAILS_
 			);
@@ -90,7 +90,7 @@ public:
 		ops::CreateTableOperation table_op(name, this->sql_schema_editor);
 		if (!build_columns)
 		{
-			throw core::NullPointerException(
+			throw NullPointerException(
 				"xw::orm::db::Migration: columns builder must be initialized",
 				_ERROR_DETAILS_
 			);

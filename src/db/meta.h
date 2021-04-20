@@ -73,7 +73,7 @@ inline std::string get_column_name(F O::* member_pointer, bool quote=false)
 
 	if (name.empty())
 	{
-		throw core::ValueError("column not found", _ERROR_DETAILS_);
+		throw ValueError("column not found", _ERROR_DETAILS_);
 	}
 
 	return quote ? util::quote_str(name) : name;

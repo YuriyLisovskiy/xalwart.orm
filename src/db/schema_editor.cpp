@@ -39,7 +39,7 @@ std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) con
 			return "DOUBLE";
 	}
 
-	throw core::ValueError("unknown SQL data type", _ERROR_DETAILS_);
+	throw ValueError("unknown SQL data type", _ERROR_DETAILS_);
 }
 
 std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) const
@@ -58,7 +58,7 @@ std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) co
 			return "CASCADE";
 	}
 
-	throw core::ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
+	throw ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
 }
 
 std::string DefaultSQLSchemaEditor::sql_constraints(
@@ -129,7 +129,7 @@ std::string DefaultSQLSchemaEditor::sql_text_column(
 		case TEXT_T:
 			break;
 		default:
-			throw core::ValueError("invalid text column type", _ERROR_DETAILS_);
+			throw ValueError("invalid text column type", _ERROR_DETAILS_);
 	}
 
 	return name + " " + this->sql_type_to_string(type) + (

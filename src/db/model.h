@@ -68,7 +68,7 @@ protected:
 	) const
 	{
 		std::shared_ptr<Object> obj;
-		xw::orm::util::tuple_for_each(columns, [this, attr_name, &obj](auto& column)
+		util::tuple_for_each(columns, [this, attr_name, &obj](auto& column)
 		{
 			if (column.name == std::string(attr_name))
 			{
@@ -77,11 +77,11 @@ protected:
 				using T = typename field_type::field_type;
 				if constexpr (std::is_fundamental_v<T>)
 				{
-					obj = std::make_shared<xw::types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
+					obj = std::make_shared<types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
 				}
 				else if constexpr (std::is_same_v<T, std::string>)
 				{
-					obj = std::make_shared<xw::types::String>(((model_type*)this)->*column.member_pointer);
+					obj = std::make_shared<types::String>(((model_type*)this)->*column.member_pointer);
 				}
 
 				return false;
@@ -92,7 +92,7 @@ protected:
 
 		if (!obj)
 		{
-			throw xw::core::AttributeError(
+			throw AttributeError(
 				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
 				_ERROR_DETAILS_
 			);
@@ -107,7 +107,7 @@ protected:
 	)
 	{
 		bool is_set = false;
-		xw::orm::util::tuple_for_each(columns, [this, attr_name, data, &is_set](auto& column)
+		util::tuple_for_each(columns, [this, attr_name, data, &is_set](auto& column)
 		{
 			if (column.name == std::string(attr_name))
 			{
@@ -116,7 +116,7 @@ protected:
 				using field_type = typename column_type::field_type;
 				size_t len = std::strlen((char*)data);
 				std::string str_val = {(char*)data, (char*)data + len + 1};
-				((model_type*)this)->*column.member_pointer = xw::orm::util::as<field_type>(str_val.c_str());
+				((model_type*)this)->*column.member_pointer = util::as<field_type>(str_val.c_str());
 				is_set = true;
 				return false;
 			}
@@ -126,7 +126,7 @@ protected:
 
 		if (!is_set)
 		{
-			throw xw::core::AttributeError(
+			throw AttributeError(
 				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
 				_ERROR_DETAILS_
 			);
@@ -141,7 +141,7 @@ public:
 	[[nodiscard]]
 	inline short __cmp__(const Object* other) const override
 	{
-		throw core::NotImplementedException(
+		throw NotImplementedException(
 			"'__cmp__' is not implemented", _ERROR_DETAILS_
 		);
 	}
@@ -149,12 +149,7 @@ public:
 	[[nodiscard]]
 	inline std::string __str__() const override
 	{
-		if (this->_is_null_model)
-		{
-			return "null";
-		}
-
-		return obj::Object::__str__();
+		return this->_is_null_model ? "null" : obj::Object::__str__();
 	}
 
 	[[nodiscard]]
