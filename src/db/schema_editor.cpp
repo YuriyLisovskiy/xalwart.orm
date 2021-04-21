@@ -37,6 +37,12 @@ std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) con
 			return "REAL";
 		case DOUBLE_T:
 			return "DOUBLE";
+		case DATE_T:
+			return "DATE";
+		case TIME_T:
+			return "TIME";
+		case DATETIME_T:
+			return "TIMESTAMP";
 	}
 
 	throw ValueError("unknown SQL data type", _ERROR_DETAILS_);

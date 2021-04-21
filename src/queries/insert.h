@@ -57,8 +57,9 @@ protected:
 				}
 			}
 
-			using field_type = typename std::remove_reference<decltype(column)>::type;
-			row += db::get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
+//			using field_type = typename std::remove_reference<decltype(column)>::type;
+//			row += db::get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
+			row += column.as_string(model) + ", ";
 			return true;
 		});
 
@@ -166,7 +167,7 @@ public:
 
 	// Inserts one row and sets inserted primary key
 	// to `pk` as type T.
-	template <column_type_c T>
+	template <db::column_field_type_c T>
 	inline void commit_one(T& pk) const
 	{
 		pk = util::as<T>(this->commit_one().c_str());

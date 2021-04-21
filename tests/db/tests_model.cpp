@@ -25,13 +25,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<TestCase_Model_TestModel>(TestCase_Model_TestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(TestCase_Model_TestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<TestCase_Model_TestModel>(TestCase_Model_TestModel::meta_columns, attr_name);
+		return this->get_attribute_from(TestCase_Model_TestModel::meta_columns, attr_name);
 	}
 };
 
@@ -79,29 +79,29 @@ TEST(TestCase_Model, meta_omit_pk_Default_IsTrue)
 	ASSERT_TRUE(TestCase_Model_TestModel::meta_omit_pk);
 }
 
-TEST(TestCase_Model, get_column_value_as_string_GetNum)
-{
-	auto model = TestCase_Model_TestModel();
-	model.id = 10;
-	ASSERT_EQ(orm::db::get_column_value_as_string(
-		model, std::get<0>(TestCase_Model_TestModel::meta_columns)
-	), "10");
-}
-
-TEST(TestCase_Model, get_column_value_as_string_GetString)
-{
-	auto model = TestCase_Model_TestModel();
-	model.name = "Steve";
-	ASSERT_EQ(orm::db::get_column_value_as_string(
-		model, std::get<1>(TestCase_Model_TestModel::meta_columns)
-	), "'Steve'");
-}
-
-TEST(TestCase_Model, get_column_value_as_string_GetCString)
-{
-	auto model = TestCase_Model_TestModel();
-	model.info = "NoNe";
-	ASSERT_EQ(orm::db::get_column_value_as_string(
-		model, std::get<2>(TestCase_Model_TestModel::meta_columns)
-	), "'NoNe'");
-}
+//TEST(TestCase_Model, get_column_value_as_string_GetNum)
+//{
+//	auto model = TestCase_Model_TestModel();
+//	model.id = 10;
+//	ASSERT_EQ(orm::db::get_column_value_as_string(
+//		model, std::get<0>(TestCase_Model_TestModel::meta_columns)
+//	), "10");
+//}
+//
+//TEST(TestCase_Model, get_column_value_as_string_GetString)
+//{
+//	auto model = TestCase_Model_TestModel();
+//	model.name = "Steve";
+//	ASSERT_EQ(orm::db::get_column_value_as_string(
+//		model, std::get<1>(TestCase_Model_TestModel::meta_columns)
+//	), "'Steve'");
+//}
+//
+//TEST(TestCase_Model, get_column_value_as_string_GetCString)
+//{
+//	auto model = TestCase_Model_TestModel();
+//	model.info = "NoNe";
+//	ASSERT_EQ(orm::db::get_column_value_as_string(
+//		model, std::get<2>(TestCase_Model_TestModel::meta_columns)
+//	), "'NoNe'");
+//}

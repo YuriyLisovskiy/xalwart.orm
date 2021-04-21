@@ -27,13 +27,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<TestModel>(TestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(TestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<TestModel>(TestModel::meta_columns, attr_name);
+		return this->get_attribute_from(TestModel::meta_columns, attr_name);
 	}
 };
 

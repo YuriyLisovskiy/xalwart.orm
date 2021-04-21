@@ -184,6 +184,30 @@ public:
 		));
 	}
 
+	void Date(const std::string& name, const col_constraints_t& constraints={})
+	{
+		this->columns_list.push_back(this->schema_editor->sql_data_column(
+			DATE_T, name,
+			constraints.null, constraints.primary_key, constraints.unique, constraints.check
+		));
+	}
+
+	void Time(const std::string& name, const col_constraints_t& constraints={})
+	{
+		this->columns_list.push_back(this->schema_editor->sql_data_column(
+			TIME_T, name,
+			constraints.null, constraints.primary_key, constraints.unique, constraints.check
+		));
+	}
+
+	void Datetime(const std::string& name, const col_constraints_t& constraints={})
+	{
+		this->columns_list.push_back(this->schema_editor->sql_data_column(
+			DATETIME_T, name,
+			constraints.null, constraints.primary_key, constraints.unique, constraints.check
+		));
+	}
+
 	// Constraints.
 	void ForeignKey(
 		const std::string& name, const foreign_key_constraints_t& info

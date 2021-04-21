@@ -117,13 +117,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<TestM>(TestM::meta_columns, attr_name, data);
+		this->set_attribute_to(TestM::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<TestM>(TestM::meta_columns, attr_name);
+		return this->get_attribute_from(TestM::meta_columns, attr_name);
 	}
 };
 
@@ -158,13 +158,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<MultiPkModel>(MultiPkModel::meta_columns, attr_name, data);
+		this->set_attribute_to(MultiPkModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<MultiPkModel>(MultiPkModel::meta_columns, attr_name);
+		return this->get_attribute_from(MultiPkModel::meta_columns, attr_name);
 	}
 };
 

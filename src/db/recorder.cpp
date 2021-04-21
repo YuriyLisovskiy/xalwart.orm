@@ -20,6 +20,7 @@ void MigrationRecorder::ensure_schema() const
 	ops::CreateTableOperation table(models::Migration::meta_table_name, editor);
 	table.Int("id", {.primary_key=true, .autoincrement=true});
 	table.String("name", {.max_len=255, .unique=true});
+	table.Datetime("applied");
 	table.up(editor);
 }
 

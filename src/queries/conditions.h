@@ -23,6 +23,14 @@
 
 __ORM_Q_BEGIN__
 
+template <typename T>
+concept column_field_iterator_type_c = std::is_fundamental_v<iterator_v_type<T>> ||
+	std::is_same_v<std::string, iterator_v_type<T>> ||
+	std::is_same_v<const char*, iterator_v_type<T>> ||
+	std::is_same_v<dt::Date, iterator_v_type<T>> ||
+	std::is_same_v<dt::Time, iterator_v_type<T>> ||
+	std::is_same_v<dt::Datetime, iterator_v_type<T>>;
+
 struct ordering final
 {
 private:
@@ -61,7 +69,7 @@ public:
 	}
 };
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline ordering asc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -69,7 +77,7 @@ inline ordering asc(ColumnT ModelT::* column)
 	return ordering(ModelT::meta_table_name, db::get_column_name(column), true);
 }
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline ordering desc(ColumnT ModelT::* column)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -80,7 +88,6 @@ inline ordering desc(ColumnT ModelT::* column)
 struct condition_t
 {
 public:
-
 	// Condition string, example `"id" = 1`.
 	std::string raw_condition;
 
@@ -121,7 +128,7 @@ public:
 	}
 };
 
-template <typename ModelT, column_type_c ColumnT>
+template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 struct comparison_op_t : public column_condition_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -130,54 +137,21 @@ public:
 	inline comparison_op_t() = default;
 
 	inline explicit comparison_op_t(
-		const std::string& column_name, const std::string& op, ColumnT value
+		const std::string& column_name, const std::string& op, const ColumnT& value
 	) : column_condition_t(
-		ModelT::meta_table_name, column_name, op + " " + std::to_string(value)
-	)
-	{
-	}
-};
-
-template <typename ModelT>
-struct comparison_op_t<ModelT, std::string> : public column_condition_t
-{
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-
-public:
-	inline comparison_op_t() = default;
-
-	inline explicit comparison_op_t(
-		const std::string& column_name, const std::string& op, const std::string& value
-	) : column_condition_t(ModelT::meta_table_name, column_name, op + " '" + value + "'")
-	{
-	}
-};
-
-template <typename ModelT>
-struct comparison_op_t<ModelT, const char*> : public column_condition_t
-{
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-
-public:
-	inline comparison_op_t() = default;
-
-	inline explicit comparison_op_t(
-		const std::string& column_name, const std::string& op, const char* value
-	) : column_condition_t(
-		ModelT::meta_table_name, column_name, op + " '" + std::string(value) + "'"
+		ModelT::meta_table_name, column_name, op + " " + db::field_as_column_v(value)
 	)
 	{
 	}
 };
 
 // SQL comparison operators for columns.
-template <typename ModelT, column_type_c ColumnT>
+template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 struct column_t
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 protected:
-
 	// Name of given column.
 	std::string name;
 
@@ -217,13 +191,13 @@ public:
 	}
 };
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline column_t<ModelT, ColumnT> c(ColumnT ModelT::* member_pointer)
 {
 	return column_t<ModelT, ColumnT>(db::get_column_name(member_pointer));
 }
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline column_condition_t is_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -231,7 +205,7 @@ inline column_condition_t is_null(ColumnT ModelT::* member_pointer)
 	return column_condition_t(ModelT::meta_table_name, db::get_column_name(member_pointer), "IS NULL");
 }
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline column_condition_t is_not_null(ColumnT ModelT::* member_pointer)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -259,31 +233,18 @@ inline condition_t operator~ (const condition_t& cond)
 	return condition_t("NOT (" + (std::string)cond + ")");
 }
 
-template <types::fundamental_type ColumnT, typename ModelT>
-inline column_condition_t between(ColumnT ModelT::* column, ColumnT lower, ColumnT upper)
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
+inline column_condition_t between(ColumnT ModelT::* column, const ColumnT& lower, const ColumnT& upper)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 
 	return column_condition_t(
 		ModelT::meta_table_name, db::get_column_name(column),
-		"BETWEEN " + std::to_string(lower) + " AND " + std::to_string(upper)
+		"BETWEEN " + db::field_as_column_v(lower) + " AND " + db::field_as_column_v(upper)
 	);
 }
 
-template <typename ModelT>
-inline column_condition_t between(
-	std::string ModelT::* column, const std::string& lower, const std::string& upper
-)
-{
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-
-	return column_condition_t(
-		ModelT::meta_table_name, db::get_column_name(column),
-		"BETWEEN '" + lower + "' AND '" + upper + '\''
-	);
-}
-
-template <typename ModelT>
+template <db::model_based_type_c ModelT>
 inline column_condition_t between(
 	const char* ModelT::* column, const char* lower, const char* upper
 )
@@ -292,11 +253,24 @@ inline column_condition_t between(
 
 	return column_condition_t(
 		ModelT::meta_table_name, db::get_column_name(column),
-		"BETWEEN '" + std::string(lower) + "' AND '" + std::string(upper) + '\''
+		"BETWEEN " + db::field_as_column_v(lower) + " AND " + db::field_as_column_v(upper)
 	);
 }
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::model_based_type_c ModelT>
+inline column_condition_t between(
+	std::string ModelT::* column, const std::string& lower, const std::string& upper
+)
+{
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+
+	return column_condition_t(
+		ModelT::meta_table_name, db::get_column_name(column),
+		"BETWEEN " + db::field_as_column_v(lower) + " AND " + db::field_as_column_v(upper)
+	);
+}
+
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline column_condition_t like(ColumnT ModelT::* column, const std::string& pattern)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -306,7 +280,7 @@ inline column_condition_t like(ColumnT ModelT::* column, const std::string& patt
 	);
 }
 
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::model_based_type_c ModelT>
 inline column_condition_t like(
 	ColumnT ModelT::* column, const std::string& pattern, const std::string& escape
 )
@@ -319,7 +293,7 @@ inline column_condition_t like(
 	);
 }
 
-template <types::fundamental_type ColumnT, fundamental_iterator_type_c IteratorT, typename ModelT>
+template <db::column_field_type_c ColumnT, column_field_iterator_type_c IteratorT, db::model_based_type_c ModelT>
 inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, IteratorT end)
 {
 	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
@@ -330,48 +304,15 @@ inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, Iterator
 	}
 
 	std::string condition = "IN (" + str::join(
-		", ", begin, end, [](const ColumnT& item) -> std::string { return std::to_string(item); }
+		", ", begin, end, [](const ColumnT& item) -> std::string { return db::field_as_column_v(item); }
 	) + ")";
 	return column_condition_t(ModelT::meta_table_name, db::get_column_name(column), condition);
 }
 
-template <types::fundamental_type ColumnT, types::fundamental_type RangeValueT, typename ModelT>
+template <db::column_field_type_c ColumnT, db::column_field_type_c RangeValueT, db::model_based_type_c ModelT>
 inline column_condition_t in(ColumnT ModelT::* column, const std::initializer_list<RangeValueT>& values)
 {
 	return in<ColumnT, typename std::initializer_list<RangeValueT>::const_iterator, ModelT>(
-		column, values.begin(), values.end()
-	);
-}
-
-template <string_type_c ColumnT, string_iterator_type_c IteratorT, typename ModelT>
-inline column_condition_t in(ColumnT ModelT::* column, IteratorT begin, IteratorT end)
-{
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
-
-	if (begin == end)
-	{
-		throw QueryError("in: list is empty", _ERROR_DETAILS_);
-	}
-
-	std::string condition = "IN (" + str::join(
-		", ", begin, end, [](const ColumnT& item) -> std::string {
-			if constexpr (std::is_same_v<ColumnT, const char*>)
-			{
-				return "'" + std::string(item) + "'";
-			}
-			else
-			{
-				return "'" + item + "'";
-			}
-		}
-	) + ")";
-	return column_condition_t(ModelT::meta_table_name, db::get_column_name(column), condition);
-}
-
-template <string_type_c ColumnT, typename ModelT>
-inline column_condition_t in(ColumnT ModelT::* column, const std::initializer_list<ColumnT>& values)
-{
-	return in<ColumnT, typename std::initializer_list<ColumnT>::const_iterator, ModelT>(
 		column, values.begin(), values.end()
 	);
 }
@@ -394,7 +335,7 @@ struct join_t
 	}
 };
 
-template <typename LeftT, typename RightT>
+template <db::model_based_type_c LeftT, db::model_based_type_c RightT>
 inline join_t join_on(
 	const std::string& type, const std::string& fk_to_left="", const q::condition_t& extra_condition={}
 )
@@ -423,19 +364,19 @@ inline join_t join_on(
 	return join_t(type, table_name, q::condition_t(condition_str));
 }
 
-template <typename LeftT, typename RightT>
+template <db::model_based_type_c LeftT, db::model_based_type_c RightT>
 inline join_t inner_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
 	return join_on<LeftT, RightT>("INNER", fk_to_left, extra_condition);
 }
 
-template <typename LeftT, typename RightT>
+template <db::model_based_type_c LeftT, db::model_based_type_c RightT>
 inline join_t left_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
 	return join_on<LeftT, RightT>("LEFT", fk_to_left, extra_condition);
 }
 
-template <typename LeftT, typename RightT>
+template <db::model_based_type_c LeftT, db::model_based_type_c RightT>
 inline join_t cross_on(const std::string& fk_to_left="", const q::condition_t& extra_condition={})
 {
 	return join_on<LeftT, RightT>("CROSS", fk_to_left, extra_condition);

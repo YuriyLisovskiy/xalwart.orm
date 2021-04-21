@@ -34,18 +34,4 @@ struct q_value
 	}
 };
 
-template <typename T>
-concept fundamental_iterator_type_c = std::is_fundamental_v<iterator_v_type<T>>;
-
-template <typename T>
-concept string_iterator_type_c = std::is_same_v<iterator_v_type<T>, const char*> ||
-	std::is_same_v<iterator_v_type<T>, std::string>;
-
-template <typename T>
-concept column_type_c = std::is_fundamental_v<T> ||
-	std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
-
-template <typename T>
-concept string_type_c = std::is_same_v<T, std::string> || std::is_same_v<T, const char*>;
-
 __ORM_Q_END__

@@ -49,9 +49,10 @@ protected:
 			if (column.is_pk)
 			{
 				using field_type = typename std::remove_reference<decltype(column)>::type;
-				this->pks.push_back(
-					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
-				);
+//				this->pks.push_back(
+//					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
+//				);
+				this->pks.push_back(column.as_string(model));
 				return false;
 			}
 

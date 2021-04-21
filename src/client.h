@@ -200,7 +200,7 @@ public:
 
 	// TESTME: avg
 	// Calculates average value of given column in selected rows.
-	template <db::model_based_type_c ModelT, q::column_type_c ColumnT>
+	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 	inline auto avg(ColumnT ModelT::* column) const
 	{
 		return q::select<ModelT>().use(this->db.get()).avg(column);
@@ -216,7 +216,7 @@ public:
 
 	// TESTME: min
 	// Calculates minimum value of given column in selected rows.
-	template <db::model_based_type_c ModelT, q::column_type_c ColumnT>
+	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 	inline auto min(ColumnT ModelT::* column) const
 	{
 		return q::select<ModelT>().use(this->db.get()).min(column);
@@ -224,7 +224,7 @@ public:
 
 	// TESTME: max
 	// Calculates maximum value of given column in selected rows.
-	template <db::model_based_type_c ModelT, q::column_type_c ColumnT>
+	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 	inline auto max(ColumnT ModelT::* column) const
 	{
 		return q::select<ModelT>().use(this->db.get()).max(column);
@@ -232,7 +232,7 @@ public:
 
 	// TESTME: sum
 	// Calculates sum by column of selected rows.
-	template <db::model_based_type_c ModelT, q::column_type_c ColumnT>
+	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
 	inline auto sum(ColumnT ModelT::* column) const
 	{
 		return q::select<ModelT>().use(this->db.get()).sum(column);

@@ -54,7 +54,7 @@ struct aggregate_function_t : public function_t
 	{
 	};
 
-	template <column_type_c ColumnT, typename ModelT>
+	template <db::column_field_type_c ColumnT, typename ModelT>
 	inline explicit aggregate_function_t(const std::string& name, ColumnT ModelT::* column)
 	{
 		this->name = name;
@@ -64,7 +64,7 @@ struct aggregate_function_t : public function_t
 
 // TESTME: avg
 // Builds SQL `avg` aggregate function.
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, typename ModelT>
 inline auto avg(ColumnT ModelT::* column)
 {
 	return aggregate_function_t<double>{"avg", column};
@@ -79,7 +79,7 @@ inline auto count()
 
 // TESTME: min
 // Builds SQL `min` aggregate function.
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, typename ModelT>
 inline auto min(ColumnT ModelT::* column)
 {
 	return aggregate_function_t<ColumnT>{"min", column};
@@ -87,7 +87,7 @@ inline auto min(ColumnT ModelT::* column)
 
 // TESTME: max
 // Builds SQL `max` aggregate function.
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, typename ModelT>
 inline auto max(ColumnT ModelT::* column)
 {
 	return aggregate_function_t<ColumnT>{"max", column};
@@ -95,7 +95,7 @@ inline auto max(ColumnT ModelT::* column)
 
 // TESTME: sum
 // Builds SQL `sum` aggregate function.
-template <column_type_c ColumnT, typename ModelT>
+template <db::column_field_type_c ColumnT, typename ModelT>
 inline auto sum(ColumnT ModelT::* column)
 {
 	return aggregate_function_t<ColumnT>{"sum", column};

@@ -26,13 +26,13 @@ struct TestCaseF_Q_delete_TestModel : public orm::db::Model
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<TestCaseF_Q_delete_TestModel>(TestCaseF_Q_delete_TestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(TestCaseF_Q_delete_TestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<TestCaseF_Q_delete_TestModel>(TestCaseF_Q_delete_TestModel::meta_columns, attr_name);
+		return this->get_attribute_from(TestCaseF_Q_delete_TestModel::meta_columns, attr_name);
 	}
 };
 

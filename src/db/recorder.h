@@ -83,12 +83,12 @@ public:
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	[[nodiscard]]
-	inline std::map<std::string, models::Migration> applied_migrations() const;
+	std::map<std::string, models::Migration> applied_migrations() const;
 
 	// Records that a migration was applied.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	void record_applied(const std::string& name) const
+	inline void record_applied(const std::string& name) const
 	{
 		this->ensure_schema();
 		q::insert(models::Migration(name))
@@ -99,7 +99,7 @@ public:
 	// Deletes migration record by `name` from the database.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	void record_revoked(const std::string& name) const
+	inline void record_revoked(const std::string& name) const
 	{
 		this->ensure_schema();
 		this->migrations()
@@ -110,7 +110,7 @@ public:
 	// Deletes all migration records.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	void flush_records() const
+	inline void flush_records() const
 	{
 		this->migrations().delete_();
 	}

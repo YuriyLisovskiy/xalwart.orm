@@ -193,7 +193,7 @@ public:
 	// Calculates average value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <column_type_c ColumnT>
+	template <db::column_field_type_c ColumnT>
 	inline auto avg(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<double>(q::avg(column));
@@ -213,7 +213,7 @@ public:
 	// Calculates minimum value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <column_type_c ColumnT>
+	template <db::column_field_type_c ColumnT>
 	inline auto min(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::min(column));
@@ -223,7 +223,7 @@ public:
 	// Calculates maximum value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <column_type_c ColumnT>
+	template <db::column_field_type_c ColumnT>
 	inline auto max(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::max(column));
@@ -233,7 +233,7 @@ public:
 	// Calculates sum by column of selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <column_type_c ColumnT>
+	template <db::column_field_type_c ColumnT>
 	inline auto sum(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::sum(column));
@@ -276,7 +276,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::list<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
@@ -308,7 +308,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		xw::Lazy<std::list<OtherModelT>> ModelT::* left,
 		xw::Lazy<ModelT> OtherModelT::* right,
@@ -350,7 +350,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::list<ModelT>>&)>& second,
@@ -387,7 +387,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <column_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		xw::Lazy<OtherModelT> ModelT::* left,
 		xw::Lazy<std::list<ModelT>> OtherModelT::* right,

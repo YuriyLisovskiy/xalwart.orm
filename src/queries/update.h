@@ -58,7 +58,7 @@ protected:
 
 			if (column.is_pk)
 			{
-				pk_val = get_column_value_as_string<ModelT, T>(model, column);
+				pk_val = column.as_string(model);
 				pk_name = column.name;
 
 				if constexpr (ModelT::meta_omit_pk)
@@ -67,7 +67,7 @@ protected:
 				}
 			}
 
-			row_data.first += column.name + " = " + get_column_value_as_string<ModelT, T>(model, column) + ", ";
+			row_data.first += column.name + " = " + column.as_string(model) + ", ";
 			return true;
 		});
 

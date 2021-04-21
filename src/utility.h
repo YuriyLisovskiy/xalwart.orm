@@ -8,6 +8,9 @@
 
 #pragma once
 
+// Core libraries.
+#include <xalwart.core/datetime.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -125,6 +128,21 @@ template<>
 inline const char* as<const char*>(const void* data)
 {
 	return (const char*)data;
+}
+
+inline dt::Date as_date(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format).date();
+}
+
+inline dt::Time as_time(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format).time_tz();
+}
+
+inline dt::Datetime as_datetime(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format);
 }
 
 inline std::string quote_str(const std::string& s)

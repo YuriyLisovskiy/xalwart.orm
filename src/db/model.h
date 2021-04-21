@@ -14,8 +14,7 @@
 // Core libraries.
 #include <xalwart.core/object/object.h>
 #include <xalwart.core/exceptions.h>
-#include <xalwart.core/types/string.h>
-#include <xalwart.core/types/fundamental.h>
+#include <xalwart.core/types/utility.h>
 #include <xalwart.core/string_utils.h>
 #include <xalwart.core/lazy.h>
 
@@ -62,26 +61,44 @@ protected:
 		this->_is_null_model = other._is_null_model;
 	}
 
-	template <typename TargetT, typename ...Columns>
+	template <typename ...Columns>
 	inline std::shared_ptr<const Object> get_attribute_from(
 		const std::tuple<Columns...>& columns, const char* attr_name
 	) const
 	{
-		std::shared_ptr<Object> obj;
+		std::shared_ptr<const Object> obj;
 		util::tuple_for_each(columns, [this, attr_name, &obj](auto& column)
 		{
 			if (column.name == std::string(attr_name))
 			{
-				using field_type = typename std::remove_reference<decltype(column)>::type;
-				using model_type = typename field_type::model_type;
-				using T = typename field_type::field_type;
-				if constexpr (std::is_fundamental_v<T>)
+				using column_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename column_type::model_type;
+				using field_type = typename column_type::field_type;
+
+				if constexpr (std::is_same_v<field_type, dt::Date>)
 				{
-					obj = std::make_shared<types::Fundamental<T>>(((model_type*)this)->*column.member_pointer);
+					obj = std::make_shared<types::Date>(
+						((model_type*)this)->*column.member_pointer,
+						DEFAULT_DATE_FORMAT
+					);
 				}
-				else if constexpr (std::is_same_v<T, std::string>)
+				else if constexpr (std::is_same_v<field_type, dt::Time>)
 				{
-					obj = std::make_shared<types::String>(((model_type*)this)->*column.member_pointer);
+					obj = std::make_shared<types::Time>(
+						((model_type*)this)->*column.member_pointer,
+						DEFAULT_TIME_FORMAT
+					);
+				}
+				else if constexpr (std::is_same_v<field_type, dt::Datetime>)
+				{
+					obj = std::make_shared<types::Datetime>(
+						((model_type*)this)->*column.member_pointer,
+						DEFAULT_DATETIME_FORMAT
+					);
+				}
+				else
+				{
+					obj = types::to_object(((model_type*)this)->*column.member_pointer);
 				}
 
 				return false;
@@ -101,8 +118,8 @@ protected:
 		return obj;
 	}
 
-	template <typename TargetT, typename ...Columns>
-	void set_attribute_for(
+	template <typename ...Columns>
+	void set_attribute_to(
 		const std::tuple<Columns...>& columns, const char* attr_name, const void* data
 	)
 	{
@@ -113,10 +130,9 @@ protected:
 			{
 				using column_type = typename std::remove_reference<decltype(column)>::type;
 				using model_type = typename column_type::model_type;
-				using field_type = typename column_type::field_type;
 				size_t len = std::strlen((char*)data);
 				std::string str_val = {(char*)data, (char*)data + len + 1};
-				((model_type*)this)->*column.member_pointer = util::as<field_type>(str_val.c_str());
+				((model_type*)this)->*column.member_pointer = column.as_field(str_val.c_str());
 				is_set = true;
 				return false;
 			}
@@ -229,25 +245,5 @@ concept model_based_type_c = std::is_base_of_v<Model, T> && std::is_default_cons
 template <typename T>
 concept model_based_iterator_type_c = std::is_base_of_v<Model, iterator_v_type<T>> &&
 	std::is_default_constructible_v<iterator_v_type<T>>;
-
-template <model_based_type_c M, column_field_type_c F>
-std::string get_column_value_as_string(const M& model, const column_meta_t<M, F>& column_meta)
-{
-	std::string result;
-	if constexpr (std::is_fundamental_v<F>)
-	{
-		result = std::to_string(model.*column_meta.member_pointer);
-	}
-	else if constexpr (std::is_same_v<F, std::string>)
-	{
-		result = "'" + model.*column_meta.member_pointer + "'";
-	}
-	else if constexpr (std::is_same_v<F, const char*>)
-	{
-		result = "'" + std::string(model.*column_meta.member_pointer) + "'";
-	}
-
-	return result;
-}
 
 __ORM_DB_END__

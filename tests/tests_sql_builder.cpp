@@ -24,13 +24,13 @@ struct TestBuilder_TestModel : public orm::db::Model
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<TestBuilder_TestModel>(TestBuilder_TestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(TestBuilder_TestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<TestBuilder_TestModel>(TestBuilder_TestModel::meta_columns, attr_name);
+		return this->get_attribute_from(TestBuilder_TestModel::meta_columns, attr_name);
 	}
 };
 
@@ -132,13 +132,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<LeftTestModel>(LeftTestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(LeftTestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<LeftTestModel>(LeftTestModel::meta_columns, attr_name);
+		return this->get_attribute_from(LeftTestModel::meta_columns, attr_name);
 	}
 };
 
@@ -159,13 +159,13 @@ public:
 
 	inline void __set_attr__(const char* attr_name, const void* data) override
 	{
-		this->set_attribute_for<RightTestModel>(RightTestModel::meta_columns, attr_name, data);
+		this->set_attribute_to(RightTestModel::meta_columns, attr_name, data);
 	}
 
 	[[nodiscard]]
 	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
 	{
-		return this->get_attribute_from<RightTestModel>(RightTestModel::meta_columns, attr_name);
+		return this->get_attribute_from(RightTestModel::meta_columns, attr_name);
 	}
 };
 

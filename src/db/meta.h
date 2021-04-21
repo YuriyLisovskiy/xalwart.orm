@@ -91,7 +91,10 @@ inline std::string get_table_name(bool quote=false)
 template <typename T>
 concept column_field_type_c = std::is_fundamental_v<T> ||
 	std::is_same_v<std::string, T> ||
-	std::is_same_v<const char*, T>;
+	std::is_same_v<const char*, T> ||
+	std::is_same_v<dt::Date, T> ||
+	std::is_same_v<dt::Time, T> ||
+	std::is_same_v<dt::Datetime, T>;
 
 template <typename ModelT, column_field_type_c FieldT>
 struct column_meta_t
@@ -104,10 +107,19 @@ struct column_meta_t
 
 	FieldT ModelT::* member_pointer;
 
+	using field_builder_type = std::function<FieldT(const void*)>;
+	using string_builder_type = std::function<std::string(const ModelT&)>;
+
+	field_builder_type as_field = nullptr;
+	string_builder_type as_string = nullptr;
+
 	column_meta_t() = default;
 
-	column_meta_t(std::string name, FieldT ModelT::* member_ptr, bool is_pk) :
-		name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk)
+	column_meta_t(
+		std::string name, FieldT ModelT::* member_ptr, bool is_pk,
+		field_builder_type field_builder, string_builder_type string_builder
+	) : name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk),
+		as_field(std::move(field_builder)), as_string(string_builder)
 	{
 	}
 
@@ -118,24 +130,90 @@ struct column_meta_t
 			this->name = other.name;
 			this->is_pk = other.is_pk;
 			this->member_pointer = other.member_pointer;
+			this->as_field = other.as_field;
+			this->as_string = other.as_string;
 		}
 	}
 };
 
-template <typename ModelT, column_field_type_c FieldT>
-inline column_meta_t<ModelT, FieldT> make_column_meta(
-	const std::string& name, FieldT ModelT::* member_ptr
-)
+inline static const char* DEFAULT_DATE_FORMAT = "%Y-%m-%d";
+inline static const char* DEFAULT_TIME_FORMAT = "%H:%M:%S";
+inline static const char* DEFAULT_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S";
+
+template <column_field_type_c FieldT>
+FieldT column_as_field(const void* data)
 {
-	return column_meta_t<ModelT, FieldT>(name, member_ptr, false);
+	if constexpr (std::is_same_v<FieldT, dt::Date>)
+	{
+		return util::as_date(data, DEFAULT_DATE_FORMAT);
+	}
+	else if constexpr (std::is_same_v<FieldT, dt::Time>)
+	{
+		return util::as_time(data, DEFAULT_TIME_FORMAT);
+	}
+	else if constexpr (std::is_same_v<FieldT, dt::Datetime>)
+	{
+		return util::as_datetime(data, DEFAULT_DATETIME_FORMAT);
+	}
+
+	return util::as<FieldT>(data);
+}
+
+template <column_field_type_c FieldT>
+std::string field_as_column_v(const FieldT& field)
+{
+	if constexpr (std::is_fundamental_v<FieldT>)
+	{
+		return std::to_string(field);
+	}
+	else if constexpr (std::is_same_v<FieldT, std::string>)
+	{
+		return "'" + field + "'";
+	}
+	else if constexpr (std::is_same_v<FieldT, const char*>)
+	{
+		return "'" + std::string(field) + "'";
+	}
+	else if constexpr (std::is_same_v<FieldT, dt::Date>)
+	{
+		return "'" + field.strftime(DEFAULT_DATE_FORMAT) + "'";
+	}
+	else if constexpr (std::is_same_v<FieldT, dt::Time>)
+	{
+		return "'" + field.strftime(DEFAULT_TIME_FORMAT) + "'";
+	}
+	else if constexpr (std::is_same_v<FieldT, dt::Datetime>)
+	{
+		return "'" + field.strftime(DEFAULT_DATETIME_FORMAT) + "'";
+	}
+
+	return "";
 }
 
 template <typename ModelT, column_field_type_c FieldT>
+inline column_meta_t<ModelT, FieldT> make_column_meta(
+	const std::string& name, FieldT ModelT::* member_ptr, bool is_pk=false
+)
+{
+	return column_meta_t<ModelT, FieldT>(
+		name, member_ptr, is_pk,
+		[](const void* data) -> FieldT
+		{
+			return column_as_field<FieldT>(data);
+		},
+		[member_ptr](const ModelT& model) -> std::string
+		{
+			return field_as_column_v(model.*member_ptr);
+		}
+	);
+}
+
+template <typename ModelT, typename FieldT>
 inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
 {
-	return column_meta_t<ModelT, FieldT>(name, member_ptr, true);
+	return make_column_meta<ModelT, FieldT>(name, member_ptr, true);
 }
 
 __ORM_DB_END__

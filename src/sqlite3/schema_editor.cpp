@@ -21,6 +21,12 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 			return "INT";
 		case db::BIG_SERIAL_T:
 			return "BIGINT";
+		case db::DATE_T:
+			return "DATE";
+		case db::TIME_T:
+			return "TIME";
+		case db::DATETIME_T:
+			return "DATETIME";
 		default:
 			return db::DefaultSQLSchemaEditor::sql_type_to_string(type);
 	}
