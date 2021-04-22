@@ -25,15 +25,28 @@ protected:
 	orm::abc::ISQLDriver* db;
 
 protected:
-	[[nodiscard]]
-	virtual std::string sql_type_to_string(sql_column_type type) const;
 
 	[[nodiscard]]
 	virtual std::string sql_on_action_to_string(on_action action) const;
 
 	[[nodiscard]]
-	virtual std::string sql_constraints(
-		bool null, bool primary_key, bool unique, const std::string& check
+	virtual std::string sql_column_constraints(
+		const std::optional<bool>& null,
+		bool primary_key,
+		bool unique,
+		bool autoincrement,
+		const std::string& check,
+		const std::string& default_
+	) const;
+
+	virtual void sql_column_autoincrement_check(
+		sql_column_type type, bool autoincrement, bool primary_key
+	) const;
+
+	[[nodiscard]]
+	virtual bool sql_column_max_len_check(
+		const std::string& name, sql_column_type type,
+		const std::optional<size_t>& max_len
 	) const;
 
 public:
@@ -48,19 +61,18 @@ public:
 	}
 
 	[[nodiscard]]
-	inline std::string sql_data_column(
-		sql_column_type type, const std::string& name,
-		bool null, bool primary_key, bool unique, const std::string& check
-	) const override
-	{
-		return name + " " + this->sql_type_to_string(type) +
-			this->sql_constraints(null, primary_key, unique, check);
-	}
+	std::string sql_type_to_string(sql_column_type type) const override;
 
 	[[nodiscard]]
-	std::string sql_text_column(
-		sql_column_type type, const std::string& name, long int max_len,
-		bool null, bool primary_key, bool unique, const std::string& check
+	std::string sql_column(
+		sql_column_type type, const std::string& name,
+		const std::optional<size_t>& max_len,
+		const std::optional<bool>& null,
+		bool primary_key,
+		bool unique,
+		bool autoincrement,
+		const std::string& check,
+		const std::string& default_
 	) const override;
 
 	[[nodiscard]]

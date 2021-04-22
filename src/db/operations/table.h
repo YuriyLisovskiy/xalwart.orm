@@ -13,9 +13,11 @@
 
 // Core libraries.
 #include <xalwart.core/exceptions.h>
+#include <xalwart.core/utility.h>
 
 // Orm libraries.
 #include "../abc.h"
+#include "../meta.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
@@ -41,40 +43,6 @@ public:
 	}
 };
 
-struct col_constraints_t
-{
-	bool null = false;
-	bool primary_key = false;
-	bool unique = false;
-	std::string check;
-};
-
-struct string_col_constraints_t
-{
-	long int max_len = -1;
-	bool null = false;
-	bool primary_key = false;
-	bool unique = false;
-	std::string check;
-};
-
-struct int_col_constraints_t
-{
-	bool null = false;
-	bool primary_key = false;
-	bool autoincrement = false;
-	bool unique = false;
-	std::string check;
-};
-
-struct foreign_key_constraints_t
-{
-	std::string to;
-	std::string key;
-	on_action on_delete=NO_ACTION;
-	on_action on_update=NO_ACTION;
-};
-
 // TESTME: CreateTableOperation
 // Create a model's table.
 class CreateTableOperation : public TableOperation
@@ -95,126 +63,61 @@ public:
 
 	void up(abc::ISQLSchemaEditor* editor) const override
 	{
-		if (!editor)
-		{
-			throw NullPointerException(
-				"xw::orm::db::CreateModel: schema editor is nullptr",
-				_ERROR_DETAILS_
-			);
-		}
-
-		editor->create_table(this->table_name, this->columns_list, this->constraints_list);
+		xw::util::require_non_null(
+			editor, "xw::orm::db::ops::CreateTableOperation: schema editor is nullptr"
+		)->create_table(this->table_name, this->columns_list, this->constraints_list);
 	}
 
 	void down(abc::ISQLSchemaEditor* editor) const override
 	{
-		if (!editor)
+		xw::util::require_non_null(
+			editor, "xw::orm::db::ops::CreateTableOperation: schema editor is nullptr"
+		)->drop_table(this->table_name);
+	}
+
+	template <column_migration_type_c T>
+	void column(const std::string& name, const constraints_t& c={})
+	{
+		if (name.empty())
 		{
-			throw NullPointerException(
-				"xw::orm::db::CreateModel: schema editor is nullptr",
-				_ERROR_DETAILS_
-			);
+			throw ValueError("'name' can not be empty", _ERROR_DETAILS_);
 		}
 
-		editor->drop_table(this->table_name);
+		std::string default_;
+		if (c.default_.has_value())
+		{
+			if (c.default_.type() != typeid(T))
+			{
+				throw TypeError(
+					"type '" + xw::util::demangle(typeid(T).name()) +
+					"' of default value is not the same as column type - '" +
+					xw::util::demangle(c.default_.type().name()) + "'",
+					_ERROR_DETAILS_
+				);
+			}
+
+			default_ = field_as_column_v(std::any_cast<T>(c.default_));
+		}
+
+		auto col_type = col_t_from_type<T>::type;
+		if (col_type == TEXT_T && c.max_len.has_value())
+		{
+			col_type = VARCHAR_T;
+		}
+
+		this->columns_list.push_back(
+			xw::util::require_non_null(this->schema_editor)->sql_column(
+				col_type, name,
+				c.max_len, c.null, c.primary_key, c.unique,
+				c.autoincrement, c.check, default_
+			)
+		);
 	}
 
-	// Columns.
-	void Bool(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			BOOL_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void String(const std::string& name, const string_col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_text_column(
-			VARCHAR_T, name, constraints.max_len,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Text(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_text_column(
-			TEXT_T, name, -1,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void ShortInt(const std::string& name, const int_col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			constraints.autoincrement ? SMALL_SERIAL_T : SMALLINT_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Int(const std::string& name, const int_col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			constraints.autoincrement ? SERIAL_T : INT_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void LongLongInt(const std::string& name, const int_col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			constraints.autoincrement ? BIG_SERIAL_T : BIGINT_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Float(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			REAL_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Double(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			DOUBLE_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Date(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			DATE_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Time(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			TIME_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	void Datetime(const std::string& name, const col_constraints_t& constraints={})
-	{
-		this->columns_list.push_back(this->schema_editor->sql_data_column(
-			DATETIME_T, name,
-			constraints.null, constraints.primary_key, constraints.unique, constraints.check
-		));
-	}
-
-	// Constraints.
-	void ForeignKey(
-		const std::string& name, const foreign_key_constraints_t& info
-	)
+	void ForeignKey(const std::string& name, const foreign_key_constraints_t& c)
 	{
 		this->constraints_list.push_back(this->schema_editor->sql_foreign_key(
-			name, info.to, info.key, info.on_delete, info.on_update
+			name, c.to, c.key, c.on_delete, c.on_update
 		));
 	}
 };

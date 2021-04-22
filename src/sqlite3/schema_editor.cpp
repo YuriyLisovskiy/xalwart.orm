@@ -11,6 +11,49 @@
 
 __ORM_SQLITE3_BEGIN__
 
+std::string SchemaEditor::sql_column_constraints(
+	const std::optional<bool>& null,
+	bool primary_key,
+	bool unique,
+	bool autoincrement,
+	const std::string& check,
+	const std::string& default_
+) const
+{
+	std::string result;
+	if (primary_key)
+	{
+		result += " PRIMARY KEY";
+	}
+
+	if (autoincrement)
+	{
+		result += " AUTOINCREMENT";
+	}
+
+	if (unique)
+	{
+		result += " UNIQUE";
+	}
+
+	if (null.has_value())
+	{
+		result += null.value() ? " NULL" : " NOT NULL";
+	}
+
+	if (!check.empty())
+	{
+		result += " CHECK (" + check + ")";
+	}
+
+	if (!default_.empty())
+	{
+		result += " DEFAULT " + default_;
+	}
+
+	return result;
+}
+
 std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 {
 	switch (type)
@@ -21,10 +64,6 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 			return "INT";
 		case db::BIG_SERIAL_T:
 			return "BIGINT";
-		case db::DATE_T:
-			return "DATE";
-		case db::TIME_T:
-			return "TIME";
 		case db::DATETIME_T:
 			return "DATETIME";
 		default:
@@ -32,51 +71,36 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 	}
 }
 
-std::string SchemaEditor::sql_data_column(
+std::string SchemaEditor::sql_column(
 	db::sql_column_type type, const std::string& name,
-	bool null, bool primary_key, bool unique, const std::string& check
+	const std::optional<size_t>& max_len,
+	const std::optional<bool>& null,
+	bool primary_key,
+	bool unique,
+	bool autoincrement,
+	const std::string& check,
+	const std::string& default_
 ) const
 {
-	auto result = name + " ";
-	bool auto_increment = false;
-	switch (type)
+	if (autoincrement)
 	{
-		case db::SMALL_SERIAL_T:
-		case db::SERIAL_T:
-		case db::BIG_SERIAL_T:
-			result += "INTEGER";
-			auto_increment = true;
-			break;
-		default:
-			result += this->sql_type_to_string(type);
+		switch (type)
+		{
+			case db::SMALL_SERIAL_T:
+			case db::SERIAL_T:
+			case db::BIG_SERIAL_T:
+			case db::SMALLINT_T:
+			case db::BIGINT_T:
+				type = db::INT_T;
+				break;
+			default:
+				break;
+		}
 	}
 
-	if (primary_key)
-	{
-		result += " PRIMARY KEY";
-	}
-
-	if (auto_increment)
-	{
-		result += " AUTOINCREMENT";
-	}
-
-	if (unique)
-	{
-		result += " UNIQUE";
-	}
-
-	if (!null)
-	{
-		result += " NOT NULL";
-	}
-
-	if (!check.empty())
-	{
-		result += " CHECK (" + check + ")";
-	}
-
-	return result;
+	return db::DefaultSQLSchemaEditor::sql_column(
+		type, name, max_len, null, primary_key, unique, autoincrement, check, default_
+	);
 }
 
 __ORM_SQLITE3_END__

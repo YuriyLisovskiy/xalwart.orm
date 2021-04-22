@@ -9,14 +9,124 @@
 
 __ORM_DB_BEGIN__
 
+std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) const
+{
+	switch (action)
+	{
+		case SET_NULL:
+			return "SET NULL";
+		case SET_DEFAULT:
+			return "SET DEFAULT";
+		case RESTRICT:
+			return "RESTRICT";
+		case NO_ACTION:
+			return "NO ACTION";
+		case CASCADE:
+			return "CASCADE";
+	}
+
+	throw ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
+}
+
+std::string DefaultSQLSchemaEditor::sql_column_constraints(
+	const std::optional<bool>& null,
+	bool primary_key,
+	bool unique,
+	bool autoincrement,
+	const std::string& check,
+	const std::string& default_
+) const
+{
+	std::string result;
+	if (primary_key)
+	{
+		result += " PRIMARY KEY";
+	}
+
+	if (unique)
+	{
+		result += " UNIQUE";
+	}
+
+	if (null.has_value())
+	{
+		result += null.value() ? " NULL" : " NOT NULL";
+	}
+
+	if (!check.empty())
+	{
+		result += " CHECK (" + check + ")";
+	}
+
+	if (!default_.empty())
+	{
+		result += " DEFAULT " + default_;
+	}
+
+	return result;
+}
+
+void DefaultSQLSchemaEditor::sql_column_autoincrement_check(
+	sql_column_type type, bool autoincrement, bool primary_key
+) const
+{
+	if (autoincrement)
+	{
+		bool non_int_type = false;
+		switch (type)
+		{
+			case SMALLINT_T:
+			case INT_T:
+			case BIGINT_T:
+			case SMALL_SERIAL_T:
+			case SERIAL_T:
+			case BIG_SERIAL_T:
+				break;
+			default:
+				non_int_type = true;
+				break;
+		}
+
+		if (non_int_type || !primary_key)
+		{
+			throw ValueError(
+				"'autoincrement' is only allowed on an integer (short, int, long long) primary key",
+				_ERROR_DETAILS_
+			);
+		}
+	}
+}
+
+bool DefaultSQLSchemaEditor::sql_column_max_len_check(
+	const std::string& name, sql_column_type type,
+	const std::optional<size_t>& max_len
+) const
+{
+	if (max_len.has_value())
+	{
+		if (type != VARCHAR_T)
+		{
+			throw ValueError(
+				"unable to set 'max_len' constraint for column '" + name +
+				"' with type '" + this->sql_type_to_string(type) + "'",
+				_ERROR_DETAILS_
+			);
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) const
 {
 	switch (type)
 	{
 		case BOOL_T:
 			return "BOOL";
-		case CHAR_T:
-			return "CHAR";
 		case VARCHAR_T:
 			return "VARCHAR";
 		case TEXT_T:
@@ -48,51 +158,33 @@ std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) con
 	throw ValueError("unknown SQL data type", _ERROR_DETAILS_);
 }
 
-std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) const
-{
-	switch (action)
-	{
-		case SET_NULL:
-			return "SET NULL";
-		case SET_DEFAULT:
-			return "SET DEFAULT";
-		case RESTRICT:
-			return "RESTRICT";
-		case NO_ACTION:
-			return "NO ACTION";
-		case CASCADE:
-			return "CASCADE";
-	}
-
-	throw ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
-}
-
-std::string DefaultSQLSchemaEditor::sql_constraints(
-	bool null, bool primary_key, bool unique, const std::string& check
+std::string DefaultSQLSchemaEditor::sql_column(
+	sql_column_type type, const std::string& name,
+	const std::optional<size_t>& max_len,
+	const std::optional<bool>& null,
+	bool primary_key,
+	bool unique,
+	bool autoincrement,
+	const std::string& check,
+	const std::string& default_
 ) const
 {
-	std::string result;
-	if (primary_key)
+	if (name.empty())
 	{
-		result += " PRIMARY KEY";
+		throw ValueError("'name' can not be empty", _ERROR_DETAILS_);
 	}
 
-	if (unique)
+	auto sql_type = this->sql_type_to_string(type);
+	if (this->sql_column_max_len_check(name, type, max_len))
 	{
-		result += " UNIQUE";
+		sql_type += "(" + std::to_string(max_len.value()) + ")";
 	}
 
-	if (!null)
-	{
-		result += " NOT NULL";
-	}
+	this->sql_column_autoincrement_check(type, autoincrement, primary_key);
 
-	if (!check.empty())
-	{
-		result += " CHECK (" + check + ")";
-	}
-
-	return result;
+	return name + " " + sql_type + this->sql_column_constraints(
+		null, primary_key, unique, autoincrement, check, default_
+	);
 }
 
 std::string DefaultSQLSchemaEditor::sql_foreign_key(
@@ -121,26 +213,6 @@ std::string DefaultSQLSchemaEditor::sql_foreign_key(
 	}
 
 	return result;
-}
-
-std::string DefaultSQLSchemaEditor::sql_text_column(
-	sql_column_type type, const std::string& name, long int max_len,
-	bool null, bool primary_key, bool unique, const std::string& check
-) const
-{
-	switch (type)
-	{
-		case CHAR_T:
-		case VARCHAR_T:
-		case TEXT_T:
-			break;
-		default:
-			throw ValueError("invalid text column type", _ERROR_DETAILS_);
-	}
-
-	return name + " " + this->sql_type_to_string(type) + (
-		type == TEXT_T || max_len < 0 ? "" : "(" + std::to_string(max_len) + ")"
-	) + this->sql_constraints(null, primary_key, unique, check);
 }
 
 __ORM_DB_END__

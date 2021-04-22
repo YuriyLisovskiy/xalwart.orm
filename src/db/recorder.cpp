@@ -18,9 +18,9 @@ void MigrationRecorder::ensure_schema() const
 
 	auto editor = this->driver()->schema_editor();
 	ops::CreateTableOperation table(models::Migration::meta_table_name, editor);
-	table.Int("id", {.primary_key=true, .autoincrement=true});
-	table.String("name", {.max_len=255, .unique=true});
-	table.Datetime("applied");
+	table.column<int>("id", {.primary_key=true, .autoincrement=true});
+	table.column<std::string>("name", {.max_len=255, .unique=true});
+	table.column<dt::Datetime>("applied");
 	table.up(editor);
 }
 
