@@ -23,10 +23,13 @@ public:
 	{
 	}
 
-	[[nodiscard]]
-	inline std::string run_insert(const std::string& query) const override
+	inline void run_insert(const std::string& query) const override
 	{
-		return "1";
+	}
+
+	inline void run_insert(const std::string& query, std::string& pk) const override
+	{
+		pk = "1";
 	}
 
 	inline void run_select(

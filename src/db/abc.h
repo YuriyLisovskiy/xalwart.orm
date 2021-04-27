@@ -155,9 +155,9 @@ public:
 class IOperation
 {
 public:
-	virtual void up(ISQLSchemaEditor* editor) const = 0;
+	virtual void up(const ISQLSchemaEditor* editor) const = 0;
 
-	virtual void down(ISQLSchemaEditor* editor) const = 0;
+	virtual void down(const ISQLSchemaEditor* editor) const = 0;
 };
 
 __ORM_DB_ABC_END__

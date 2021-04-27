@@ -18,8 +18,7 @@
 __ORM_DB_MODELS_BEGIN__
 
 // TESTME: Migration
-// TODO: add datetime field
-class Migration : public Model
+class Migration final : public Model
 {
 public:
 	size_t id{};
@@ -39,7 +38,8 @@ public:
 	inline std::string __str__() const override
 	{
 		return this->is_null() ? "null" : (
-			"Migration " + this->name + " at " + this->applied.strftime(db::DEFAULT_DATETIME_FORMAT)
+			"Migration " + this->name + " at " +
+			this->applied.strftime(db::DEFAULT_DATETIME_FORMAT)
 		);
 	}
 

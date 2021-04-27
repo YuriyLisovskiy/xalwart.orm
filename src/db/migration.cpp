@@ -9,70 +9,54 @@
 
 __ORM_DB_BEGIN__
 
-bool Migration::up(abc::ISQLSchemaEditor* editor) const
+bool Migration::apply(
+	const abc::ISQLSchemaEditor* editor,
+	const std::function<void()>& success_callback
+) const
 {
-	if (!editor)
-	{
-		throw NullPointerException(
-			"xw::orm::db::Migration: schema editor is nullptr",
-			_ERROR_DETAILS_
-		);
-	}
-
-	auto func = [this, editor]() -> bool
-	{
-		for (const auto& operation : this->operations)
+	xw::util::require_non_null(editor, "migration > apply: schema editor is nullptr");
+	return xw::util::require_non_null(this->sql_driver)->run_transaction(
+		[this, editor, success_callback]() -> bool
 		{
-			operation->up(editor);
+			for (const auto& operation : this->operations)
+			{
+				operation->up(editor);
+			}
+
+			if (success_callback)
+			{
+				success_callback();
+			}
+
+			return true;
 		}
-
-		return true;
-	};
-
-	bool result;
-	if (this->atomic && this->sql_driver)
-	{
-		result = this->sql_driver->run_transaction(func);
-	}
-	else
-	{
-		result = func();
-	}
-
-	return result;
+	);
 }
 
-bool Migration::down(abc::ISQLSchemaEditor* editor) const
+bool Migration::rollback(
+	const abc::ISQLSchemaEditor* editor,
+	const std::function<void()>& success_callback
+) const
 {
-	if (!editor)
-	{
-		throw NullPointerException(
-			"xw::orm::db::Migration: schema editor is nullptr",
-			_ERROR_DETAILS_
-		);
-	}
-
-	auto func = [this, editor]() -> bool
-	{
-		for (const auto& operation : this->operations)
+	xw::util::require_non_null(editor, "migration > rollback: schema editor is nullptr");
+	return xw::util::require_non_null(
+		this->sql_driver, "migration > rollback: sql driver is nullptr"
+	)->run_transaction(
+		[this, editor, success_callback]() -> bool
 		{
-			operation->down(editor);
+			for (const auto& operation : this->operations)
+			{
+				operation->down(editor);
+			}
+
+			if (success_callback)
+			{
+				success_callback();
+			}
+
+			return true;
 		}
-
-		return true;
-	};
-
-	bool result;
-	if (this->atomic && this->sql_driver)
-	{
-		result = this->sql_driver->run_transaction(func);
-	}
-	else
-	{
-		result = func();
-	}
-
-	return result;
+	);
 }
 
 __ORM_DB_END__

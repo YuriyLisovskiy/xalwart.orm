@@ -24,19 +24,4 @@ void MigrationRecorder::ensure_schema() const
 	table.up(editor);
 }
 
-std::map<std::string, models::Migration> MigrationRecorder::applied_migrations() const
-{
-	std::map<std::string, models::Migration> mapping;
-	if (this->has_table())
-	{
-		auto migrations = this->migrations().all();
-		for (auto& migration : migrations)
-		{
-			mapping[migration.name] = std::move(migration);
-		}
-	}
-
-	return mapping;
-}
-
 __ORM_DB_END__

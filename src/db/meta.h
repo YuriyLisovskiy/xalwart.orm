@@ -103,7 +103,7 @@ struct column_meta_t
 	using model_type = ModelT;
 
 	std::string name;
-	bool is_pk;
+	bool is_pk = false;
 
 	FieldT ModelT::* member_pointer;
 

@@ -151,7 +151,7 @@ std::string DefaultSQLBuilder::sql_select(
 	{
 		auto column_str = std::string(*column);
 		columns_str += prefix + util::quote_str(column_str);
-		columns_str += " AS " + util::quote_str(raw_prefix + column_str);
+		columns_str += " AS " + util::quote_str(column_str);
 		if (std::next(column) != columns.end())
 		{
 			columns_str += ", ";

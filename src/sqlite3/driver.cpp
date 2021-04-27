@@ -71,7 +71,17 @@ void Driver::run_query(const std::string& query) const
 	}
 }
 
-std::string Driver::run_insert(const std::string& query) const
+void Driver::run_insert(const std::string& query) const
+{
+	if (query.empty())
+	{
+		this->throw_empty_arg("query", _ERROR_DETAILS_);
+	}
+
+	this->run_query(query);
+}
+
+void Driver::run_insert(const std::string& query, std::string& last_row_id) const
 {
 	if (query.empty())
 	{
@@ -79,7 +89,6 @@ std::string Driver::run_insert(const std::string& query) const
 	}
 
 	char* message_error;
-	std::string last_inserted_pk;
 	auto extended_query = "BEGIN TRANSACTION; " + query + " SELECT last_insert_rowid(); COMMIT TRANSACTION;";
 	auto ret_val = sqlite3_exec(
 		this->db,
@@ -89,7 +98,7 @@ std::string Driver::run_insert(const std::string& query) const
 			last_inserted_pk = argv[0];
 			return 0;
 		},
-		&last_inserted_pk,
+		&last_row_id,
 		&message_error
 	);
 
@@ -99,8 +108,6 @@ std::string Driver::run_insert(const std::string& query) const
 		sqlite3_free(message_error);
 		throw SQLError(message, _ERROR_DETAILS_);
 	}
-
-	return last_inserted_pk;
 }
 
 void Driver::run_select(
@@ -124,11 +131,13 @@ void Driver::run_select(
 				std::map<std::string, char*> row;
 				for (int i = 0; i < argc; i++)
 				{
-					auto column = str::split(column_names[i], '.', 1);
-					if (!column.empty())
-					{
-						row[column.back()] = argv[i];
-					}
+					// TODO: check what if column value is nullptr!
+					row[column_names[i]] = argv[i];
+//					auto column = str::split(column_names[i], '.', 1);
+//					if (!column.empty())
+//					{
+//						row[column.back()] = argv[i];
+//					}
 				}
 
 				pair.second(pair.first, &row);

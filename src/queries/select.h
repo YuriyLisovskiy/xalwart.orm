@@ -281,7 +281,7 @@ public:
 		const std::function<void(ModelT&, const xw::Lazy<std::list<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
 		PrimaryKeyT ModelT::* model_pk = &ModelT::id,
-		std::string foreign_key=""
+		const std::string& foreign_key=""
 	)
 	{
 		auto fk_column = foreign_key.empty() ? db::make_fk<ModelT>() : foreign_key;
@@ -313,7 +313,7 @@ public:
 		xw::Lazy<std::list<OtherModelT>> ModelT::* left,
 		xw::Lazy<ModelT> OtherModelT::* right,
 		PrimaryKeyT ModelT::* model_pk = &ModelT::id,
-		std::string foreign_key=""
+		const std::string& foreign_key=""
 	)
 	{
 		return this->template one_to_many<PrimaryKeyT, OtherModelT>(
@@ -392,7 +392,7 @@ public:
 		xw::Lazy<OtherModelT> ModelT::* left,
 		xw::Lazy<std::list<ModelT>> OtherModelT::* right,
 		PrimaryKeyT OtherModelT::* other_model_pk = &OtherModelT::id,
-		std::string foreign_key=""
+		const std::string& foreign_key=""
 	)
 	{
 		return this->template many_to_one<PrimaryKeyT, OtherModelT>(
@@ -445,7 +445,7 @@ public:
 	inline select& many_to_many(
 		const std::function<void(ModelT&, const Lazy<std::list<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const Lazy<std::list<ModelT>>&)>& second,
-		std::string left_fk="", std::string right_fk="", std::string intermediate_table=""
+		const std::string& left_fk="", const std::string& right_fk="", const std::string& intermediate_table=""
 	)
 	{
 		abc::ISQLDriver* driver = this->sql_driver;

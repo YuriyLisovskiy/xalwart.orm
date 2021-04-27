@@ -101,7 +101,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ThrowsEmptyColumns)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_DefaultSelect)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test";)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test";)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {}, {}
 	);
@@ -110,7 +110,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_DefaultSelect)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Distinct)
 {
-	std::string expected = R"(SELECT DISTINCT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test";)";
+	std::string expected = R"(SELECT DISTINCT "test"."id" AS "id", "test"."name" AS "name" FROM "test";)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, true, {}, {}, {}, -1, 0, {}, {}
 	);
@@ -171,7 +171,7 @@ public:
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Join)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LEFT JOIN "right_model" ON "left_model"."id" = "right_model"."left_id";)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" LEFT JOIN "right_model" ON "left_model"."id" = "right_model"."left_id";)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {
 			orm::q::left_on<LeftTestModel, RightTestModel>("left_id")
@@ -182,7 +182,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Join)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Where)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE "test"."id" = 1;)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" WHERE "test"."id" = 1;)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {
 			orm::q::c(&TestBuilder_TestModel::id) == 1
@@ -193,7 +193,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Where)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ComplicatedWhere)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" WHERE ("test"."id" = 1 AND "test"."name" < 'John');)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" WHERE ("test"."id" = 1 AND "test"."name" < 'John');)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {
 			orm::q::c(&TestBuilder_TestModel::id) == 1 & orm::q::c(&TestBuilder_TestModel::name) < "John"
@@ -204,7 +204,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ComplicatedWhere)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_OrderBy)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" ORDER BY "test"."id" ASC, "test"."name" DESC;)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {
 			orm::q::asc(&TestBuilder_TestModel::id), orm::q::desc(&TestBuilder_TestModel::name)
@@ -215,7 +215,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_OrderBy)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Limit)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LIMIT 1;)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" LIMIT 1;)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, 1, 0, {}, {}
 	);
@@ -231,7 +231,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ThrowsOffsetWithoutLimit)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Offset)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" LIMIT 1 OFFSET 1;)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" LIMIT 1 OFFSET 1;)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, 1, 1, {}, {}
 	);
@@ -240,7 +240,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Offset)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_GroupBy)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id", "test"."name";)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" GROUP BY "test"."id", "test"."name";)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {
 			"id", "name"
@@ -260,7 +260,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ThrowsHavingWithoutGroupBy)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Having)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id" HAVING "test"."id" = 1;)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" GROUP BY "test"."id" HAVING "test"."id" = 1;)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0,
 		{"id"},
@@ -271,7 +271,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_select_query_Having)
 
 TEST_F(DefaultSQLBuilder_TestCase, make_select_query_ComplicatedHaving)
 {
-	std::string expected = R"(SELECT "test"."id" AS "test.id", "test"."name" AS "test.name" FROM "test" GROUP BY "test"."id" HAVING ("test"."id" = 1 AND "test"."name" < 'John');)";
+	std::string expected = R"(SELECT "test"."id" AS "id", "test"."name" AS "name" FROM "test" GROUP BY "test"."id" HAVING ("test"."id" = 1 AND "test"."name" < 'John');)";
 	auto actual = this->sql_builder.sql_select(
 		TestBuilder_TestModel::meta_table_name, {"id", "name"}, false, {}, {}, {}, -1, 0, {
 			"id"

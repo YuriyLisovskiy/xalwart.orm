@@ -28,4 +28,6 @@ DEF_EXCEPTION_WITH_BASE(SQLError, BaseException, "sql error");
 // Must be thrown if the model does not meet some requirements.
 DEF_EXCEPTION_WITH_BASE(ModelError, BaseException, "model error");
 
+DEF_EXCEPTION_WITH_BASE(MigrationsError, BaseException, "migrations error");
+
 __ORM_END__

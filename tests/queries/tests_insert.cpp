@@ -54,7 +54,7 @@ protected:
 
 TEST_F(TestCase_Q_insert_One, commit_one_MissingDriverException)
 {
-	ASSERT_THROW(auto _ = this->query->commit_one(), orm::QueryError);
+	ASSERT_THROW(this->query->commit_one(), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_insert_One, commit_one_WithPkArg_MissingDriverException)
@@ -92,7 +92,7 @@ protected:
 
 TEST_F(TestCase_Q_insert_Bulk, commit_one_FailDueToBulkMode)
 {
-	ASSERT_THROW(auto _ = this->query->commit_one(), orm::QueryError);
+	ASSERT_THROW(this->query->commit_one(), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_insert_One, commit_one_WithPkArg_FailDueToBulkMode)
@@ -145,7 +145,9 @@ TEST_F(TestCaseF_Q_insert, commit_one_ReturnedStringPk)
 	TestCase_Q_insert_TestModel model;
 	model.name = "Steve";
 
-	ASSERT_EQ(orm::q::insert(model).use(this->driver).commit_one(), "1");
+	std::string pk;
+	orm::q::insert(model).use(this->driver).commit_one(pk);
+	ASSERT_EQ(pk, "1");
 }
 
 TEST_F(TestCaseF_Q_insert, commit_one_SetPk)

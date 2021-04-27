@@ -65,9 +65,6 @@ protected:
 		);
 	}
 
-	// Ensures the table exists and has the correct schema.
-	void ensure_schema() const;
-
 public:
 
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
@@ -78,12 +75,18 @@ public:
 		);
 	}
 
-	// Returns a `std::map` mapping `name` to `Migration` instances
-	// for all applied migrations.
+	// Ensures the table exists and has the correct schema.
+	void ensure_schema() const;
+
+	// Returns a `std::list` of `Migration` instances of all
+	// applied migrations.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	[[nodiscard]]
-	std::map<std::string, models::Migration> applied_migrations() const;
+	inline std::list<models::Migration> applied_migrations() const
+	{
+		return this->migrations().all();
+	}
 
 	// Records that a migration was applied.
 	//
@@ -99,7 +102,7 @@ public:
 	// Deletes migration record by `name` from the database.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	inline void record_revoked(const std::string& name) const
+	inline void record_discarded(const std::string& name) const
 	{
 		this->ensure_schema();
 		this->migrations()

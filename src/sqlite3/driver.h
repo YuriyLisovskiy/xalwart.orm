@@ -74,8 +74,12 @@ public:
 	void run_query(const std::string& query) const override;
 
 	// insert row(s)
-	[[nodiscard]]
-	std::string run_insert(const std::string& query) const override;
+	void run_insert(const std::string& query) const override;
+
+	// Sets `last_row_id` to an id of last inserted row.
+	void run_insert(
+		const std::string& query, std::string& last_row_id
+	) const override;
 
 	// select rows
 

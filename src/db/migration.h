@@ -30,56 +30,15 @@ protected:
 
 	std::list<std::shared_ptr<abc::IOperation>> operations;
 
-	bool initial = false;
-
-	// Whether to wrap the whole migration in a transaction.
-	// Only has an effect on database drivers which support transactional DDL.
-	bool atomic = true;
+	// Mark transaction as initial.
+	bool is_initial = false;
 
 	// Database driver for running transactions.
 	orm::abc::ISQLDriver* sql_driver;
 
 	abc::ISQLSchemaEditor* sql_schema_editor;
 
-public:
-	inline explicit Migration(
-		orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false
-	) : sql_driver(driver), identifier(std::move(identifier)), initial(initial)
-	{
-		if (!this->sql_driver)
-		{
-			throw NullPointerException(
-				"xw::orm::db::Migration: SQL driver is not initialized",
-				_ERROR_DETAILS_
-			);
-		}
-
-		this->sql_schema_editor = this->sql_driver->schema_editor();
-		if (!this->sql_schema_editor)
-		{
-			throw NullPointerException(
-				"xw::orm::db::Migration: SQL schema editor is nullptr",
-				_ERROR_DETAILS_
-			);
-		}
-	}
-
-	bool up(abc::ISQLSchemaEditor* schema_editor) const;
-
-	bool down(abc::ISQLSchemaEditor* schema_editor) const;
-
-	[[nodiscard]]
-	inline bool is_initial() const
-	{
-		return this->initial;
-	}
-
-	[[nodiscard]]
-	inline bool is_atomic() const
-	{
-		return this->atomic;
-	}
-
+protected:
 	// Operations.
 	void create_table(
 		const std::string& name,
@@ -91,7 +50,7 @@ public:
 		if (!build_columns)
 		{
 			throw NullPointerException(
-				"xw::orm::db::Migration: columns builder must be initialized",
+				"migration: columns builder must be initialized",
 				_ERROR_DETAILS_
 			);
 		}
@@ -103,6 +62,42 @@ public:
 		}
 
 		this->operations.push_back(std::make_shared<ops::CreateTableOperation>(table_op));
+	}
+
+public:
+	inline explicit Migration(
+		orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false
+	) : sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
+	{
+		xw::util::require_non_null(
+			this->sql_driver, "migration: SQL driver is not initialized"
+		);
+		this->sql_schema_editor = this->sql_driver->schema_editor();
+		xw::util::require_non_null(
+			this->sql_schema_editor, "migration: SQL schema editor is not initialized"
+		);
+	}
+
+	bool apply(
+		const abc::ISQLSchemaEditor* schema_editor,
+		const std::function<void()>& success_callback=nullptr
+	) const;
+
+	bool rollback(
+		const abc::ISQLSchemaEditor* schema_editor,
+		const std::function<void()>& success_callback=nullptr
+	) const;
+
+	[[nodiscard]]
+	inline std::string name() const
+	{
+		return this->identifier;
+	}
+
+	[[nodiscard]]
+	inline bool initial() const
+	{
+		return this->is_initial;
 	}
 };
 

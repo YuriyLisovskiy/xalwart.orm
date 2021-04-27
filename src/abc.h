@@ -105,8 +105,12 @@ public:
 
 	// insert row(s)
 
+	virtual void run_insert(const std::string& query) const = 0;
+
 	// Returns last inserted row id.
-	virtual std::string run_insert(const std::string& query) const = 0;
+	virtual void run_insert(
+		const std::string& query, std::string& last_row_id
+	) const = 0;
 
 	// select rows
 

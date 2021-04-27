@@ -61,14 +61,14 @@ public:
 	{
 	}
 
-	void up(abc::ISQLSchemaEditor* editor) const override
+	void up(const abc::ISQLSchemaEditor* editor) const override
 	{
 		xw::util::require_non_null(
 			editor, "xw::orm::db::ops::CreateTableOperation: schema editor is nullptr"
 		)->create_table(this->table_name, this->columns_list, this->constraints_list);
 	}
 
-	void down(abc::ISQLSchemaEditor* editor) const override
+	void down(const abc::ISQLSchemaEditor* editor) const override
 	{
 		xw::util::require_non_null(
 			editor, "xw::orm::db::ops::CreateTableOperation: schema editor is nullptr"

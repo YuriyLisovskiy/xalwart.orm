@@ -151,7 +151,7 @@ public:
 	// Inserts one row and returns inserted pk as string.
 	//
 	// Throws 'QueryError' if more than one model was set.
-	inline std::string commit_one() const
+	inline void commit_one() const
 	{
 		if (this->rows.size() > 1)
 		{
@@ -162,7 +162,7 @@ public:
 		}
 
 		auto query = this->query();
-		return this->sql_driver->run_insert(query);
+		this->sql_driver->run_insert(query);
 	}
 
 	// Inserts one row and sets inserted primary key
@@ -170,7 +170,18 @@ public:
 	template <db::column_field_type_c T>
 	inline void commit_one(T& pk) const
 	{
-		pk = util::as<T>(this->commit_one().c_str());
+		if (this->rows.size() > 1)
+		{
+			throw QueryError(
+				"insert: trying to insert one model, but multiple models were set",
+				_ERROR_DETAILS_
+			);
+		}
+
+		auto query = this->query();
+		std::string raw_pk;
+		this->sql_driver->run_insert(query, raw_pk);
+		pk = util::as<T>(raw_pk.c_str());
 	}
 
 	// Inserts row(s) into database.
