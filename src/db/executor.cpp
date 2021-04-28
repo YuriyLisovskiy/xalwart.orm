@@ -32,7 +32,9 @@ MigrationExecutor::MigrationExecutor(
 	}
 }
 
-void MigrationExecutor::apply(const abc::ISQLSchemaEditor* editor, const std::string& to_migration) const
+void MigrationExecutor::apply(
+	const abc::ISQLSchemaEditor* editor, const std::string& to_migration
+) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();
@@ -86,11 +88,14 @@ void MigrationExecutor::apply(const abc::ISQLSchemaEditor* editor, const std::st
 		return;
 	}
 
+	auto state = this->create_initial_state(true);
 	while (m_it != this->migrations.end())
 	{
-		auto migration_name = m_it->get()->name();
+		auto migration = *m_it++;
+		auto migration_name = migration->name();
 		this->log_progress(" Applying '" + migration_name + "'...", "");
-		bool applied = m_it->get()->apply(editor, [this, migration_name]()
+		migration->update_state(state);
+		bool applied = migration->apply(state, editor, [this, migration_name]()
 		{
 			this->recorder.record_applied(migration_name);
 			this->log_progress(" DONE", "\n");
@@ -105,12 +110,12 @@ void MigrationExecutor::apply(const abc::ISQLSchemaEditor* editor, const std::st
 		{
 			break;
 		}
-
-		m_it++;
 	}
 }
 
-void MigrationExecutor::rollback(const abc::ISQLSchemaEditor* editor, const std::string& to_migration) const
+void MigrationExecutor::rollback(
+	const abc::ISQLSchemaEditor* editor, const std::string& to_migration
+) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();
@@ -136,34 +141,53 @@ void MigrationExecutor::rollback(const abc::ISQLSchemaEditor* editor, const std:
 		return;
 	}
 
-	auto am_it = applied_migrations.rbegin();
+	std::map<std::string, project_state> states;
+	auto state = this->create_initial_state(false);
+	auto am_it = applied_migrations.begin();
 	for (
-		auto m_it = this->migrations.rbegin();
-		m_it != this->migrations.rend() && am_it != applied_migrations.rend();
+		auto m_it = this->migrations.begin();
+		m_it != this->migrations.end() && am_it != applied_migrations.end();
 		m_it++, am_it++
 	)
 	{
-		if ((*m_it)->name() != am_it->name)
+		auto migration = *m_it;
+		if (migration->name() != am_it->name)
 		{
 			throw MigrationsError(
-				"detected inconsistency: check if '" + (*m_it)->name() +
+				"detected inconsistency: check if '" + migration->name() +
 				"' migration exists and (or) recorded to the database",
 				_ERROR_DETAILS_
 			);
 		}
 
-		auto migration_name = m_it->get()->name();
+		states[migration->name()] = state;
+		migration->update_state(state);
+	}
+
+	auto migrations_to_run = this->migrations;
+	auto erase_it = migrations_to_run.begin();
+	std::advance(erase_it, am_size);
+	if (erase_it != migrations_to_run.end())
+	{
+		migrations_to_run.erase(erase_it);
+	}
+
+	for (auto migration = migrations_to_run.rbegin(); migration != migrations_to_run.rend(); migration++)
+	{
+		auto migration_name = (*migration)->name();
 		if (!rollback_all && migration_name == to_migration)
 		{
 			break;
 		}
 
 		this->log_progress(" Rolling back '" + migration_name + "'...", "");
-		bool rolled_back = m_it->get()->rollback(editor, [this, migration_name]()
-		{
-			this->recorder.record_discarded(migration_name);
-			this->log_progress(" DONE", "\n");
-		});
+		bool rolled_back = (*migration)->rollback(
+			states[migration_name], editor, [this, migration_name]()
+			{
+				this->recorder.record_discarded(migration_name);
+				this->log_progress(" DONE", "\n");
+			}
+		);
 		if (!rolled_back)
 		{
 			this->log_progress(" FAILED", "\n");

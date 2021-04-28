@@ -17,7 +17,9 @@
 
 // Orm libraries.
 #include "../abc.h"
-#include "./operations/table.h"
+#include "./operations/create_table.h"
+#include "./operations/drop_table.h"
+#include "./state.h"
 
 
 __ORM_DB_BEGIN__
@@ -42,11 +44,11 @@ protected:
 	// Operations.
 	void create_table(
 		const std::string& name,
-		const std::function<void(ops::CreateTableOperation&)>& build_columns,
-		const std::function<void(ops::CreateTableOperation&)>& build_constraints=nullptr
+		const std::function<void(ops::CreateTable&)>& build_columns,
+		const std::function<void(ops::CreateTable&)>& build_constraints=nullptr
 	)
 	{
-		ops::CreateTableOperation table_op(name, this->sql_schema_editor);
+		ops::CreateTable table_op(name);
 		if (!build_columns)
 		{
 			throw NullPointerException(
@@ -61,7 +63,12 @@ protected:
 			build_constraints(table_op);
 		}
 
-		this->operations.push_back(std::make_shared<ops::CreateTableOperation>(table_op));
+		this->operations.push_back(std::make_shared<ops::CreateTable>(table_op));
+	}
+
+	void drop_table(const std::string& name)
+	{
+		this->operations.push_back(std::make_shared<ops::DropTable>(name));
 	}
 
 public:
@@ -78,12 +85,22 @@ public:
 		);
 	}
 
+	inline void update_state(project_state& state) const
+	{
+		for (const auto& operation : this->operations)
+		{
+			operation->update_state(state);
+		}
+	}
+
 	bool apply(
+		project_state& state,
 		const abc::ISQLSchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	bool rollback(
+		project_state& state,
 		const abc::ISQLSchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;

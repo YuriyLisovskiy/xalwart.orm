@@ -112,6 +112,8 @@ struct foreign_key_constraints_t
 	on_action on_update=NO_ACTION;
 };
 
+struct project_state;
+
 __ORM_DB_END__
 
 
@@ -120,6 +122,7 @@ __ORM_DB_ABC_BEGIN__
 class ISQLSchemaEditor
 {
 public:
+	[[nodiscard]]
 	virtual std::string sql_type_to_string(sql_column_type type) const = 0;
 
 	// SQL builders.
@@ -155,9 +158,17 @@ public:
 class IOperation
 {
 public:
-	virtual void up(const ISQLSchemaEditor* editor) const = 0;
+	virtual void update_state(project_state& st) const = 0;
 
-	virtual void down(const ISQLSchemaEditor* editor) const = 0;
+	virtual void forward(
+		const ISQLSchemaEditor* editor,
+		const project_state& from_state, const project_state& to_state
+	) const = 0;
+
+	virtual void backward(
+		const ISQLSchemaEditor* editor,
+		const project_state& from_state, const project_state& to_state
+	) const = 0;
 };
 
 __ORM_DB_ABC_END__

@@ -19,7 +19,7 @@
 #include "../queries/insert.h"
 #include "../queries/select.h"
 #include "../queries/delete.h"
-#include "./operations/table.h"
+#include "./operations/create_table.h"
 
 
 __ORM_DB_BEGIN__

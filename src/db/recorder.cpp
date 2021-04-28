@@ -17,11 +17,13 @@ void MigrationRecorder::ensure_schema() const
 	}
 
 	auto editor = this->driver()->schema_editor();
-	ops::CreateTableOperation table(models::Migration::meta_table_name, editor);
+	ops::CreateTable table(models::Migration::meta_table_name);
 	table.column<int>("id", {.primary_key=true, .autoincrement=true});
 	table.column<std::string>("name", {.max_len=255, .unique=true});
 	table.column<dt::Datetime>("applied");
-	table.up(editor);
+	project_state state;
+	table.update_state(state);
+	table.forward(editor, state, state);
 }
 
 __ORM_DB_END__
