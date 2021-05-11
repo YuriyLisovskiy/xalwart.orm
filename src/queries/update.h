@@ -21,7 +21,7 @@ __ORM_Q_BEGIN__
 template <db::model_based_type_c ModelT>
 class update final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "update: 'meta_table_name' is not initialized");
 
 protected:
 

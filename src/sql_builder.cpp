@@ -91,7 +91,7 @@ std::string DefaultSQLBuilder::sql_select_(
 		if (limit < 0)
 		{
 			throw QueryError(
-				"SQL builder error: 'offset' is used without 'limit'", _ERROR_DETAILS_
+				"DefaultSQLBuilder: 'offset' is used without 'limit'", _ERROR_DETAILS_
 			);
 		}
 
@@ -121,7 +121,7 @@ std::string DefaultSQLBuilder::sql_select_(
 		if (group_by_cols.empty())
 		{
 			throw QueryError(
-				"SQL builder error: 'having' is used without 'group by'", _ERROR_DETAILS_
+				"DefaultSQLBuilder: 'having' is used without 'group by'", _ERROR_DETAILS_
 			);
 		}
 

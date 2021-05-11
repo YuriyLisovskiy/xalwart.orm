@@ -9,6 +9,49 @@
 
 __ORM_DB_BEGIN__
 
+project_state MigrationExecutor::create_initial_state(bool with_applied_migrations) const
+{
+	project_state state;
+	if (with_applied_migrations)
+	{
+		this->recorder.ensure_schema();
+		auto applied_migrations = this->recorder.applied_migrations();
+		auto am_size = applied_migrations.size();
+		auto m_size = this->migrations.size();
+		if (am_size > m_size)
+		{
+			throw MigrationsError(
+				"MigrationExecutor > create_initial_state: detected inconsistency"
+				" - you must rollback migrations before deleting them",
+				_ERROR_DETAILS_
+			);
+		}
+
+		decltype(migrations)::const_iterator m_it;
+		auto am_it = applied_migrations.begin();
+		for (
+			m_it = this->migrations.begin();
+			m_it != this->migrations.end() && am_it != applied_migrations.end();
+			m_it++, am_it++
+		)
+		{
+			if ((*m_it)->name() != am_it->name)
+			{
+				throw MigrationsError(
+					"MigrationExecutor > create_initial_state:"
+					" detected inconsistency - check if '" + (*m_it)->name() +
+					"' migration exists and (or) recorded to the database",
+					_ERROR_DETAILS_
+				);
+			}
+
+			(*m_it)->update_state(state);
+		}
+	}
+
+	return state;
+}
+
 MigrationExecutor::MigrationExecutor(
 	orm::abc::ISQLDriver* driver,
 	std::list<std::shared_ptr<Migration>> migrations,
@@ -20,7 +63,8 @@ MigrationExecutor::MigrationExecutor(
 		if (!left || !right)
 		{
 			throw NullPointerException(
-				"can not compare nullptr migrations", _ERROR_DETAILS_
+				"MigrationExecutor: can not compare nullptr migrations",
+				_ERROR_DETAILS_
 			);
 		}
 
@@ -43,7 +87,8 @@ void MigrationExecutor::apply(
 	if (am_size > m_size)
 	{
 		throw MigrationsError(
-			"detected inconsistency: you must rollback migrations before deleting them",
+			"MigrationExecutor > apply: detected inconsistency -"
+			" you must rollback migrations before deleting them",
 			_ERROR_DETAILS_
 		);
 	}
@@ -69,7 +114,8 @@ void MigrationExecutor::apply(
 		if ((*m_it)->name() != am_it->name)
 		{
 			throw MigrationsError(
-				"detected inconsistency: check if '" + (*m_it)->name() +
+				"MigrationExecutor > apply: detected inconsistency"
+				" - check if '" + (*m_it)->name() +
 				"' migration exists and (or) recorded to the database",
 				_ERROR_DETAILS_
 			);
@@ -124,7 +170,8 @@ void MigrationExecutor::rollback(
 	if (am_size > m_size)
 	{
 		throw MigrationsError(
-			"detected inconsistency: you must rollback migrations before deleting them from disk",
+			"MigrationExecutor > rollback: detected inconsistency -"
+			" you must rollback migrations before deleting them from disk",
 			_ERROR_DETAILS_
 		);
 	}
@@ -154,7 +201,8 @@ void MigrationExecutor::rollback(
 		if (migration->name() != am_it->name)
 		{
 			throw MigrationsError(
-				"detected inconsistency: check if '" + migration->name() +
+				"MigrationExecutor > rollback: detected inconsistency"
+				" - check if '" + migration->name() +
 				"' migration exists and (or) recorded to the database",
 				_ERROR_DETAILS_
 			);
@@ -184,7 +232,7 @@ void MigrationExecutor::rollback(
 		bool rolled_back = (*migration)->rollback(
 			states[migration_name], editor, [this, migration_name]()
 			{
-				this->recorder.record_discarded(migration_name);
+				this->recorder.record_rolled_back(migration_name);
 				this->log_progress(" DONE", "\n");
 			}
 		);

@@ -28,7 +28,7 @@ private:
 		const std::string& arg, int line, const char* function, const char* file
 	) const
 	{
-		throw QueryError("SQL builder error: '" + arg + "' is required", line, function, file);
+		throw QueryError("DefaultSQLBuilder: '" + arg + "' is required", line, function, file);
 	}
 
 public:

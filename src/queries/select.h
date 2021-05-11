@@ -30,7 +30,7 @@ __ORM_Q_BEGIN__
 template <db::model_based_type_c ModelT>
 class select final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "select: 'meta_table_name' is not initialized");
 
 protected:
 
@@ -81,7 +81,7 @@ protected:
 public:
 
 	// Retrieves table name and sets the default values.
-	inline explicit select()
+	inline explicit select() : q_distinct(false), q_limit(-1), q_offset(-1)
 	{
 		this->table_name = db::get_table_name<ModelT>();
 		this->pk_name = db::get_pk_name<ModelT>();
@@ -89,10 +89,6 @@ public:
 		{
 			throw QueryError("select: model requires pk column", _ERROR_DETAILS_);
 		}
-
-		this->q_distinct = false;
-		this->q_limit = -1;
-		this->q_offset = -1;
 	};
 
 	// Sets SQL driver.

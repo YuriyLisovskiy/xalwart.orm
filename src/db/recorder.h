@@ -39,7 +39,7 @@ protected:
 	inline orm::abc::ISQLDriver* driver() const
 	{
 		return xw::util::require_non_null(
-			this->sql_driver, "SQL driver must not be nullptr"
+			this->sql_driver, "MigrationRecorder > driver: SQL driver must not be nullptr"
 		);
 	}
 
@@ -71,7 +71,7 @@ public:
 	inline explicit MigrationRecorder(orm::abc::ISQLDriver* driver)
 	{
 		this->sql_driver = xw::util::require_non_null(
-			driver, "SQL driver must not be nullptr"
+			driver, "MigrationRecorder: SQL driver must not be nullptr"
 		);
 	}
 
@@ -102,7 +102,7 @@ public:
 	// Deletes migration record by `name` from the database.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	inline void record_discarded(const std::string& name) const
+	inline void record_rolled_back(const std::string& name) const
 	{
 		this->ensure_schema();
 		this->migrations()

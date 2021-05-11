@@ -223,7 +223,7 @@ inline void check_model()
 		{
 			if (has_pk)
 			{
-				throw ModelError("model has more than one primary key", _ERROR_DETAILS_);
+				throw ModelError("check_model: model has more than one primary key", _ERROR_DETAILS_);
 			}
 
 			has_pk = true;
@@ -234,7 +234,7 @@ inline void check_model()
 
 	if (!has_pk)
 	{
-		throw ModelError("model does not contain primary key", _ERROR_DETAILS_);
+		throw ModelError("check_model: model does not contain primary key", _ERROR_DETAILS_);
 	}
 }
 

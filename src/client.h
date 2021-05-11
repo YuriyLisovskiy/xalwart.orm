@@ -39,7 +39,7 @@ public:
 		if (!this->db)
 		{
 			throw NullPointerException(
-				"xw::orm::Client: driver must be instantiated", _ERROR_DETAILS_
+				"Client: driver must be instantiated", _ERROR_DETAILS_
 			);
 		}
 	}

@@ -55,7 +55,7 @@ public:
 		if (!this->db)
 		{
 			throw NullPointerException(
-				"xw::orm::db::SchemaEditorBase: database driver is nullptr", _ERROR_DETAILS_
+				"DefaultSQLSchemaEditor: database driver is nullptr", _ERROR_DETAILS_
 			);
 		}
 	}

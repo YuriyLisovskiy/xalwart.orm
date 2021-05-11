@@ -30,9 +30,6 @@ protected:
 	std::map<std::string, std::tuple<sql_column_type, std::string, constraints_t>> columns{};
 	std::map<std::string, foreign_key_constraints_t> foreign_keys{};
 
-//	std::list<std::string> columns_list;
-//	std::list<std::string> constraints_list;
-
 public:
 	inline explicit CreateTable(const std::string& name) : TableOperation(name)
 	{
@@ -53,7 +50,6 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		// TODO: remove all references to this table!
 		xw::util::require_non_null(
 			editor, "CreateTable > backward: schema editor is nullptr"
 		)->drop_table(this->table_name);
@@ -64,7 +60,9 @@ public:
 	{
 		if (name.empty())
 		{
-			throw ValueError("'name' can not be empty", _ERROR_DETAILS_);
+			throw ValueError(
+				"CreateTable > backward: 'name' can not be empty", _ERROR_DETAILS_
+			);
 		}
 
 		std::string default_;
@@ -73,7 +71,7 @@ public:
 			if (c.default_.type() != typeid(T))
 			{
 				throw TypeError(
-					"type '" + xw::util::demangle(typeid(T).name()) +
+					"CreateTable > backward: type '" + xw::util::demangle(typeid(T).name()) +
 					"' of default value is not the same as column type - '" +
 					xw::util::demangle(c.default_.type().name()) + "'",
 					_ERROR_DETAILS_

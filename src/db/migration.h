@@ -41,32 +41,15 @@ protected:
 	abc::ISQLSchemaEditor* sql_schema_editor;
 
 protected:
+
 	// Operations.
 	void create_table(
 		const std::string& name,
 		const std::function<void(ops::CreateTable&)>& build_columns,
 		const std::function<void(ops::CreateTable&)>& build_constraints=nullptr
-	)
-	{
-		ops::CreateTable table_op(name);
-		if (!build_columns)
-		{
-			throw NullPointerException(
-				"migration: columns builder must be initialized",
-				_ERROR_DETAILS_
-			);
-		}
+	);
 
-		build_columns(table_op);
-		if (build_constraints)
-		{
-			build_constraints(table_op);
-		}
-
-		this->operations.push_back(std::make_shared<ops::CreateTable>(table_op));
-	}
-
-	void drop_table(const std::string& name)
+	inline void drop_table(const std::string& name)
 	{
 		this->operations.push_back(std::make_shared<ops::DropTable>(name));
 	}
@@ -77,11 +60,11 @@ public:
 	) : sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
 	{
 		xw::util::require_non_null(
-			this->sql_driver, "migration: SQL driver is not initialized"
+			this->sql_driver, "Migration: SQL driver is not initialized"
 		);
 		this->sql_schema_editor = this->sql_driver->schema_editor();
 		xw::util::require_non_null(
-			this->sql_schema_editor, "migration: SQL schema editor is not initialized"
+			this->sql_schema_editor, "Migration: SQL schema editor is not initialized"
 		);
 	}
 

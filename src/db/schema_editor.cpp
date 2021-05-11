@@ -25,7 +25,10 @@ std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) co
 			return "CASCADE";
 	}
 
-	throw ValueError("unknown SQL 'on [action]'", _ERROR_DETAILS_);
+	throw ValueError(
+		"DefaultSQLSchemaEditor > sql_on_action_to_string: unknown SQL 'on action'",
+		_ERROR_DETAILS_
+	);
 }
 
 std::string DefaultSQLSchemaEditor::sql_column_constraints(
@@ -90,7 +93,8 @@ void DefaultSQLSchemaEditor::sql_column_autoincrement_check(
 		if (non_int_type || !primary_key)
 		{
 			throw ValueError(
-				"'autoincrement' is only allowed on an integer (short, int, long long) primary key",
+				"DefaultSQLSchemaEditor > sql_column_autoincrement_check:"
+				" 'autoincrement' is only allowed on an integer (short, int, long long) primary key",
 				_ERROR_DETAILS_
 			);
 		}
@@ -107,7 +111,8 @@ bool DefaultSQLSchemaEditor::sql_column_max_len_check(
 		if (type != VARCHAR_T)
 		{
 			throw ValueError(
-				"unable to set 'max_len' constraint for column '" + name +
+				"DefaultSQLSchemaEditor > sql_column_max_len_check:"
+				" unable to set 'max_len' constraint for column '" + name +
 				"' with type '" + this->sql_type_to_string(type) + "'",
 				_ERROR_DETAILS_
 			);
@@ -155,7 +160,10 @@ std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) con
 			return "TIMESTAMP";
 	}
 
-	throw ValueError("unknown SQL data type", _ERROR_DETAILS_);
+	throw ValueError(
+		"DefaultSQLSchemaEditor > sql_type_to_string: unknown SQL data type",
+		_ERROR_DETAILS_
+	);
 }
 
 std::string DefaultSQLSchemaEditor::sql_column(
@@ -171,7 +179,10 @@ std::string DefaultSQLSchemaEditor::sql_column(
 {
 	if (name.empty())
 	{
-		throw ValueError("'name' can not be empty", _ERROR_DETAILS_);
+		throw ValueError(
+			"DefaultSQLSchemaEditor > sql_column: 'name' can not be empty",
+			_ERROR_DETAILS_
+		);
 	}
 
 	auto sql_type = this->sql_type_to_string(type);
