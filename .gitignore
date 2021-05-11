@@ -48,3 +48,6 @@ lib/
 # Manual testing stuff
 tests/tests.cpp
 tests/benchmark*
+
+# Other stuff
+Makefile

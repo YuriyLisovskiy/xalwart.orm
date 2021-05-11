@@ -220,6 +220,7 @@ void MigrationExecutor::rollback(
 		migrations_to_run.erase(erase_it);
 	}
 
+	bool rolled_back_any = false;
 	for (auto migration = migrations_to_run.rbegin(); migration != migrations_to_run.rend(); migration++)
 	{
 		auto migration_name = (*migration)->name();
@@ -228,6 +229,7 @@ void MigrationExecutor::rollback(
 			break;
 		}
 
+		rolled_back_any = true;
 		this->log_progress(" Rolling back '" + migration_name + "'...", "");
 		bool rolled_back = (*migration)->rollback(
 			states[migration_name], editor, [this, migration_name]()
@@ -241,6 +243,11 @@ void MigrationExecutor::rollback(
 			this->log_progress(" FAILED", "\n");
 			return;
 		}
+	}
+
+	if (!rolled_back_any)
+	{
+		this->log_progress(" No migrations to roll back.", "\n");
 	}
 }
 
