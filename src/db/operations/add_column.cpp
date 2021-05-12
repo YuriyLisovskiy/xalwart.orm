@@ -1,10 +1,10 @@
 /**
- * db/operations/drop_table.cpp
+ * db/operations/add_column.cpp
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
-#include "./drop_table.h"
+#include "./add_column.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__

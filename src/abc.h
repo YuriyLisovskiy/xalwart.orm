@@ -91,7 +91,7 @@ public:
 
 	// Returns SQL schema editor related to driver.
 	[[nodiscard]]
-	virtual db::abc::ISQLSchemaEditor* schema_editor() const = 0;
+	virtual db::abc::ISchemaEditor* schema_editor() const = 0;
 
 	// Returns SQL query builder related to driver.
 	[[nodiscard]]

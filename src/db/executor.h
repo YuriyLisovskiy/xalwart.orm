@@ -39,11 +39,11 @@ public:
 	);
 
 	void apply(
-		const abc::ISQLSchemaEditor* editor, const std::string& to_migration=""
+		const abc::ISchemaEditor* editor, const std::string& to_migration=""
 	) const;
 
 	void rollback(
-		const abc::ISQLSchemaEditor* editor, const std::string& to_migration=""
+		const abc::ISchemaEditor* editor, const std::string& to_migration=""
 	) const;
 };
 

@@ -19,7 +19,9 @@
 #include "../abc.h"
 #include "./operations/create_table.h"
 #include "./operations/drop_table.h"
+#include "./operations/add_column.h"
 #include "./state.h"
+#include "./utility.h"
 
 
 __ORM_DB_BEGIN__
@@ -38,7 +40,7 @@ protected:
 	// Database driver for running transactions.
 	orm::abc::ISQLDriver* sql_driver;
 
-	abc::ISQLSchemaEditor* sql_schema_editor;
+	abc::ISchemaEditor* sql_schema_editor;
 
 protected:
 
@@ -54,17 +56,27 @@ protected:
 		this->operations.push_back(std::make_shared<ops::DropTable>(name));
 	}
 
+	template <column_migration_type_c T>
+	inline void add_column(
+		const std::string& table_name, const std::string& column_name, const constraints_t& c={}
+	)
+	{
+		this->operations.push_back(
+			std::make_shared<ops::AddColumn<T>>(table_name, column_name, c)
+		);
+	}
+
 public:
 	inline explicit Migration(
 		orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false
 	) : sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
 	{
 		xw::util::require_non_null(
-			this->sql_driver, "Migration: SQL driver is not initialized"
+			this->sql_driver, ce<Migration>("", "driver is not initialized")
 		);
 		this->sql_schema_editor = this->sql_driver->schema_editor();
 		xw::util::require_non_null(
-			this->sql_schema_editor, "Migration: SQL schema editor is not initialized"
+			this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized")
 		);
 	}
 
@@ -78,13 +90,13 @@ public:
 
 	bool apply(
 		project_state& state,
-		const abc::ISQLSchemaEditor* schema_editor,
+		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	bool rollback(
 		project_state& state,
-		const abc::ISQLSchemaEditor* schema_editor,
+		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 

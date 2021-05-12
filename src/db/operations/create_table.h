@@ -27,8 +27,8 @@ __ORM_DB_OPERATIONS_BEGIN__
 class CreateTable : public TableOperation
 {
 protected:
-	std::map<std::string, std::tuple<sql_column_type, std::string, constraints_t>> columns{};
-	std::map<std::string, foreign_key_constraints_t> foreign_keys{};
+	std::unordered_map<std::string, column_state> columns{};
+	std::unordered_map<std::string, foreign_key_constraints_t> foreign_keys{};
 
 public:
 	inline explicit CreateTable(const std::string& name) : TableOperation(name)
@@ -37,60 +37,40 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		state.tables[this->name_lower()] = table_state{this->columns, this->foreign_keys};
+		state.tables[this->name_lower()] = table_state{
+			.name = this->name_lower(), .columns = this->columns, .foreign_keys = this->foreign_keys
+		};
 	}
 
-	void forward(
-		const abc::ISQLSchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
-	) const override;
-
-	inline void backward(
-		const abc::ISQLSchemaEditor* editor,
+	inline void forward(
+		const abc::ISchemaEditor* editor,
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
+		auto table = to_state.get_table(this->name_lower());
 		xw::util::require_non_null(
-			editor, "CreateTable > backward: schema editor is nullptr"
-		)->drop_table(this->table_name);
+			editor, ce<CreateTable>("forward", "schema editor is nullptr")
+		)->create_table(table);
+	}
+
+	inline void backward(
+		const abc::ISchemaEditor* editor,
+		const project_state& from_state, const project_state& to_state
+	) const override
+	{
+		auto table = from_state.get_table(this->name_lower());
+		xw::util::require_non_null(
+			editor, ce<CreateTable>("backward", "schema editor is nullptr")
+		)->drop_table(table.name);
 	}
 
 	template <column_migration_type_c T>
 	inline void column(const std::string& name, const constraints_t& c={})
 	{
-		if (name.empty())
-		{
-			throw ValueError(
-				"CreateTable > backward: 'name' can not be empty", _ERROR_DETAILS_
-			);
-		}
-
-		std::string default_;
-		if (c.default_.has_value())
-		{
-			if (c.default_.type() != typeid(T))
-			{
-				throw TypeError(
-					"CreateTable > backward: type '" + xw::util::demangle(typeid(T).name()) +
-					"' of default value is not the same as column type - '" +
-					xw::util::demangle(c.default_.type().name()) + "'",
-					_ERROR_DETAILS_
-				);
-			}
-
-			default_ = field_as_column_v(std::any_cast<T>(c.default_));
-		}
-
-		auto col_type = col_t_from_type<T>::type;
-		if (col_type == TEXT_T && c.max_len.has_value())
-		{
-			col_type = VARCHAR_T;
-		}
-
-		this->columns[name] = std::make_tuple(col_type, default_, c);
+		this->columns[name] = column_state::create<T>(name, c);
 	}
 
-	inline void ForeignKey(const std::string& name, const foreign_key_constraints_t& c)
+	inline void foreign_key(const std::string& name, const foreign_key_constraints_t& c)
 	{
 		this->foreign_keys[name] = c;
 	}

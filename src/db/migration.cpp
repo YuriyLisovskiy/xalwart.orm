@@ -19,7 +19,7 @@ void Migration::create_table(
 	if (!build_columns)
 	{
 		throw NullPointerException(
-			"Migration > create_table: columns builder must be initialized",
+			ce<Migration>("create_table", "columns builder must be initialized"),
 			_ERROR_DETAILS_
 		);
 	}
@@ -35,11 +35,13 @@ void Migration::create_table(
 
 bool Migration::apply(
 	project_state& state,
-	const abc::ISQLSchemaEditor* editor,
+	const abc::ISchemaEditor* editor,
 	const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(editor, "Migration > apply: schema editor is nullptr");
+	xw::util::require_non_null(
+		editor, ce<Migration>("apply", "schema editor is nullptr")
+	);
 	return xw::util::require_non_null(this->sql_driver)->run_transaction(
 		[this, editor, success_callback, &state]() -> bool
 		{
@@ -62,11 +64,14 @@ bool Migration::apply(
 
 bool Migration::rollback(
 	project_state& state,
-	const abc::ISQLSchemaEditor* editor,
+	const abc::ISchemaEditor* editor,
 	const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(editor, "Migration > rollback: schema editor is nullptr");
+	xw::util::require_non_null(
+		editor,
+		ce<Migration>("rollback", "schema editor is nullptr")
+	);
 
 	std::list<std::tuple<
 		std::shared_ptr<abc::IOperation>, project_state, project_state
@@ -81,7 +86,7 @@ bool Migration::rollback(
 	}
 
 	return xw::util::require_non_null(
-		this->sql_driver, "Migration > rollback: sql driver is nullptr"
+		this->sql_driver, ce<Migration>("rollback", "driver is nullptr")
 	)->run_transaction(
 		[ops_to_run, editor, success_callback]() -> bool
 		{

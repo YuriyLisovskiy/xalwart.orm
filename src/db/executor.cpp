@@ -77,7 +77,7 @@ MigrationExecutor::MigrationExecutor(
 }
 
 void MigrationExecutor::apply(
-	const abc::ISQLSchemaEditor* editor, const std::string& to_migration
+	const abc::ISchemaEditor* editor, const std::string& to_migration
 ) const
 {
 	this->recorder.ensure_schema();
@@ -140,7 +140,6 @@ void MigrationExecutor::apply(
 		auto migration = *m_it++;
 		auto migration_name = migration->name();
 		this->log_progress(" Applying '" + migration_name + "'...", "");
-		migration->update_state(state);
 		bool applied = migration->apply(state, editor, [this, migration_name]()
 		{
 			this->recorder.record_applied(migration_name);
@@ -160,7 +159,7 @@ void MigrationExecutor::apply(
 }
 
 void MigrationExecutor::rollback(
-	const abc::ISQLSchemaEditor* editor, const std::string& to_migration
+	const abc::ISchemaEditor* editor, const std::string& to_migration
 ) const
 {
 	this->recorder.ensure_schema();
@@ -217,7 +216,7 @@ void MigrationExecutor::rollback(
 	std::advance(erase_it, am_size);
 	if (erase_it != migrations_to_run.end())
 	{
-		migrations_to_run.erase(erase_it);
+		migrations_to_run.erase(erase_it, migrations_to_run.end());
 	}
 
 	bool rolled_back_any = false;

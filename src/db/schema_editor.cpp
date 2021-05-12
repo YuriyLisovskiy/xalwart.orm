@@ -32,38 +32,33 @@ std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) co
 }
 
 std::string DefaultSQLSchemaEditor::sql_column_constraints(
-	const std::optional<bool>& null,
-	bool primary_key,
-	bool unique,
-	bool autoincrement,
-	const std::string& check,
-	const std::string& default_
+	const constraints_t& constraints, const std::string& default_value
 ) const
 {
 	std::string result;
-	if (primary_key)
+	if (constraints.primary_key)
 	{
 		result += " PRIMARY KEY";
 	}
 
-	if (unique)
+	if (constraints.unique)
 	{
 		result += " UNIQUE";
 	}
 
-	if (null.has_value())
+	if (constraints.null.has_value())
 	{
-		result += null.value() ? " NULL" : " NOT NULL";
+		result += constraints.null.value() ? " NULL" : " NOT NULL";
 	}
 
-	if (!check.empty())
+	if (!constraints.check.empty())
 	{
-		result += " CHECK (" + check + ")";
+		result += " CHECK (" + constraints.check + ")";
 	}
 
-	if (!default_.empty())
+	if (!default_value.empty())
 	{
-		result += " DEFAULT " + default_;
+		result += " DEFAULT " + default_value;
 	}
 
 	return result;
@@ -166,18 +161,9 @@ std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) con
 	);
 }
 
-std::string DefaultSQLSchemaEditor::sql_column(
-	sql_column_type type, const std::string& name,
-	const std::optional<size_t>& max_len,
-	const std::optional<bool>& null,
-	bool primary_key,
-	bool unique,
-	bool autoincrement,
-	const std::string& check,
-	const std::string& default_
-) const
+std::string DefaultSQLSchemaEditor::sql_column(const column_state& column) const
 {
-	if (name.empty())
+	if (column.name.empty())
 	{
 		throw ValueError(
 			"DefaultSQLSchemaEditor > sql_column: 'name' can not be empty",
@@ -185,16 +171,17 @@ std::string DefaultSQLSchemaEditor::sql_column(
 		);
 	}
 
-	auto sql_type = this->sql_type_to_string(type);
-	if (this->sql_column_max_len_check(name, type, max_len))
+	auto c = column.constraints;
+	auto sql_type = this->sql_type_to_string(column.type);
+	if (this->sql_column_max_len_check(column.name, column.type, c.max_len))
 	{
-		sql_type += "(" + std::to_string(max_len.value()) + ")";
+		sql_type += "(" + std::to_string(c.max_len.value()) + ")";
 	}
 
-	this->sql_column_autoincrement_check(type, autoincrement, primary_key);
+	this->sql_column_autoincrement_check(column.type, c.autoincrement, c.primary_key);
 
-	return name + " " + sql_type + this->sql_column_constraints(
-		null, primary_key, unique, autoincrement, check, default_
+	return column.name + " " + sql_type + this->sql_column_constraints(
+		c, column.default_value
 	);
 }
 

@@ -12,43 +12,38 @@
 __ORM_SQLITE3_BEGIN__
 
 std::string SchemaEditor::sql_column_constraints(
-	const std::optional<bool>& null,
-	bool primary_key,
-	bool unique,
-	bool autoincrement,
-	const std::string& check,
-	const std::string& default_
+	const db::constraints_t& cc, const std::string& default_value
 ) const
 {
 	std::string result;
-	if (primary_key)
+	if (cc.primary_key)
 	{
 		result += " PRIMARY KEY";
 	}
 
-	if (autoincrement)
+	if (cc.autoincrement)
 	{
 		result += " AUTOINCREMENT";
 	}
 
-	if (unique)
+	if (cc.unique)
 	{
 		result += " UNIQUE";
 	}
 
-	if (null.has_value())
+	if (cc.null.has_value())
 	{
-		result += null.value() ? " NULL" : " NOT NULL";
+		result += cc.null.value() ? " NULL" : " NOT NULL";
 	}
 
-	if (!check.empty())
+	if (!cc.check.empty())
 	{
-		result += " CHECK (" + check + ")";
+		result += " CHECK (" + cc.check + ")";
 	}
 
-	if (!default_.empty())
+	if (!default_value.empty())
 	{
-		result += " DEFAULT " + default_;
+		result += " DEFAULT " + default_value;
 	}
 
 	return result;
@@ -71,36 +66,26 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 	}
 }
 
-std::string SchemaEditor::sql_column(
-	db::sql_column_type type, const std::string& name,
-	const std::optional<size_t>& max_len,
-	const std::optional<bool>& null,
-	bool primary_key,
-	bool unique,
-	bool autoincrement,
-	const std::string& check,
-	const std::string& default_
-) const
+std::string SchemaEditor::sql_column(const db::column_state& column) const
 {
-	if (autoincrement)
+	auto column_copy = column;
+	if (column.constraints.autoincrement)
 	{
-		switch (type)
+		switch (column_copy.type)
 		{
 			case db::SMALL_SERIAL_T:
 			case db::SERIAL_T:
 			case db::BIG_SERIAL_T:
 			case db::SMALLINT_T:
 			case db::BIGINT_T:
-				type = db::INT_T;
+				column_copy.type = db::INT_T;
 				break;
 			default:
 				break;
 		}
 	}
 
-	return db::DefaultSQLSchemaEditor::sql_column(
-		type, name, max_len, null, primary_key, unique, autoincrement, check, default_
-	);
+	return db::DefaultSQLSchemaEditor::sql_column(column_copy);
 }
 
 __ORM_SQLITE3_END__

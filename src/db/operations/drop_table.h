@@ -36,19 +36,26 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISQLSchemaEditor* editor,
+		const abc::ISchemaEditor* editor,
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
+		auto table = from_state.get_table(this->name_lower());
 		xw::util::require_non_null(
-			editor, "DropTable > forward: schema editor is nullptr"
-		)->drop_table(this->table_name);
+			editor, ce<DropTable>("forward", "schema editor is nullptr")
+		)->drop_table(table.name);
 	}
 
-	void backward(
-		const abc::ISQLSchemaEditor* editor,
+	inline void backward(
+		const abc::ISchemaEditor* editor,
 		const project_state& from_state, const project_state& to_state
-	) const override;
+	) const override
+	{
+		auto table = to_state.tables.at(this->name_lower());
+		xw::util::require_non_null(
+			editor, ce<DropTable>("backward", "schema editor is nullptr")
+		)->create_table(table);
+	}
 };
 
 __ORM_DB_OPERATIONS_END__

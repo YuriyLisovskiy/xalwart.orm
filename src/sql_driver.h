@@ -24,7 +24,7 @@ class DefaultSQLDriver : public abc::ISQLDriver
 protected:
 
 	// SQL Schema editor related to SQL driver.
-	mutable std::shared_ptr<db::abc::ISQLSchemaEditor> sql_schema_editor;
+	mutable std::shared_ptr<db::abc::ISchemaEditor> sql_schema_editor;
 
 	// SQL query builder related to SQL driver.
 	mutable std::shared_ptr<abc::ISQLQueryBuilder> sql_query_builder;
@@ -35,7 +35,7 @@ public:
 	// Instantiates default schema editor if it was not
 	// done yet and returns it.
 	[[nodiscard]]
-	inline db::abc::ISQLSchemaEditor* schema_editor() const override
+	inline db::abc::ISchemaEditor* schema_editor() const override
 	{
 		if (!this->sql_schema_editor)
 		{

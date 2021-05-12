@@ -57,7 +57,7 @@ public:
 	// Instantiates SQLite3 schema editor if it was not
 	// done yet and returns it.
 	[[nodiscard]]
-	inline db::abc::ISQLSchemaEditor* schema_editor() const override
+	inline db::abc::ISchemaEditor* schema_editor() const override
 	{
 		if (!this->sql_schema_editor)
 		{
