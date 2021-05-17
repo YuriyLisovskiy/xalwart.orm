@@ -8,9 +8,6 @@
 
 #pragma once
 
-// Core libraries.
-#include <xalwart.core/utility.h>
-
 // Module definitions.
 #include "./_def_.h"
 

@@ -196,6 +196,22 @@ struct table_state
 
 		return column->second;
 	}
+
+	[[nodiscard]]
+	const column_state& get_column_addr(const std::string& column_name) const
+	{
+		auto column = this->columns.find(column_name);
+		if (column == this->columns.end())
+		{
+			throw KeyError(
+				"table_state > get_column: column with name '" + column_name +
+				"' does not exist in '" + this->name + "' table",
+				_ERROR_DETAILS_
+			);
+		}
+
+		return column->second;
+	}
 };
 
 struct project_state
@@ -219,6 +235,21 @@ struct project_state
 
 	[[nodiscard]]
 	table_state& get_table_addr(const std::string& name)
+	{
+		auto table = this->tables.find(name);
+		if (table == this->tables.end())
+		{
+			throw KeyError(
+				"project_state > get_table: table with name '" + name + "' does not exist",
+				_ERROR_DETAILS_
+			);
+		}
+
+		return table->second;
+	}
+
+	[[nodiscard]]
+	const table_state& get_table_addr(const std::string& name) const
 	{
 		auto table = this->tables.find(name);
 		if (table == this->tables.end())

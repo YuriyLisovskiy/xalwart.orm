@@ -13,7 +13,6 @@
 
 // Core libraries.
 #include <xalwart.core/exceptions.h>
-#include <xalwart.core/utility.h>
 
 // Orm libraries.
 #include "./base.h"

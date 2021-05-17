@@ -20,6 +20,9 @@
 #include "./operations/create_table.h"
 #include "./operations/drop_table.h"
 #include "./operations/add_column.h"
+#include "./operations/drop_column.h"
+#include "./operations/alter_column.h"
+#include "./operations/rename_column.h"
 #include "./state.h"
 #include "./utility.h"
 
@@ -63,6 +66,34 @@ protected:
 	{
 		this->operations.push_back(
 			std::make_shared<ops::AddColumn<T>>(table_name, column_name, c)
+		);
+	}
+
+	inline void drop_column(
+		const std::string& table_name, const std::string& column_name
+	)
+	{
+		this->operations.push_back(
+			std::make_shared<ops::DropColumn>(table_name, column_name)
+		);
+	}
+
+	template <column_migration_type_c T>
+	inline void alter_column(
+		const std::string& table_name, const std::string& column_name, const constraints_t& c={}
+	)
+	{
+		this->operations.push_back(
+			std::make_shared<ops::AlterColumn<T>>(table_name, column_name, c)
+		);
+	}
+
+	inline void rename_column(
+		const std::string& table_name, const std::string& old_name, const std::string& new_name
+	)
+	{
+		this->operations.push_back(
+			std::make_shared<ops::RenameColumn>(table_name, old_name, new_name)
 		);
 	}
 

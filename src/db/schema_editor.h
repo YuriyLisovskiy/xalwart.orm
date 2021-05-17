@@ -105,12 +105,12 @@ public:
 	}
 
 	inline void create_column(
-		const std::string& table_name, const column_state& column
+		const table_state& table, const column_state& column
 	) const override
 	{
 		auto& c = column.constraints;
 		auto col_string = this->sql_column(column);
-		auto query = "ALTER TABLE " + table_name + " ADD COLUMN " + col_string + ";";
+		auto query = "ALTER TABLE " + table.name + " ADD COLUMN " + col_string + ";";
 		this->db->run_query(query);
 	}
 
@@ -121,6 +121,24 @@ public:
 		this->db->run_query(
 			"ALTER TABLE " + table.name + " DROP COLUMN " + column.name + ";"
 		);
+	}
+
+	inline void alter_column(
+		const table_state& table,
+		const column_state& from_column, const column_state& to_column
+	) const override
+	{
+		// TODO: implement DefaultSQLSchemaEditor::alter_column
+		//  if names are different -> rename column;
+		//  else if names are the same -> alter column constraints
+		throw NotImplementedException(
+			"method 'DefaultSQLSchemaEditor::alter_column' is not implemented",
+			_ERROR_DETAILS_
+		);
+//		auto& c = column.constraints;
+//		auto col_string = this->sql_column(column);
+//		auto query = "ALTER TABLE " + table.name + " ADD COLUMN " + col_string + ";";
+//		this->db->run_query(query);
 	}
 };
 
