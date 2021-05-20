@@ -21,7 +21,6 @@
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: RenameColumn
-// TODO: fit sqlite3 schema editor for renaming columns!
 // Renames a column in the table in database.
 class RenameColumn : public ColumnOperation
 {

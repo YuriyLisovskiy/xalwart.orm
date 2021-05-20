@@ -447,7 +447,7 @@ public:
 			this->execute(this->sql_create_unique(table, {new_column}));
 		}
 
-		// TODO: implement logic for adding index.
+		// TODO: implement logic for index.
 
 //		if (needs_db_default)
 //		{
