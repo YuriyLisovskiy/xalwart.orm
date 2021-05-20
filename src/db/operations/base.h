@@ -27,7 +27,6 @@ class TableOperation : public abc::IOperation
 {
 protected:
 	std::string table_name;
-	std::string table_name_lower;
 
 public:
 	TableOperation() = default;
@@ -40,20 +39,12 @@ public:
 				ce<TableOperation>("", "'name' can not be empty"), _ERROR_DETAILS_
 			);
 		}
-
-		this->table_name_lower = str::lower(this->table_name);
 	}
 
 	[[nodiscard]]
 	inline const std::string& name() const
 	{
 		return this->table_name;
-	}
-
-	[[nodiscard]]
-	inline std::string name_lower() const
-	{
-		return this->table_name_lower;
 	}
 };
 
@@ -63,10 +54,7 @@ class ColumnOperation : public abc::IOperation
 {
 protected:
 	std::string table_name_;
-	std::string table_name_lower_;
-
 	std::string column_name;
-	std::string column_name_lower;
 
 public:
 	ColumnOperation() = default;
@@ -90,9 +78,6 @@ public:
 				_ERROR_DETAILS_
 			);
 		}
-
-		this->table_name_lower_ = str::lower(this->table_name_);
-		this->column_name_lower = str::lower(this->column_name);
 	}
 
 	[[nodiscard]]
@@ -102,21 +87,9 @@ public:
 	}
 
 	[[nodiscard]]
-	inline std::string table_name_lower() const
-	{
-		return this->table_name_lower_;
-	}
-
-	[[nodiscard]]
 	inline const std::string& name() const
 	{
 		return this->column_name;
-	}
-
-	[[nodiscard]]
-	inline std::string name_lower() const
-	{
-		return this->column_name_lower;
 	}
 };
 

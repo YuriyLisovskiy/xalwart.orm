@@ -26,7 +26,6 @@ class RenameColumn : public ColumnOperation
 {
 protected:
 	std::string new_name_;
-	std::string new_name_lower_;
 
 public:
 	inline explicit RenameColumn(
@@ -42,8 +41,6 @@ public:
 				_ERROR_DETAILS_
 			);
 		}
-
-		this->new_name_lower_ = str::lower(this->new_name_);
 	}
 
 	[[nodiscard]]
@@ -52,17 +49,11 @@ public:
 		return this->new_name_;
 	}
 
-	[[nodiscard]]
-	inline std::string new_name_lower() const
-	{
-		return this->table_name_lower_;
-	}
-
 	inline void update_state(project_state& state) const override
 	{
-		auto& table = state.get_table_addr(this->table_name_lower());
-		auto column = table.get_column(this->name_lower());
-		if (table.columns.contains(this->new_name_lower()))
+		auto& table = state.get_table_addr(this->table_name());
+		auto column = table.get_column(this->name());
+		if (table.columns.contains(this->new_name()))
 		{
 			throw ValueError(ce<RenameColumn>(
 				"update_state",
@@ -72,7 +63,7 @@ public:
 		}
 
 		table.columns.erase(column.name);
-		column.name = this->new_name_lower();
+		column.name = this->new_name();
 		table.columns[column.name] = column;
 	}
 
@@ -81,14 +72,14 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		const auto& to_table = to_state.get_table_addr(this->table_name_lower());
-		const auto& from_table = from_state.get_table_addr(this->table_name_lower());
+		const auto& to_table = to_state.get_table_addr(this->table_name());
+		const auto& from_table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<RenameColumn>("forward", "schema editor is nullptr")
 		)->alter_column(
 			from_table,
-			from_table.get_column_addr(this->name_lower()),
-			to_table.get_column_addr(this->new_name_lower())
+			from_table.get_column_addr(this->name()),
+			to_table.get_column_addr(this->new_name())
 		);
 	}
 
@@ -97,14 +88,14 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto& to_table = to_state.get_table_addr(this->table_name_lower());
-		auto& from_table = from_state.get_table_addr(this->table_name_lower());
+		auto& to_table = to_state.get_table_addr(this->table_name());
+		auto& from_table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<RenameColumn>("backward", "schema editor is nullptr")
 		)->alter_column(
 			from_table,
-			from_table.get_column_addr(this->new_name_lower()),
-			to_table.get_column_addr(this->name_lower())
+			from_table.get_column_addr(this->new_name()),
+			to_table.get_column_addr(this->name())
 		);
 	}
 };

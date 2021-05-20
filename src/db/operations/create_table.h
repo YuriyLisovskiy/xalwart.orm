@@ -36,8 +36,8 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		state.tables[this->name_lower()] = table_state{
-			.name = this->name_lower(), .columns = this->columns, .foreign_keys = this->foreign_keys
+		state.tables[this->name()] = table_state{
+			.name = this->name(), .columns = this->columns, .foreign_keys = this->foreign_keys
 		};
 	}
 
@@ -46,7 +46,7 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto table = to_state.get_table(this->name_lower());
+		auto table = to_state.get_table(this->name());
 		xw::util::require_non_null(
 			editor, ce<CreateTable>("forward", "schema editor is nullptr")
 		)->create_table(table);
@@ -57,7 +57,7 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto table = from_state.get_table(this->name_lower());
+		auto table = from_state.get_table(this->name());
 		xw::util::require_non_null(
 			editor, ce<CreateTable>("backward", "schema editor is nullptr")
 		)->drop_table(table.name);

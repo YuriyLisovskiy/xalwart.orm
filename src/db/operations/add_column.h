@@ -48,17 +48,17 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		auto& table = state.get_table_addr(this->table_name_lower());
-		if (table.columns.find(this->name_lower()) != table.columns.end())
+		auto& table = state.get_table_addr(this->table_name());
+		if (table.columns.find(this->name()) != table.columns.end())
 		{
 			throw ValueError(ce<AddColumn<T>>(
 				"update_state",
-				"column with name '" + this->name_lower() + "' already exists,"
+				"column with name '" + this->name() + "' already exists,"
 				" consider altering it instead of creating"
 			), _ERROR_DETAILS_);
 		}
 
-		table.columns[this->name_lower()] = this->column;
+		table.columns[this->name()] = this->column;
 	}
 
 	inline void forward(
@@ -66,9 +66,9 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto& to_table = to_state.get_table_addr(this->table_name_lower());
-		auto& col = to_table.get_column_addr(this->name_lower());
-		auto& from_table = from_state.get_table_addr(this->table_name_lower());
+		auto& to_table = to_state.get_table_addr(this->table_name());
+		auto& col = to_table.get_column_addr(this->name());
+		auto& from_table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<AddColumn<T>>("forward", "schema editor is nullptr")
 		)->create_column(from_table, col);
@@ -79,10 +79,10 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto& table = from_state.get_table_addr(this->table_name_lower());
+		auto& table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<AddColumn<T>>("backward", "schema editor is nullptr")
-		)->drop_column(table, table.get_column_addr(this->name_lower()));
+		)->drop_column(table, table.get_column_addr(this->name()));
 	}
 };
 

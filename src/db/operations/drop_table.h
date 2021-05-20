@@ -29,7 +29,7 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		state.tables.erase(this->name_lower());
+		state.tables.erase(this->name());
 	}
 
 	inline void forward(
@@ -37,7 +37,7 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto table = from_state.get_table(this->name_lower());
+		auto table = from_state.get_table(this->name());
 		xw::util::require_non_null(
 			editor, ce<DropTable>("forward", "schema editor is nullptr")
 		)->drop_table(table.name);
@@ -48,7 +48,7 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto table = to_state.tables.at(this->name_lower());
+		auto table = to_state.tables.at(this->name());
 		xw::util::require_non_null(
 			editor, ce<DropTable>("backward", "schema editor is nullptr")
 		)->create_table(table);

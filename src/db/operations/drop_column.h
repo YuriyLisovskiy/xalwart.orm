@@ -31,8 +31,8 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		auto& table = state.get_table_addr(this->table_name_lower());
-		auto& column = table.get_column_addr(this->name_lower());
+		auto& table = state.get_table_addr(this->table_name());
+		auto& column = table.get_column_addr(this->name());
 		table.columns.erase(column.name);
 	}
 
@@ -41,10 +41,10 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		const auto& table = from_state.get_table_addr(this->table_name_lower());
+		const auto& table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<DropColumn>("forward", "schema editor is nullptr")
-		)->drop_column(table, table.get_column_addr(this->name_lower()));
+		)->drop_column(table, table.get_column_addr(this->name()));
 	}
 
 	inline void backward(
@@ -52,10 +52,10 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto& table = to_state.get_table_addr(this->table_name_lower());
+		auto& table = to_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<DropColumn>("backward", "schema editor is nullptr")
-		)->create_column(table, table.get_column_addr(this->name_lower()));
+		)->create_column(table, table.get_column_addr(this->name()));
 	}
 };
 

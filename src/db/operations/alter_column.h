@@ -48,8 +48,8 @@ public:
 
 	inline void update_state(project_state& state) const override
 	{
-		auto& table = state.get_table_addr(this->table_name_lower());
-		const auto& column = table.get_column_addr(this->name_lower());
+		auto& table = state.get_table_addr(this->table_name());
+		const auto& column = table.get_column_addr(this->name());
 		table.columns[column.name] = this->column_data;
 	}
 
@@ -58,14 +58,14 @@ public:
 		const project_state& from_state, const project_state& to_state
 	) const override
 	{
-		auto& to_table = to_state.get_table_addr(this->table_name_lower());
-		auto& from_table = from_state.get_table_addr(this->table_name_lower());
+		auto& to_table = to_state.get_table_addr(this->table_name());
+		auto& from_table = from_state.get_table_addr(this->table_name());
 		xw::util::require_non_null(
 			editor, ce<AlterColumn<T>>("forward/backward", "schema editor is nullptr")
 		)->alter_column(
 			from_table,
-			from_table.get_column_addr(this->name_lower()),
-			to_table.get_column_addr(this->name_lower())
+			from_table.get_column_addr(this->name()),
+			to_table.get_column_addr(this->name())
 		);
 	}
 
