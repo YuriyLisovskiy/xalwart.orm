@@ -139,7 +139,9 @@ public:
 		if (old_null.has_value() && old_null.value() && !(new_null.has_value() && new_null.value()))
 		{
 			mapping[new_column.name] = "coalesce(" +
-				this->quote_name(old_column.name) + ", " + new_column.default_value + ")";
+				this->quote_name(old_column.name) + ", " +
+				(new_column.default_value.empty() ? "NULL" : new_column.default_value) +
+			")";
 		}
 		else
 		{
