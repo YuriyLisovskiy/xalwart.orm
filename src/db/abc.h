@@ -48,7 +48,7 @@ public:
 	// alters column's constraints otherwise.
 	virtual void alter_column(
 		const table_state& table,
-		const column_state& from_column, const column_state& to_column
+		const column_state& from_column, const column_state& to_column, bool strict
 	) const = 0;
 };
 

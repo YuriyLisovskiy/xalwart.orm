@@ -49,7 +49,7 @@ std::string SchemaEditor::sql_column_constraints(
 	return result;
 }
 
-std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
+std::string SchemaEditor::sql_type_string(db::sql_column_type type) const
 {
 	switch (type)
 	{
@@ -62,7 +62,7 @@ std::string SchemaEditor::sql_type_to_string(db::sql_column_type type) const
 		case db::DATETIME_T:
 			return "DATETIME";
 		default:
-			return db::DefaultSQLSchemaEditor::sql_type_to_string(type);
+			return db::DefaultSQLSchemaEditor::sql_type_string(type);
 	}
 }
 

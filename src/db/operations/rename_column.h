@@ -21,6 +21,7 @@
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: RenameColumn
+// TODO: fit sqlite3 schema editor for renaming columns!
 // Renames a column in the table in database.
 class RenameColumn : public ColumnOperation
 {
@@ -79,7 +80,8 @@ public:
 		)->alter_column(
 			from_table,
 			from_table.get_column_addr(this->name()),
-			to_table.get_column_addr(this->new_name())
+			to_table.get_column_addr(this->new_name()),
+			false
 		);
 	}
 
@@ -95,7 +97,8 @@ public:
 		)->alter_column(
 			from_table,
 			from_table.get_column_addr(this->new_name()),
-			to_table.get_column_addr(this->name())
+			to_table.get_column_addr(this->name()),
+			false
 		);
 	}
 };

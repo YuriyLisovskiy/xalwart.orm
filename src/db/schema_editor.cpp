@@ -9,7 +9,7 @@
 
 __ORM_DB_BEGIN__
 
-std::string DefaultSQLSchemaEditor::sql_on_action_to_string(on_action action) const
+std::string DefaultSQLSchemaEditor::sql_on_action_constraint(on_action action) const
 {
 	switch (action)
 	{
@@ -108,7 +108,7 @@ bool DefaultSQLSchemaEditor::sql_column_max_len_check(
 			throw ValueError(
 				"DefaultSQLSchemaEditor > sql_column_max_len_check:"
 				" unable to set 'max_len' constraint for column '" + name +
-				"' with type '" + this->sql_type_to_string(type) + "'",
+				"' with type '" + this->sql_type_string(type) + "'",
 				_ERROR_DETAILS_
 			);
 		}
@@ -121,7 +121,7 @@ bool DefaultSQLSchemaEditor::sql_column_max_len_check(
 	return false;
 }
 
-std::string DefaultSQLSchemaEditor::sql_type_to_string(sql_column_type type) const
+std::string DefaultSQLSchemaEditor::sql_type_string(sql_column_type type) const
 {
 	switch (type)
 	{
@@ -172,7 +172,7 @@ std::string DefaultSQLSchemaEditor::sql_column(const column_state& column) const
 	}
 
 	auto c = column.constraints;
-	auto sql_type = this->sql_type_to_string(column.type);
+	auto sql_type = this->sql_type_string(column.type);
 	if (this->sql_column_max_len_check(column.name, column.type, c.max_len))
 	{
 		sql_type += "(" + std::to_string(c.max_len.value()) + ")";
@@ -197,7 +197,7 @@ std::string DefaultSQLSchemaEditor::sql_foreign_key(
 		case NO_ACTION:
 			break;
 		default:
-			result += " ON DELETE " + this->sql_on_action_to_string(on_delete);
+			result += " ON DELETE " + this->sql_on_action_constraint(on_delete);
 			break;
 	}
 
@@ -206,7 +206,7 @@ std::string DefaultSQLSchemaEditor::sql_foreign_key(
 		case NO_ACTION:
 			break;
 		default:
-			result += " ON UPDATE " + this->sql_on_action_to_string(on_update);
+			result += " ON UPDATE " + this->sql_on_action_constraint(on_update);
 			break;
 	}
 

@@ -20,6 +20,7 @@
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: AlterColumn
+// TODO: fit sqlite3 schema editor for altering columns!
 // Alters a column of the table in database.
 template <column_migration_type_c T>
 class AlterColumn : public ColumnOperation
@@ -65,7 +66,8 @@ public:
 		)->alter_column(
 			from_table,
 			from_table.get_column_addr(this->name()),
-			to_table.get_column_addr(this->name())
+			to_table.get_column_addr(this->name()),
+			false
 		);
 	}
 

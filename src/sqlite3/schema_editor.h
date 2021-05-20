@@ -24,12 +24,21 @@ class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
 protected:
 	[[nodiscard]]
+	inline std::string sql_drop_table(const std::string& name) const override
+	{
+		return "DROP TABLE " + name;
+	}
+
+	[[nodiscard]]
+	std::string sql_column(const db::column_state& column) const override;
+
+	[[nodiscard]]
 	std::string sql_column_constraints(
 		const db::constraints_t& constraints, const std::string& default_value
 	) const override;
 
 	[[nodiscard]]
-	std::string sql_type_to_string(db::sql_column_type type) const override;
+	std::string sql_type_string(db::sql_column_type type) const override;
 
 	inline void sql_column_autoincrement_check(
 		db::sql_column_type type, bool autoincrement, bool primary_key
@@ -48,9 +57,6 @@ public:
 	inline explicit SchemaEditor(orm::abc::ISQLDriver* db) : db::DefaultSQLSchemaEditor(db)
 	{
 	}
-
-	[[nodiscard]]
-	std::string sql_column(const db::column_state& column) const override;
 
 	inline void drop_column(
 		const db::table_state& table, const db::column_state& column
