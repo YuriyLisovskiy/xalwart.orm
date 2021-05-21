@@ -59,6 +59,14 @@ protected:
 	}
 
 	[[nodiscard]]
+	virtual inline std::string sql_rename_table(
+		const std::string& old_name, const std::string& new_name
+	) const
+	{
+		return "ALTER TABLE " + this->quote_name(old_name) + " RENAME TO " + this->quote_name(new_name);
+	}
+
+	[[nodiscard]]
 	virtual inline std::string sql_add_column(
 		const table_state& table, const column_state& column
 	) const
@@ -321,6 +329,20 @@ public:
 	inline void drop_table(const std::string& name) const override
 	{
 		this->execute(this->sql_drop_table(name));
+	}
+
+	inline void rename_table(
+		const table_state& table, const std::string& old_name, const std::string& new_name
+	) const override
+	{
+		if (old_name == new_name)
+		{
+			// TODO: !IMPORTANT! Check if driver ignores case
+			//  and if names are the same in lower-case.
+			return;
+		}
+
+		this->execute(this->sql_rename_table(old_name, new_name));
 	}
 
 	inline void create_column(

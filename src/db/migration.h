@@ -19,6 +19,7 @@
 #include "../abc.h"
 #include "./operations/create_table.h"
 #include "./operations/drop_table.h"
+#include "./operations/rename_table.h"
 #include "./operations/add_column.h"
 #include "./operations/drop_column.h"
 #include "./operations/alter_column.h"
@@ -57,6 +58,13 @@ protected:
 	inline void drop_table(const std::string& name)
 	{
 		this->operations.push_back(std::make_shared<ops::DropTable>(name));
+	}
+
+	inline void rename_table(const std::string& old_name, const std::string& new_name)
+	{
+		this->operations.push_back(
+			std::make_shared<ops::RenameTable>(old_name, new_name)
+		);
 	}
 
 	template <column_migration_type_c T>

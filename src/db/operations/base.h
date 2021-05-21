@@ -26,7 +26,7 @@ __ORM_DB_OPERATIONS_BEGIN__
 class TableOperation : public abc::IOperation
 {
 protected:
-	std::string table_name;
+	mutable std::string table_name;
 
 public:
 	TableOperation() = default;

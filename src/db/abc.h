@@ -34,6 +34,11 @@ public:
 	// Drops the table.
 	virtual void drop_table(const std::string& name) const = 0;
 
+	// Renames the table.
+	virtual void rename_table(
+		const table_state& table, const std::string& old_name, const std::string& new_name
+	) const = 0;
+
 	// Creates a new column.
 	virtual void create_column(
 		const table_state& table, const column_state& column
