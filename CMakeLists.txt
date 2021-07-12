@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(FRAMEWORK_NAME "xalwart")
 set(LIBRARY_NAME "${FRAMEWORK_NAME}.orm")
-set(LIBRARY_VERSION "0.0.1")
+set(LIBRARY_VERSION "0.0.0")
 
 project(${LIBRARY_NAME})
 
@@ -32,19 +32,26 @@ if (NOT ${SOURCES_COUNT} EQUAL 0)
         set(USE_SQLITE3 no)
     endif()
 
-    # Build shared library.
-    set(FULL_LIBRARY_NAME ${LIBRARY_NAME}-${LIBRARY_VERSION})
-    add_library(${FULL_LIBRARY_NAME} SHARED ${SOURCES})
+    # Build the library.
+    if (NOT LIB_SHARED)
+        set(LIB_SHARED no)
+    endif()
+
+    if (${LIB_SHARED})
+        add_library(${LIBRARY_NAME} SHARED ${SOURCES})
+    else()
+        add_library(${LIBRARY_NAME} STATIC ${SOURCES})
+    endif()
 
     if (USE_SQLITE3)
         # Use sqlite3 driver.
         add_compile_definitions(USE_SQLITE3)
-        target_link_libraries(${FULL_LIBRARY_NAME} PUBLIC sqlite3)
+        target_link_libraries(${LIBRARY_NAME} PUBLIC sqlite3)
     endif()
 
     # Install library.
     install(
-        TARGETS ${FULL_LIBRARY_NAME}
+        TARGETS ${LIBRARY_NAME}
         ARCHIVE DESTINATION ${GNU_LIB_DIR}
         LIBRARY DESTINATION ${GNU_LIB_DIR}
     )
