@@ -34,5 +34,7 @@ jobs:
         with:
           release_branch: master
           tag: v${{ steps.bump2version.outputs.lib_version }}
+          name: v${{ steps.bump2version.outputs.lib_version }}
+          message: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
