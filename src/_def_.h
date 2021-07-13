@@ -9,7 +9,7 @@
 #pragma once
 
 // Module definitions.
-#include <xalwart.core/_def_.h>
+#include <xalwart.base/_def_.h>
 
 // xw::orm
 #define __ORM_BEGIN__ __MAIN_NAMESPACE_BEGIN__ namespace orm {

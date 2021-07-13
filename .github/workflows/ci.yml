@@ -69,11 +69,11 @@ jobs:
                      -DCMAKE_C_COMPILER=clang-${{ matrix.compiler_version }} .. && \
           sudo make && \
           sudo make install
-      - name: Install Core Library
+      - name: Install Base Library
         run: |
           cd /tmp && \
-          git clone https://${{secrets.GH_ACCESS_TOKEN}}@github.com/YuriyLisovskiy/xalwart.core.git && \
-          cd xalwart.core && \
+          git clone https://${{secrets.GH_ACCESS_TOKEN}}@github.com/YuriyLisovskiy/xalwart.base.git && \
+          cd xalwart.base && \
           sudo mkdir build && \
           cd build && \
           sudo cmake -DCMAKE_BUILD_TYPE=Release \
@@ -131,11 +131,11 @@ jobs:
                      -DCMAKE_C_COMPILER=gcc-${{ matrix.compiler_version }} .. && \
           sudo make && \
           sudo make install
-      - name: Install Core Library
+      - name: Install Base Library
         run: |
           cd /tmp && \
-          git clone https://${{secrets.GH_ACCESS_TOKEN}}@github.com/YuriyLisovskiy/xalwart.core.git && \
-          cd xalwart.core && \
+          git clone https://${{secrets.GH_ACCESS_TOKEN}}@github.com/YuriyLisovskiy/xalwart.base.git && \
+          cd xalwart.base && \
           sudo mkdir build && \
           cd build && \
           sudo cmake -DCMAKE_BUILD_TYPE=Release \

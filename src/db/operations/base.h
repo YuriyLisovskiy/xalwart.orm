@@ -8,8 +8,8 @@
 
 #pragma once
 
-// Core libraries.
-#include <xalwart.core/string_utils.h>
+// Base libraries.
+#include <xalwart.base/string_utils.h>
 
 // Module definitions.
 #include "./_def_.h"

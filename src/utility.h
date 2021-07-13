@@ -8,8 +8,8 @@
 
 #pragma once
 
-// Core libraries.
-#include <xalwart.core/datetime.h>
+// Base libraries.
+#include <xalwart.base/datetime.h>
 
 // Module definitions.
 #include "./_def_.h"

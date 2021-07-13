@@ -31,13 +31,13 @@ RUN git clone -q https://github.com/google/googletest.git /googletest && \
     make && make install && \
     cd / && rm -rf /googletest
 
-RUN git clone -q https://$GH_ACCESS_TOKEN@github.com/YuriyLisovskiy/xalwart.core.git /xalwart.core && \
-    mkdir -p /xalwart.core/build && \
-    cd /xalwart.core && \
-    cd /xalwart.core/build && \
+RUN git clone -q https://$GH_ACCESS_TOKEN@github.com/YuriyLisovskiy/xalwart.base.git /xalwart.base && \
+    mkdir -p /xalwart.base/build && \
+    cd /xalwart.base && \
+    cd /xalwart.base/build && \
     cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release .. && \
     make && make install && \
-    cd / && rm -rf /xalwart.core
+    cd / && rm -rf /xalwart.base
 
 RUN ldconfig /etc/ld.so.conf.d
 

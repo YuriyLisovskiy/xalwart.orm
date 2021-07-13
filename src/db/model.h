@@ -11,12 +11,12 @@
 // C++ libraries.
 #include <map>
 
-// Core libraries.
-#include <xalwart.core/object/object.h>
-#include <xalwart.core/exceptions.h>
-#include <xalwart.core/types/utility.h>
-#include <xalwart.core/string_utils.h>
-#include <xalwart.core/lazy.h>
+// Base libraries.
+#include <xalwart.base/object/object.h>
+#include <xalwart.base/exceptions.h>
+#include <xalwart.base/types/utility.h>
+#include <xalwart.base/string_utils.h>
+#include <xalwart.base/lazy.h>
 
 // Module definitions.
 #include "./_def_.h"

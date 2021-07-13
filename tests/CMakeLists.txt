@@ -19,7 +19,7 @@ function(add_tests SUB_DIR SUB_NAME)
         target_link_libraries(${FULL_BIN} PUBLIC sqlite3)
     endif()
 
-    target_link_libraries(${FULL_BIN} PUBLIC ${FRAMEWORK_NAME}.core ${LIBRARY_NAME})
+    target_link_libraries(${FULL_BIN} PUBLIC ${FRAMEWORK_NAME}.base ${LIBRARY_NAME})
 endfunction()
 
 function(add_sub_tests SUB_NAME)

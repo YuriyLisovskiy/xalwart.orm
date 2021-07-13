@@ -9,8 +9,8 @@
 
 #pragma once
 
-// Core libraries.
-#include <xalwart.core/exceptions.h>
+// Base libraries.
+#include <xalwart.base/exceptions.h>
 
 // Module definitions.
 #include "./_def_.h"

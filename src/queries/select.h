@@ -12,9 +12,9 @@
 #include <list>
 #include <iostream>
 
-// Core libraries.
-#include <xalwart.core/types/string.h>
-#include <xalwart.core/lazy.h>
+// Base libraries.
+#include <xalwart.base/types/string.h>
+#include <xalwart.base/lazy.h>
 
 // Module definitions.
 #include "./_def_.h"

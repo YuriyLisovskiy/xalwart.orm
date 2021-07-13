@@ -8,8 +8,8 @@
 
 #ifdef USE_SQLITE3
 
-// Core libraries.
-#include <xalwart.core/string_utils.h>
+// Base libraries.
+#include <xalwart.base/string_utils.h>
 
 
 __ORM_SQLITE3_BEGIN__
