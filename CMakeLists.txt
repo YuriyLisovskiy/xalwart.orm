@@ -49,6 +49,8 @@ if (NOT ${SOURCES_COUNT} EQUAL 0)
         target_link_libraries(${LIBRARY_NAME} PUBLIC sqlite3)
     endif()
 
+    target_link_libraries(${LIBRARY_NAME} PUBLIC ${FRAMEWORK_NAME}.core)
+
     # Install library.
     install(
         TARGETS ${LIBRARY_NAME}
