@@ -1,18 +1,26 @@
-## xalwart.orm [![c++](https://img.shields.io/badge/c%2B%2B-20-6c85cf)](https://isocpp.org/)
+## xalwart.orm
+[![c++](https://img.shields.io/badge/c%2B%2B-20-6c85cf)](https://isocpp.org/)
+[![cmake](https://img.shields.io/badge/cmake-%3E=2.8.12-success)](https://cmake.org/)
+[![alpine](https://img.shields.io/badge/Alpine_Linux-0D597F?style=flat&logo=alpine-linux&logoColor=white)](https://alpinelinux.org/)
+[![ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 
-| [![alpine](https://img.shields.io/badge/Alpine_Linux-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white)](https://alpinelinux.org/) | [![ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/) | [![macOS](https://img.shields.io/badge/mac_OS-gray?style=for-the-badge&logo=apple&logoColor=white)](https://www.apple.com/macos/) | [![windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/en-us/windows/) |
-|:---:|:---:|:---:|:---:|
-| [![clang](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang-alpine.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang-alpine.yml) | [![clang](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang-ubuntu.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-clang-ubuntu.yml) | *not supported* | *not supported* |
-| [![gcc](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc-alpine.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc-alpine.yml) | [![gcc](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc-ubuntu.yml/badge.svg)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/tests-gcc-ubuntu.yml) | *not supported* | *not supported* |
+### Build Status
+| @ | Build |
+|---|---|
+| Dev branch: | [![CI](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml?query=branch%3Adev) |
+| Master branch: | [![CI](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml?query=branch%3Amaster) |
 
-### Requirements
+## Requirements
+The following compilers are tested with the CI system, and are known to work
+on Alpine Linux and Ubuntu.
+* g++ 10 or later
+* clang++ 10 or later
 
-- C++ compiler:
-  - `gcc`: v10 or later.
-  - `clang`: v10 or later.
-- CMake: `2.8.12` or later.
-- Additional libraries:
-  - [xalwart.core](https://github.com/YuriyLisovskiy/xalwart.core) (required)
+To build the library from source CMake 2.8.12 or later is required.
+
+### Dependencies
+The following library is required:
+- [xalwart.core](https://github.com/YuriyLisovskiy/xalwart.core) 0.x.x or later
 
 ### Available drivers:
 * `sqlite3`:
@@ -25,18 +33,23 @@
   add_compile_definitions(USE_SQLITE3)
   ```
 
-### Build and Install
+## Compile from Source
 ```bash
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make && sudo make install
+cmake -DCMAKE_BUILD_TYPE=Release -DUSE_DRIVER_NAME=yes ..
+make
+
+# for linux:
+sudo make install
 ```
 
-### Testing
+## Testing
+```bash
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Debug .. && make unittests-all
+```
 
 Use valgrind to check for memory leaks:
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Debug .. && make
 valgrind --leak-check=full ./tests/unittests-all
 ```
