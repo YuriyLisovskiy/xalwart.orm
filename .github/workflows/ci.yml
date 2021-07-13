@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        alpine_version: [ 3.13 ]
+        alpine_version: [3.13]
     steps:
       - uses: actions/checkout@v2
       - name: Build the Container
@@ -50,9 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [ Ubuntu ]
-        os: [ ubuntu-18.04 ]
-        compiler_version: [ 10 ]
+        name: [Ubuntu]
+        os: [ubuntu-18.04]
+        compiler_version: [10]
     steps:
       - uses: actions/checkout@v2
       - name: Install Compiler
@@ -104,9 +104,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [ Ubuntu ]
-        os: [ ubuntu-18.04 ]
-        compiler_version: [ 10 ]
+        name: [Ubuntu]
+        os: [ubuntu-18.04]
+        compiler_version: [10]
     steps:
       - uses: actions/checkout@v2
       - name: Install Compiler and Check Version
