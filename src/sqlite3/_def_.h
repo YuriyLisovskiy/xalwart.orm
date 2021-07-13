@@ -13,9 +13,8 @@
 // Module definitions.
 #include "../_def_.h"
 
-
 // xw::orm::sqlite3
-#define __SQLITE3_BEGIN__ __ORM_BEGIN__ namespace sqlite3 {
-#define __SQLITE3_END__ } __ORM_END__
+#define __ORM_SQLITE3_BEGIN__ __ORM_BEGIN__ namespace sqlite3 {
+#define __ORM_SQLITE3_END__ } __ORM_END__
 
 #endif // USE_SQLITE3

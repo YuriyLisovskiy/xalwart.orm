@@ -17,17 +17,17 @@
 #include "./conditions.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
-template <model_based_type_c ModelT>
+template <db::model_based_type_c ModelT>
 class delete_ final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "delete: 'meta_table_name' is not initialized");
 
 protected:
 
 	// Driver to perform an access to the database.
-	abc::ISQLDriver* db = nullptr;
+	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Holds condition for SQL 'WHERE' statement.
 	q_value<condition_t> where_cond;
@@ -49,9 +49,10 @@ protected:
 			if (column.is_pk)
 			{
 				using field_type = typename std::remove_reference<decltype(column)>::type;
-				this->pks.push_back(
-					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
-				);
+//				this->pks.push_back(
+//					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
+//				);
+				this->pks.push_back(column.as_string(model));
 				return false;
 			}
 
@@ -72,7 +73,7 @@ public:
 	{
 		if (driver)
 		{
-			this->db = driver;
+			this->sql_driver = driver;
 		}
 
 		return *this;
@@ -84,7 +85,7 @@ public:
 	[[nodiscard]]
 	inline std::string query() const
 	{
-		if (!this->db)
+		if (!this->sql_driver)
 		{
 			throw QueryError("delete: database driver not set", _ERROR_DETAILS_);
 		}
@@ -97,7 +98,7 @@ public:
 				if (column.is_pk)
 				{
 					condition.set(column_condition_t(
-						meta::get_table_name<ModelT>(),
+						db::get_table_name<ModelT>(),
 						column.name,
 						"IN (" + str::join(", ", this->pks.begin(), this->pks.end()) + ")"
 					));
@@ -108,7 +109,13 @@ public:
 			});
 		}
 
-		return this->db->make_delete_query(meta::get_table_name<ModelT>(), condition.value);
+		auto sql_builder = this->sql_driver->query_builder();
+		if (!sql_builder)
+		{
+			throw QueryError("delete: SQL builder is not initialized", _ERROR_DETAILS_);
+		}
+
+		return sql_builder->sql_delete(db::get_table_name<ModelT>(), condition.value);
 	}
 
 	// Appends model's pk to deletion list.
@@ -140,8 +147,8 @@ public:
 	inline void commit() const
 	{
 		auto query = this->query();
-		this->db->run_delete(query);
+		this->sql_driver->run_delete(query);
 	}
 };
 
-__Q_END__
+__ORM_Q_END__

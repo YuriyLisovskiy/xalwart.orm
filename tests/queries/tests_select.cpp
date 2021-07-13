@@ -10,25 +10,28 @@
 
 using namespace xw;
 
-struct TestCase_Q_TestModel : public orm::Model<TestCase_Q_TestModel>
+struct TestCase_Q_TestModel : public orm::db::Model
 {
 	static constexpr const char* meta_table_name = "test_model";
 
 	int id{};
 	std::string name;
 
-	static const std::tuple<
-		orm::column_meta_t<TestCase_Q_TestModel, int>,
-		orm::column_meta_t<TestCase_Q_TestModel, std::string>
-	> meta_columns;
-};
+	inline static const std::tuple meta_columns = {
+		orm::db::make_pk_column_meta("id", &TestCase_Q_TestModel::id),
+		orm::db::make_column_meta("name", &TestCase_Q_TestModel::name)
+	};
 
-const std::tuple<
-	orm::column_meta_t<TestCase_Q_TestModel, int>,
-	orm::column_meta_t<TestCase_Q_TestModel, std::string>
-> TestCase_Q_TestModel::meta_columns = {
-	orm::make_pk_column_meta("id", &TestCase_Q_TestModel::id),
-	orm::make_column_meta("name", &TestCase_Q_TestModel::name)
+	inline void __set_attr__(const char* attr_name, const void* data) override
+	{
+		this->set_attribute_to(TestCase_Q_TestModel::meta_columns, attr_name, data);
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
+	{
+		return this->get_attribute_from(TestCase_Q_TestModel::meta_columns, attr_name);
+	}
 };
 
 class TestCase_Q_select : public ::testing::Test
@@ -102,9 +105,9 @@ TEST_F(TestCase_Q_select, first_ThrowsClientNotSet)
 	ASSERT_THROW(this->query->first(), orm::QueryError);
 }
 
-TEST_F(TestCase_Q_select, to_vector_ThrowsClientNotSet)
+TEST_F(TestCase_Q_select, all_ThrowsClientNotSet)
 {
-	ASSERT_THROW(this->query->to_vector(), orm::QueryError);
+	ASSERT_THROW(this->query->all(), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_select, query_ThrowsClientNotSet)

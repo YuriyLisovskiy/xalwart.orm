@@ -1,56 +1,43 @@
 /**
- * driver.cpp
+ * sql_builder.cpp
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
-#include "./driver.h"
-
-// Core libraries.
-#include <xalwart.core/string_utils.h>
+#include "./sql_builder.h"
 
 
 __ORM_BEGIN__
 
-void SQLDriverBase::throw_empty_arg(
-	const std::string& arg, int line, const char* function, const char* file
-) const
-{
-	throw QueryError(
-		this->name() + ": '" + arg + "' is required", line, function, file
-	);
-}
-
-std::string SQLDriverBase::make_insert_query(
-	const std::string& table_name,
-	const std::string& columns,
-	const std::vector<std::string>& rows
+std::string DefaultSQLBuilder::sql_insert(
+	const std::string& table_name, const std::string& columns,
+	const std::list<std::string>& rows
 ) const
 {
 	if (table_name.empty())
 	{
-		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+		this->_throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
 	if (columns.empty())
 	{
-		this->throw_empty_arg("columns", _ERROR_DETAILS_);
+		this->_throw_empty_arg("columns", _ERROR_DETAILS_);
 	}
 
 	auto values = str::join("), (", rows.begin(), rows.end());
 	if (values.empty())
 	{
-		this->throw_empty_arg("rows", _ERROR_DETAILS_);
+		this->_throw_empty_arg("rows", _ERROR_DETAILS_);
 	}
 
 	return "INSERT INTO " + util::quote_str(table_name) + " (" + columns + ") VALUES (" + values + ");";
 }
 
-std::string SQLDriverBase::compose_select_query(
+std::string DefaultSQLBuilder::sql_select_(
 	const std::string& table_name,
 	const std::string& columns,
 	bool distinct,
-	const std::vector<q::join_t>& joins,
+	const std::list<q::join_t>& joins,
 	const q::condition_t& where_cond,
 	const std::list<q::ordering>& order_by_cols,
 	long int limit,
@@ -61,12 +48,12 @@ std::string SQLDriverBase::compose_select_query(
 {
 	if (table_name.empty())
 	{
-		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+		this->_throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
 	if (columns.empty())
 	{
-		this->throw_empty_arg("columns", _ERROR_DETAILS_);
+		this->_throw_empty_arg("columns", _ERROR_DETAILS_);
 	}
 
 	auto query = std::string("SELECT") + (distinct ? " DISTINCT" : "") + " " + columns +
@@ -104,7 +91,7 @@ std::string SQLDriverBase::compose_select_query(
 		if (limit < 0)
 		{
 			throw QueryError(
-				this->name() + ": 'offset' is used without 'limit'", _ERROR_DETAILS_
+				"DefaultSQLBuilder: 'offset' is used without 'limit'", _ERROR_DETAILS_
 			);
 		}
 
@@ -134,7 +121,7 @@ std::string SQLDriverBase::compose_select_query(
 		if (group_by_cols.empty())
 		{
 			throw QueryError(
-				this->name() + ": 'having' is used without 'group by'", _ERROR_DETAILS_
+				"DefaultSQLBuilder: 'having' is used without 'group by'", _ERROR_DETAILS_
 			);
 		}
 
@@ -144,11 +131,11 @@ std::string SQLDriverBase::compose_select_query(
 	return query + ";";
 }
 
-std::string SQLDriverBase::make_select_query(
+std::string DefaultSQLBuilder::sql_select(
 	const std::string& table_name,
-	const std::vector<std::string>& columns,
+	const std::list<std::string>& columns,
 	bool distinct,
-	const std::vector<q::join_t>& joins,
+	const std::list<q::join_t>& joins,
 	const q::condition_t& where_cond,
 	const std::list<q::ordering>& order_by_cols,
 	long int limit,
@@ -164,20 +151,20 @@ std::string SQLDriverBase::make_select_query(
 	{
 		auto column_str = std::string(*column);
 		columns_str += prefix + util::quote_str(column_str);
-		columns_str += " AS " + util::quote_str(raw_prefix + column_str);
+		columns_str += " AS " + util::quote_str(column_str);
 		if (std::next(column) != columns.end())
 		{
 			columns_str += ", ";
 		}
 	}
 
-	return this->compose_select_query(
+	return this->sql_select_(
 		table_name, columns_str, distinct, joins, where_cond,
 		order_by_cols, limit, offset, group_by_cols, having_cond
 	);
 }
 
-std::string SQLDriverBase::make_update_query(
+std::string DefaultSQLBuilder::sql_update(
 	const std::string& table_name,
 	const std::string& columns_data,
 	const q::condition_t& condition
@@ -185,12 +172,12 @@ std::string SQLDriverBase::make_update_query(
 {
 	if (table_name.empty())
 	{
-		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+		this->_throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
 	if (columns_data.empty())
 	{
-		this->throw_empty_arg("columns_data", _ERROR_DETAILS_);
+		this->_throw_empty_arg("columns_data", _ERROR_DETAILS_);
 	}
 
 	std::string query = "UPDATE " + util::quote_str(table_name) + " SET " + columns_data;
@@ -203,13 +190,13 @@ std::string SQLDriverBase::make_update_query(
 	return query + ";";
 }
 
-std::string SQLDriverBase::make_delete_query(
+std::string DefaultSQLBuilder::sql_delete(
 	const std::string& table_name, const q::condition_t& where_cond
 ) const
 {
 	if (table_name.empty())
 	{
-		this->throw_empty_arg("table_name", _ERROR_DETAILS_);
+		this->_throw_empty_arg("table_name", _ERROR_DETAILS_);
 	}
 
 	std::string query = "DELETE FROM " + util::quote_str(table_name);

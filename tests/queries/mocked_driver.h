@@ -6,18 +6,30 @@
 
 #pragma once
 
-#include "../../src/driver.h"
+#include "../../src/sql_driver.h"
 
 using namespace xw;
 
 
-class MockedDriver : public orm::SQLDriverBase
+class MockedDriver : public orm::DefaultSQLDriver
 {
 public:
-	[[nodiscard]]
-	inline std::string run_insert(const std::string& query) const override
+	std::vector<std::string> table_names() const override
 	{
-		return "1";
+		return {};
+	}
+
+	inline void run_query(const std::string&) const override
+	{
+	}
+
+	inline void run_insert(const std::string& query) const override
+	{
+	}
+
+	inline void run_insert(const std::string& query, std::string& pk) const override
+	{
+		pk = "1";
 	}
 
 	inline void run_select(
@@ -34,6 +46,11 @@ public:
 
 	inline void run_delete(const std::string& query) const override
 	{
+	}
+
+	inline bool run_transaction(const std::function<bool()>&) const override
+	{
+		return false;
 	}
 
 	[[nodiscard]]

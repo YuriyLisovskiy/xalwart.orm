@@ -1,0 +1,78 @@
+/**
+ * db/operations/create_table.h
+ *
+ * Copyright (c) 2021 Yuriy Lisovskiy
+ *
+ * TODO: description
+ */
+
+#pragma once
+
+// Module definitions.
+#include "./_def_.h"
+
+// Core libraries.
+#include <xalwart.core/exceptions.h>
+
+// Orm libraries.
+#include "./base.h"
+#include "../state.h"
+
+
+__ORM_DB_OPERATIONS_BEGIN__
+
+// TESTME: CreateTable
+// Creates a table in the database.
+class CreateTable : public TableOperation
+{
+protected:
+	std::unordered_map<std::string, column_state> columns{};
+	std::unordered_map<std::string, foreign_key_constraints_t> foreign_keys{};
+
+public:
+	inline explicit CreateTable(const std::string& name) : TableOperation(name)
+	{
+	}
+
+	inline void update_state(project_state& state) const override
+	{
+		state.tables[this->name()] = table_state{
+			.name = this->name(), .columns = this->columns, .foreign_keys = this->foreign_keys
+		};
+	}
+
+	inline void forward(
+		const abc::ISchemaEditor* editor,
+		const project_state& from_state, const project_state& to_state
+	) const override
+	{
+		auto table = to_state.get_table(this->name());
+		xw::util::require_non_null(
+			editor, ce<CreateTable>("forward", "schema editor is nullptr")
+		)->create_table(table);
+	}
+
+	inline void backward(
+		const abc::ISchemaEditor* editor,
+		const project_state& from_state, const project_state& to_state
+	) const override
+	{
+		auto table = from_state.get_table(this->name());
+		xw::util::require_non_null(
+			editor, ce<CreateTable>("backward", "schema editor is nullptr")
+		)->drop_table(table.name);
+	}
+
+	template <column_migration_type_c T>
+	inline void column(const std::string& name, const constraints_t& c={})
+	{
+		this->columns[name] = column_state::create<T>(name, c);
+	}
+
+	inline void foreign_key(const std::string& name, const foreign_key_constraints_t& c)
+	{
+		this->foreign_keys[name] = c;
+	}
+};
+
+__ORM_DB_OPERATIONS_END__

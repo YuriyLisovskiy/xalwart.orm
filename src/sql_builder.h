@@ -1,10 +1,10 @@
 /**
- * driver.h
+ * sql_builder.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Base driver implements generation of common SQL queries
- * which can be overwritten.
+ * Default SQL builder implements generating of common
+ * SQL queries which can be overwritten.
  */
 
 #pragma once
@@ -18,15 +18,18 @@
 
 __ORM_BEGIN__
 
-class SQLDriverBase : public abc::ISQLDriver
+class DefaultSQLBuilder : public abc::ISQLQueryBuilder
 {
-protected:
+private:
 
 	// Helper method which throws 'QueryError' with message and
 	// location for 'arg' argument name.
-	void throw_empty_arg(
+	inline void _throw_empty_arg(
 		const std::string& arg, int line, const char* function, const char* file
-	) const;
+	) const
+	{
+		throw QueryError("DefaultSQLBuilder: '" + arg + "' is required", line, function, file);
+	}
 
 public:
 
@@ -35,10 +38,10 @@ public:
 	// All arguments must be non-empty, 'rows' must contain
 	// at least one non-empty row.
 	[[nodiscard]]
-	std::string make_insert_query(
+	std::string sql_insert(
 		const std::string& table_name,
 		const std::string& columns,
-		const std::vector<std::string>& rows
+		const std::list<std::string>& rows
 	) const override;
 
 	// Builds 'SELECT' query to string from parts.
@@ -49,11 +52,11 @@ public:
 	// 'table_name' must be non-empty string.
 	// 'columns' must be non-empty string.
 	[[nodiscard]]
-	std::string compose_select_query(
+	std::string sql_select_(
 		const std::string& table_name,
 		const std::string& columns,
 		bool distinct,
-		const std::vector<q::join_t>& joins,
+		const std::list<q::join_t>& joins,
 		const q::condition_t& where_cond,
 		const std::list<q::ordering>& order_by_cols,
 		long int limit,
@@ -65,13 +68,13 @@ public:
 	// Generates 'SELECT' query as string.
 	//
 	// 'table_name' must be non-empty string.
-	// 'columns' must be non-empty vector.
+	// 'columns' must be non-empty list.
 	[[nodiscard]]
-	std::string make_select_query(
+	std::string sql_select(
 		const std::string& table_name,
-		const std::vector<std::string>& columns,
+		const std::list<std::string>& columns,
 		bool distinct,
-		const std::vector<q::join_t>& joins,
+		const std::list<q::join_t>& joins,
 		const q::condition_t& where_cond,
 		const std::list<q::ordering>& order_by_cols,
 		long int limit,
@@ -86,7 +89,7 @@ public:
 	// `columns_data`: columns with data,
 	// example: "column1 = data1, column2 = data2, ..."
 	[[nodiscard]]
-	std::string make_update_query(
+	std::string sql_update(
 		const std::string& table_name,
 		const std::string& columns_data,
 		const q::condition_t& condition
@@ -96,7 +99,7 @@ public:
 	//
 	// 'table_name' must be non-empty string.
 	[[nodiscard]]
-	std::string make_delete_query(
+	std::string sql_delete(
 		const std::string& table_name, const q::condition_t& where_cond
 	) const override;
 };

@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * ORM helpers.
+ * ORM utilities.
  */
 
 #pragma once
 
 // Core libraries.
-#include <xalwart.core/exceptions.h>
+#include <xalwart.core/datetime.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -18,7 +18,7 @@
 #include "./exceptions.h"
 
 
-__ORM_UTIL_BEGIN__
+__ORM_UTILITY_BEGIN__
 
 template<typename T>
 struct item_return{ typedef T type; };
@@ -130,6 +130,21 @@ inline const char* as<const char*>(const void* data)
 	return (const char*)data;
 }
 
+inline dt::Date as_date(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format).date();
+}
+
+inline dt::Time as_time(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format).time_tz();
+}
+
+inline dt::Datetime as_datetime(const void* data, const char* format)
+{
+	return dt::Datetime::strptime((const char*)data, format);
+}
+
 inline std::string quote_str(const std::string& s)
 {
 	return s.starts_with('"') ? s : '"' + s + '"';
@@ -202,13 +217,13 @@ inline void check_model()
 {
 	// Checks if only one primary key is present.
 	bool has_pk = false;
-	util::tuple_for_each(ModelT::meta_columns, [&has_pk](auto& column)
+	tuple_for_each(ModelT::meta_columns, [&has_pk](auto& column)
 	{
 		if (column.is_pk)
 		{
 			if (has_pk)
 			{
-				throw ModelError("model has more than one primary key", _ERROR_DETAILS_);
+				throw ModelError("check_model: model has more than one primary key", _ERROR_DETAILS_);
 			}
 
 			has_pk = true;
@@ -219,8 +234,8 @@ inline void check_model()
 
 	if (!has_pk)
 	{
-		throw ModelError("model does not contain primary key", _ERROR_DETAILS_);
+		throw ModelError("check_model: model does not contain primary key", _ERROR_DETAILS_);
 	}
 }
 
-__ORM_UTIL_END__
+__ORM_UTILITY_END__

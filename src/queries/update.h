@@ -16,17 +16,17 @@
 #include "../exceptions.h"
 
 
-__Q_BEGIN__
+__ORM_Q_BEGIN__
 
-template <model_based_type_c ModelT>
+template <db::model_based_type_c ModelT>
 class update final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "update: 'meta_table_name' is not initialized");
 
 protected:
 
 	// Driver to perform an access to the database.
-	abc::ISQLDriver* db = nullptr;
+	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Name of the table which is retrieved from
 	// `ModelT::meta_table_name` static member.
@@ -58,7 +58,7 @@ protected:
 
 			if (column.is_pk)
 			{
-				pk_val = get_column_value_as_string<ModelT, T>(model, column);
+				pk_val = column.as_string(model);
 				pk_name = column.name;
 
 				if constexpr (ModelT::meta_omit_pk)
@@ -67,7 +67,7 @@ protected:
 				}
 			}
 
-			row_data.first += column.name + " = " + get_column_value_as_string<ModelT, T>(model, column) + ", ";
+			row_data.first += column.name + " = " + column.as_string(model) + ", ";
 			return true;
 		});
 
@@ -81,7 +81,7 @@ public:
 	// Prepares model's data.
 	inline explicit update(const ModelT& model)
 	{
-		this->table_name = meta::get_table_name<ModelT>();
+		this->table_name = db::get_table_name<ModelT>();
 		this->append_row(model);
 	};
 
@@ -90,7 +90,7 @@ public:
 	{
 		if (driver)
 		{
-			this->db = driver;
+			this->sql_driver = driver;
 		}
 
 		return *this;
@@ -102,15 +102,21 @@ public:
 	[[nodiscard]]
 	inline std::string query() const
 	{
-		if (!this->db)
+		if (!this->sql_driver)
 		{
 			throw QueryError("update: database driver not set", _ERROR_DETAILS_);
 		}
 
+		auto sql_builder = this->sql_driver->query_builder();
+		if (!sql_builder)
+		{
+			throw QueryError("update: SQL query builder is not initialized", _ERROR_DETAILS_);
+		}
+
 		return str::join(
 			" ", this->rows.begin(), this->rows.end(),
-			[this](const auto& row) -> std::string {
-				return this->db->make_update_query(this->table_name, row.first, row.second);
+			[this, sql_builder](const auto& row) -> std::string {
+				return sql_builder->sql_update(this->table_name, row.first, row.second);
 			}
 		);
 	}
@@ -136,15 +142,15 @@ public:
 		}
 
 		auto query = this->query();
-		this->db->run_update(query, false);
+		this->sql_driver->run_update(query, false);
 	}
 
 	// Updates multiple rows in database.
 	inline void commit_batch() const
 	{
 		auto query = this->query();
-		this->db->run_update(query, true);
+		this->sql_driver->run_update(query, true);
 	}
 };
 
-__Q_END__
+__ORM_Q_END__
