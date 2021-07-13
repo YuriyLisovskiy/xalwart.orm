@@ -9,6 +9,7 @@ Dockerfile*
 cmake-build-*
 build/
 README.md
+VERSION
 Makefile
 docker/
 
