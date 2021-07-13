@@ -34,7 +34,6 @@ RUN git clone -q https://github.com/google/googletest.git /googletest && \
 RUN git clone -q https://$GH_ACCESS_TOKEN@github.com/YuriyLisovskiy/xalwart.core.git /xalwart.core && \
     mkdir -p /xalwart.core/build && \
     cd /xalwart.core && \
-    git checkout dev && \
     cd /xalwart.core/build && \
     cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release .. && \
     make && make install && \
