@@ -1,21 +1,21 @@
-ARG ALPINE_VERSION=3.13
+FROM alpine:3.13
 
-FROM alpine:$ALPINE_VERSION
-
+ARG cc=clang
+ARG cxx=clang++
+ARG build_shared_lib=off
 ARG GH_ACCESS_TOKEN
-
-ENV APP_HOME /app
-ENV APP_USER root
-USER $APP_USER
-
-WORKDIR $APP_HOME
 
 RUN echo "ipv6" >> /etc/modules
 
 RUN apk update && apk upgrade
 
+RUN apk add --update --no-cache bash
+
+COPY . .
+
+RUN bash ./scripts/install_compiler_alpine.sh $cc
+
 RUN apk add --update --no-cache \
-    gcc \
     alpine-sdk \
     dpkg \
     cmake \
@@ -26,25 +26,34 @@ RUN apk add --update --no-cache \
 RUN git clone -q https://github.com/google/googletest.git /googletest && \
     mkdir -p /googletest/build && \
     cd /googletest/build && \
-    cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc .. && \
+    cmake -DCMAKE_C_COMPILER=$cc \
+          -DCMAKE_CXX_COMPILER=$cxx \
+          .. && \
     make && make install && \
     cd / && rm -rf /googletest
 
 RUN git clone -q https://$GH_ACCESS_TOKEN@github.com/YuriyLisovskiy/xalwart.base.git /xalwart.base && \
     mkdir -p /xalwart.base/build && \
     cd /xalwart.base && \
+    git checkout dev && \
     cd /xalwart.base/build && \
-    cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release .. && \
+    cmake -DCMAKE_C_COMPILER=$cc \
+          -DCMAKE_CXX_COMPILER=$cxx \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIB=$build_shared_lib \
+          .. && \
     make && make install && \
     cd / && rm -rf /xalwart.base
 
 RUN ldconfig /etc/ld.so.conf.d
 
-COPY . .
-
-RUN mkdir $APP_HOME/build && \
-    cd $APP_HOME/build && \
-    cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug .. && \
+RUN mkdir build && \
+    cd build && \
+    cmake -DCMAKE_C_COMPILER=$cc \
+          -DCMAKE_CXX_COMPILER=$cxx \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_SHARED_LIB=$build_shared_lib \
+          .. && \
     make unittests-all
 
 CMD valgrind --leak-check=full $APP_HOME/build/tests/unittests-all

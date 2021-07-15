@@ -23,7 +23,7 @@ The following library is required:
 - [xalwart.base](https://github.com/YuriyLisovskiy/xalwart.base) 0.x.x or later
 
 ### Available drivers:
-* `sqlite3`:
+* `sqlite3` (`USE_SQLITE3`):
     ```bash
     sudo apt-get install sqlite3 libsqlite3-dev
     ```
@@ -34,9 +34,12 @@ The following library is required:
   ```
 
 ## Compile from Source
+* `BUILD_SHARED_LIB` means to build a shared or static library (`off` by default).
+* `USE_DRIVER_NAME` marks the name of a driver that will be used in ORM.
+  `DRIVER_NAME` should be replaced by one of the [available drivers](#available-drivers).
 ```bash
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DUSE_DRIVER_NAME=yes ..
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIB=off -DUSE_DRIVER_NAME=yes ..
 make
 
 # for linux:
