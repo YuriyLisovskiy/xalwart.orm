@@ -27,5 +27,6 @@ function(add_sub_tests SUB_NAME)
 endfunction(add_sub_tests)
 
 add_tests("" all)
+add_sub_tests(db)
 add_sub_tests(exceptions)
 add_sub_tests(queries)

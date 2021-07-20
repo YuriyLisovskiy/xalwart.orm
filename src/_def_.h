@@ -19,11 +19,7 @@ __ORM_BEGIN__
 
 namespace v
 {
-const uint major = 0;
-const uint minor = 0;
-const uint patch = 0;
-
-const std::string version = std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+const inline auto version = version_t("0.0.0");
 };
 
 __ORM_END__

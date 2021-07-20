@@ -34,12 +34,17 @@ The following library is required:
   ```
 
 ## Compile from Source
-* `BUILD_SHARED_LIB` means to build a shared or static library (`off` by default).
-* `USE_DRIVER_NAME` marks the name of a driver that will be used in ORM.
+* `BUILD_SHARED_LIBS` means to build a shared or static library (`off` by default).
+* `XW_USE_DRIVER_NAME` marks the name of a driver that will be used in ORM.
   `DRIVER_NAME` should be replaced by one of the [available drivers](#available-drivers).
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIB=off -DUSE_DRIVER_NAME=yes ..
+git clone https://github.com/YuriyLisovskiy/xalwart.orm.git
+cd xalwart.orm
+mkdir build
+cmake -D CMAKE_BUILD_TYPE=Release \
+      -D BUILD_SHARED_LIBS=ON \
+      -D XW_USE_DRIVER_NAME=ON \
+      ..
 make
 
 # for linux:
@@ -48,11 +53,12 @@ sudo make install
 
 ## Testing
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Debug .. && make unittests-all
-```
-
-Use valgrind to check for memory leaks:
-```bash
+mkdir build
+cd build
+cmake -D CMAKE_BUILD_TYPE=Debug \
+      -D BUILD_SHARED_LIBS=ON \
+      -D XW_BUILD_TESTS=ON \
+      ..
+make unittests-all
 valgrind --leak-check=full ./tests/unittests-all
 ```
