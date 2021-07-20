@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - dev
+      - release
 jobs:
   compile-lib:
     name: Build the library and upload it to artifacts

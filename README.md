@@ -34,16 +34,15 @@ The following library is required:
   ```
 
 ## Compile from Source
-* `BUILD_SHARED_LIBS` means to build a shared or static library (`off` by default).
-* `XW_USE_DRIVER_NAME` marks the name of a driver that will be used in ORM.
-  `DRIVER_NAME` should be replaced by one of the [available drivers](#available-drivers).
+* `BUILD_SHARED_LIBS` means to build a shared or static library (`ON` by default).
+* `XW_USE_DB_DRIVER_NAME` marks the name of a driver that will be used in ORM.
+  `DB_DRIVER_NAME` should be replaced by one of the [available drivers](#available-drivers).
 ```bash
 git clone https://github.com/YuriyLisovskiy/xalwart.orm.git
 cd xalwart.orm
 mkdir build
 cmake -D CMAKE_BUILD_TYPE=Release \
-      -D BUILD_SHARED_LIBS=ON \
-      -D XW_USE_DRIVER_NAME=ON \
+      -D XW_USE_DB_DRIVER_NAME=ON \
       ..
 make
 
@@ -56,7 +55,6 @@ sudo make install
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=Debug \
-      -D BUILD_SHARED_LIBS=ON \
       -D XW_BUILD_TESTS=ON \
       ..
 make unittests-all
