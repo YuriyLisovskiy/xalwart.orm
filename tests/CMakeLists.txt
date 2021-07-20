@@ -15,7 +15,8 @@ function(add_tests SUB_DIR SUB_NAME)
     add_executable(${FULL_BIN} ${SOURCES} ${TESTS_DIR}/main.cpp)
     target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs)
 
-    if (USE_SQLITE3)
+    if (${XW_USE_SQLITE3})
+        add_compile_definitions(USE_SQLITE3)
         target_link_libraries(${FULL_BIN} PUBLIC sqlite3)
     endif()
 
