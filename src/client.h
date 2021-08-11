@@ -8,6 +8,9 @@
 
 #pragma once
 
+// Base libraries.
+#include <xalwart.base/utility.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -69,7 +72,7 @@ public:
 		auto pk_str = q::insert<ModelT>(model).use(this->db.get()).one();
 		if (pk_member_ptr)
 		{
-			model.*pk_member_ptr = util::as<PkT>((const void*)pk_str.c_str());
+			model.*pk_member_ptr = xw::util::as<PkT>((const void*)pk_str.c_str());
 		}
 	}
 
