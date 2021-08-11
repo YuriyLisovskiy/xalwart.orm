@@ -15,12 +15,13 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: RenameColumn
+// TODO: docs for 'RenameColumn'
 // Renames a column in the table in database.
 class RenameColumn : public ColumnOperation
 {
@@ -29,17 +30,12 @@ protected:
 
 public:
 	inline explicit RenameColumn(
-		const std::string& table_name,
-		const std::string& old_name, std::string new_name
-	) : ColumnOperation(table_name, old_name),
-		new_name_(std::move(new_name))
+		const std::string& table_name, const std::string& old_name, std::string new_name
+	) : ColumnOperation(table_name, old_name), new_name_(std::move(new_name))
 	{
 		if (this->new_name_.empty())
 		{
-			throw ValueError(
-				ce<RenameColumn>("", "'new_name' can not be empty"),
-				_ERROR_DETAILS_
-			);
+			throw ValueError(ce<RenameColumn>("", "'new_name' can not be empty"), _ERROR_DETAILS_);
 		}
 	}
 
@@ -68,8 +64,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& to_table = to_state.get_table_addr(this->table_name());
@@ -77,16 +72,12 @@ public:
 		xw::util::require_non_null(
 			editor, ce<RenameColumn>("forward", "schema editor is nullptr")
 		)->alter_column(
-			from_table,
-			from_table.get_column_addr(this->name()),
-			to_table.get_column_addr(this->new_name()),
-			false
+			from_table, from_table.get_column_addr(this->name()), to_table.get_column_addr(this->new_name()), false
 		);
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
@@ -94,10 +85,7 @@ public:
 		xw::util::require_non_null(
 			editor, ce<RenameColumn>("backward", "schema editor is nullptr")
 		)->alter_column(
-			from_table,
-			from_table.get_column_addr(this->new_name()),
-			to_table.get_column_addr(this->name()),
-			false
+			from_table, from_table.get_column_addr(this->new_name()), to_table.get_column_addr(this->name()), false
 		);
 	}
 };

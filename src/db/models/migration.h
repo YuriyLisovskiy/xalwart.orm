@@ -38,8 +38,7 @@ public:
 	inline std::string __str__() const override
 	{
 		return this->is_null() ? "null" : (
-			"Migration " + this->name + " at " +
-			this->applied.strftime(db::DEFAULT_DATETIME_FORMAT)
+			"Migration " + this->name + " at " + this->applied.strftime(db::DEFAULT_DATETIME_FORMAT)
 		);
 	}
 

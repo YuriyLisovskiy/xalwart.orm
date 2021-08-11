@@ -19,10 +19,10 @@
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type_c ModelT>
+template <db::model_based_type ModelT>
 class delete_ final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "delete: 'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::delete: 'meta_table_name' is not initialized");
 
 protected:
 
@@ -41,17 +41,13 @@ protected:
 	{
 		if (model.is_null())
 		{
-			throw QueryError("delete: unable to delete null model", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::delete: unable to delete null model", _ERROR_DETAILS_);
 		}
 
 		util::tuple_for_each(ModelT::meta_columns, [this, model](auto& column)
 		{
 			if (column.is_pk)
 			{
-				using field_type = typename std::remove_reference<decltype(column)>::type;
-//				this->pks.push_back(
-//					get_column_value_as_string<ModelT, typename field_type::field_type>(model, column)
-//				);
 				this->pks.push_back(column.as_string(model));
 				return false;
 			}
@@ -87,7 +83,7 @@ public:
 	{
 		if (!this->sql_driver)
 		{
-			throw QueryError("delete: database driver not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::delete: database driver not set", _ERROR_DETAILS_);
 		}
 
 		auto condition = this->where_cond;
@@ -112,7 +108,7 @@ public:
 		auto sql_builder = this->sql_driver->query_builder();
 		if (!sql_builder)
 		{
-			throw QueryError("delete: SQL builder is not initialized", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::delete: SQL builder is not initialized", _ERROR_DETAILS_);
 		}
 
 		return sql_builder->sql_delete(db::get_table_name<ModelT>(), condition.value);

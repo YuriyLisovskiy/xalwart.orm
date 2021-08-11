@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Abstract base classes for `db` module.
+ * Abstract base classes for 'db' module.
  */
 
 #pragma once
@@ -15,11 +15,12 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./state.h"
+#include "./states.h"
 
 
 __ORM_DB_ABC_BEGIN__
 
+// TODO: docs for 'ISchemaEditor'
 class ISchemaEditor
 {
 protected:
@@ -52,19 +53,18 @@ public:
 	) const = 0;
 };
 
+// TODO: docs for 'IOperation'
 class IOperation
 {
 public:
 	virtual void update_state(ProjectState& st) const = 0;
 
 	virtual void forward(
-		const ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const = 0;
 
 	virtual void backward(
-		const ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const = 0;
 };
 

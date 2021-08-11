@@ -13,15 +13,16 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 #include "../../exceptions.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: AlterColumn
+// TODO: docs for 'AlterColumn'
 // Alters a column of the table in database.
-template <column_migration_type_c T>
+template <column_migration_type T>
 class AlterColumn : public ColumnOperation
 {
 protected:
@@ -54,8 +55,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
@@ -63,16 +63,12 @@ public:
 		xw::util::require_non_null(
 			editor, ce<AlterColumn<T>>("forward/backward", "schema editor is nullptr")
 		)->alter_column(
-			from_table,
-			from_table.get_column_addr(this->name()),
-			to_table.get_column_addr(this->name()),
-			false
+			from_table, from_table.get_column_addr(this->name()), to_table.get_column_addr(this->name()), false
 		);
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		this->forward(editor, from_state, to_state);

@@ -28,14 +28,14 @@
 __ORM_Q_BEGIN__
 
 // TESTME: add tests with mocked driver
-template <db::model_based_type_c ModelT>
+template <db::model_based_type ModelT>
 class select final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "select: 'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::select: 'meta_table_name' is not initialized");
 
 protected:
 
-	// Driver to perform an access to the database.
+	// Driver to perform the access to the database.
 	abc::ISQLDriver* sql_driver = nullptr;
 
 	abc::ISQLQueryBuilder* sql_builder = nullptr;
@@ -88,7 +88,7 @@ public:
 		this->pk_name = db::get_pk_name<ModelT>();
 		if (this->pk_name.empty())
 		{
-			throw QueryError("select: model requires pk column", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::select: model requires pk column", _ERROR_DETAILS_);
 		}
 	};
 
@@ -100,15 +100,14 @@ public:
 			this->sql_driver = driver;
 			if (!this->sql_driver)
 			{
-				throw QueryError("select: SQL driver is not set", _ERROR_DETAILS_);
+				throw QueryError("xw::orm::q::select: SQL driver is not set", _ERROR_DETAILS_);
 			}
 
 			this->sql_builder = driver->query_builder();
 			if (!this->sql_builder)
 			{
 				throw QueryError(
-					"select: unable to retrieve not nullptr SQL query builder from driver",
-					_ERROR_DETAILS_
+					"xw::orm::q::select: unable to retrieve not nullptr SQL query builder from driver", _ERROR_DETAILS_
 				);
 			}
 		}
@@ -124,7 +123,7 @@ public:
 	{
 		if (!this->sql_builder)
 		{
-			throw QueryError("select: SQL query builder is not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::select: SQL query builder is not set", _ERROR_DETAILS_);
 		}
 
 		std::list<std::string> columns;
@@ -155,7 +154,7 @@ public:
 	{
 		if (!this->sql_builder)
 		{
-			throw QueryError("select > " + func.name + ": SQL query builder is not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::select > " + func.name + ": SQL query builder is not set", _ERROR_DETAILS_);
 		}
 
 		auto query = this->sql_builder->sql_select_(
@@ -173,7 +172,7 @@ public:
 
 		if (!this->sql_driver)
 		{
-			throw QueryError("select > " + func.name + ": SQL driver is not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::select > " + func.name + ": SQL driver is not set", _ERROR_DETAILS_);
 		}
 
 		using row_t = std::map<std::string, char*>;
@@ -190,7 +189,7 @@ public:
 	// Calculates average value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <db::column_field_type_c ColumnT>
+	template <db::column_field_type ColumnT>
 	inline auto avg(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<double>(q::avg(column));
@@ -210,7 +209,7 @@ public:
 	// Calculates minimum value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <db::column_field_type_c ColumnT>
+	template <db::column_field_type ColumnT>
 	inline auto min(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::min(column));
@@ -220,7 +219,7 @@ public:
 	// Calculates maximum value of given column in selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <db::column_field_type_c ColumnT>
+	template <db::column_field_type ColumnT>
 	inline auto max(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::max(column));
@@ -230,7 +229,7 @@ public:
 	// Calculates sum by column of selected rows.
 	//
 	// Throws 'QueryError' when driver is not set.
-	template <db::column_field_type_c ColumnT>
+	template <db::column_field_type ColumnT>
 	inline auto sum(ColumnT ModelT::* column) const
 	{
 		return this->template aggregate<ColumnT>(q::sum(column));
@@ -273,7 +272,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `ModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		const std::function<void(ModelT&, const xw::Lazy<std::list<OtherModelT>>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<ModelT>&)>& second,
@@ -305,7 +304,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& one_to_many(
 		xw::Lazy<std::list<OtherModelT>> ModelT::* left,
 		xw::Lazy<ModelT> OtherModelT::* right,
@@ -347,7 +346,7 @@ public:
 	// and '_id' suffix. For example:
 	//   `OtherModelT::meta_table_name` equals to 'persons', so, the result
 	//   will be 'person_id'.
-	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		const std::function<void(ModelT&, const xw::Lazy<OtherModelT>&)>& first,
 		const std::function<void(OtherModelT&, const xw::Lazy<std::list<ModelT>>&)>& second,
@@ -384,7 +383,7 @@ public:
 	// automatically.
 	//
 	// For more details, read the above method's doc.
-	template <db::column_field_type_c PrimaryKeyT = size_t, typename OtherModelT>
+	template <db::column_field_type PrimaryKeyT = size_t, typename OtherModelT>
 	inline select& many_to_one(
 		xw::Lazy<OtherModelT> ModelT::* left,
 		xw::Lazy<std::list<ModelT>> OtherModelT::* right,
@@ -496,7 +495,7 @@ public:
 	inline select& many_to_many(
 		Lazy<std::list<OtherModelT>> ModelT::*left,
 		Lazy<std::list<ModelT>> OtherModelT::*right,
-		std::string left_fk="", std::string right_fk="", std::string intermediate_table=""
+		const std::string& left_fk="", const std::string& right_fk="", const std::string& intermediate_table=""
 	)
 	{
 		return this->template many_to_many<OtherModelT>(
@@ -604,6 +603,7 @@ public:
 	// query and returns its result.
 	//
 	// Throws 'QueryError' when driver is not set.
+	[[nodiscard]]
 	inline std::list<ModelT> all() const
 	{
 		auto query = this->query();
@@ -635,7 +635,7 @@ public:
 	{
 		if (!this->sql_builder)
 		{
-			throw QueryError("select: SQL query builder is not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::select: SQL query builder is not set", _ERROR_DETAILS_);
 		}
 
 		auto pk_col = util::quote_str(this->table_name) + "." + util::quote_str(this->pk_name);
@@ -653,9 +653,7 @@ public:
 		);
 		select_query.pop_back();
 
-		auto query = this->sql_builder->sql_delete(
-			this->table_name, Condition(pk_col + " IN (" + select_query + ")")
-		);
+		auto query = this->sql_builder->sql_delete(this->table_name, Condition(pk_col + " IN (" + select_query + ")"));
 		this->sql_driver->run_delete(query);
 	}
 };

@@ -28,7 +28,9 @@
 __ORM_DB_BEGIN__
 
 // !IMPORTANT!
-// Currently Model supports single pk only.
+// Model supports single pk only!
+// TESTME: Model
+// TODO: docs for 'Model'
 class Model : public obj::Object
 {
 private:
@@ -74,26 +76,22 @@ protected:
 				using column_type = typename std::remove_reference<decltype(column)>::type;
 				using model_type = typename column_type::model_type;
 				using field_type = typename column_type::field_type;
-
 				if constexpr (std::is_same_v<field_type, dt::Date>)
 				{
 					obj = std::make_shared<types::Date>(
-						((model_type*)this)->*column.member_pointer,
-						DEFAULT_DATE_FORMAT
+						((model_type*)this)->*column.member_pointer, DEFAULT_DATE_FORMAT
 					);
 				}
 				else if constexpr (std::is_same_v<field_type, dt::Time>)
 				{
 					obj = std::make_shared<types::Time>(
-						((model_type*)this)->*column.member_pointer,
-						DEFAULT_TIME_FORMAT
+						((model_type*)this)->*column.member_pointer, DEFAULT_TIME_FORMAT
 					);
 				}
 				else if constexpr (std::is_same_v<field_type, dt::Datetime>)
 				{
 					obj = std::make_shared<types::Datetime>(
-						((model_type*)this)->*column.member_pointer,
-						DEFAULT_DATETIME_FORMAT
+						((model_type*)this)->*column.member_pointer, DEFAULT_DATETIME_FORMAT
 					);
 				}
 				else
@@ -119,9 +117,7 @@ protected:
 	}
 
 	template <typename ...Columns>
-	void set_attribute_to(
-		const std::tuple<Columns...>& columns, const char* attr_name, const void* data
-	)
+	void set_attribute_to(const std::tuple<Columns...>& columns, const char* attr_name, const void* data)
 	{
 		bool is_set = false;
 		util::tuple_for_each(columns, [this, attr_name, data, &is_set](auto& column)
@@ -151,15 +147,13 @@ protected:
 
 public:
 
-	// By default throws 'NotImplementedException'.
+	// By default, throws 'NotImplementedException'.
 	// Overwriting is recommended in child classes
 	// for models' comparison.
 	[[nodiscard]]
 	inline short __cmp__(const Object* other) const override
 	{
-		throw NotImplementedException(
-			"'__cmp__' is not implemented", _ERROR_DETAILS_
-		);
+		throw NotImplementedException("'__cmp__' is not implemented", _ERROR_DETAILS_);
 	}
 
 	[[nodiscard]]
@@ -240,10 +234,10 @@ public:
 
 // Used in templates where Model-based class is required.
 template <typename T>
-concept model_based_type_c = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
+concept model_based_type = std::is_base_of_v<Model, T> && std::is_default_constructible_v<T>;
 
 template <typename T>
-concept model_based_iterator_type_c = std::is_base_of_v<Model, iterator_v_type<T>> &&
+concept model_based_iterator = std::is_base_of_v<Model, iterator_v_type<T>> &&
 	std::is_default_constructible_v<iterator_v_type<T>>;
 
 __ORM_DB_END__

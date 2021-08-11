@@ -9,18 +9,17 @@
 #pragma once
 
 // Module definitions.
-#include <utility>
-
 #include "./_def_.h"
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: RenameTable
+// TODO: docs for 'RenameTable'
 // Renames a table in the database.
 class RenameTable : public TableOperation
 {
@@ -28,9 +27,8 @@ protected:
 	mutable std::string new_table_name;
 
 public:
-	inline explicit RenameTable(
-		const std::string& old_name, std::string new_name
-	) : TableOperation(old_name), new_table_name(std::move(new_name))
+	inline explicit RenameTable(const std::string& old_name, std::string new_name) :
+		TableOperation(old_name), new_table_name(std::move(new_name))
 	{
 	}
 
@@ -55,8 +53,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& new_table = to_state.get_table_addr(this->new_name());
@@ -67,8 +64,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		std::swap(this->new_table_name, this->table_name);

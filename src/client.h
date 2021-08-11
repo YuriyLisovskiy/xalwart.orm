@@ -25,6 +25,8 @@
 
 __ORM_BEGIN__
 
+// TESTME: Client
+// TODO: docs for 'Client'
 class Client final
 {
 protected:
@@ -41,9 +43,7 @@ public:
 	{
 		if (!this->db)
 		{
-			throw NullPointerException(
-				"Client: driver must be instantiated", _ERROR_DETAILS_
-			);
+			throw NullPointerException("xw::orm::Client: driver must be instantiated", _ERROR_DETAILS_);
 		}
 	}
 
@@ -57,19 +57,19 @@ public:
 
 	// TESTME: insert_one
 	// Inserts one model to the database.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline void insert_one(const ModelT& model) const
 	{
-		q::insert<ModelT>(model).use(this->db.get()).commit_one();
+		q::insert<ModelT>(model).use(this->driver()).commit_one();
 	}
 
 	// TESTME: insert_one (with pk)
 	// Inserts one model to the database and writes
 	// last inserted primary key to 'pk' out argument.
-	template <db::model_based_type_c ModelT, typename PkT>
+	template <db::model_based_type ModelT, typename PkT>
 	inline void insert_one(ModelT& model, PkT ModelT::* pk_member_ptr) const
 	{
-		auto pk_str = q::insert<ModelT>(model).use(this->db.get()).one();
+		auto pk_str = q::insert<ModelT>(model).use(this->driver()).one();
 		if (pk_member_ptr)
 		{
 			model.*pk_member_ptr = xw::util::as<PkT>((const void*)pk_str.c_str());
@@ -78,15 +78,15 @@ public:
 
 	// TESTME: insert
 	// Creates 'insert' statement object with initialized driver.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline q::insert<ModelT> insert(const ModelT& model) const
 	{
-		return q::insert<ModelT>(model).use(this->db.get());
+		return q::insert<ModelT>(model).use(this->driver());
 	}
 
 	// TESTME: insert (using iterator)
 	// Inserts the list of models to the database.
-	template <db::model_based_iterator_type_c IteratorT>
+	template <db::model_based_iterator IteratorT>
 	inline void insert(IteratorT begin, IteratorT end) const
 	{
 		if (begin == end)
@@ -104,42 +104,41 @@ public:
 
 	// TESTME: get
 	// Retrieve first row from database.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline ModelT get(const q::Condition& cond) const
 	{
-		return q::select<ModelT>().use(this->db.get()).where(cond).first();
+		return q::select<ModelT>().use(this->driver()).where(cond).first();
 	}
 
 	// TESTME: select
 	// Creates 'select' statement object with initialized driver.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline q::select<ModelT> select() const
 	{
-		return q::select<ModelT>().use(this->db.get());
+		return q::select<ModelT>().use(this->driver());
 	}
 
 	// TESTME: filter
 	// Creates 'select' statement object with called 'where' method.
 	// So, 'WHERE' condition is set and can not be changed.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline q::select<ModelT> filter(const q::Condition& cond) const
 	{
-		return q::select<ModelT>().use(this->db.get()).where(cond);
+		return q::select<ModelT>().use(this->driver()).where(cond);
 	}
 
 	// TESTME: update
 	// Creates 'update' statement object with initialized driver.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline q::update<ModelT> update(const ModelT& model) const
 	{
-		return q::update<ModelT>(model).use(this->db.get());
+		return q::update<ModelT>(model).use(this->driver());
 	}
 
 	// TESTME: update (using iterator)
 	// Deletes list of models using iterator.
 	template <
-		db::model_based_iterator_type_c IteratorT,
-		db::model_based_type_c ModelT = iterator_v_type<IteratorT>
+		db::model_based_iterator IteratorT, db::model_based_type ModelT = iterator_v_type<IteratorT>
 	>
 	inline void update(IteratorT begin, IteratorT end) const
 	{
@@ -157,7 +156,7 @@ public:
 
 	// TESTME: update (using initializer list)
 	// Updates list of models using initializer list.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline void update(const std::initializer_list<ModelT>& list) const
 	{
 		using ConstIterator = typename std::initializer_list<ModelT>::const_iterator;
@@ -166,17 +165,16 @@ public:
 
 	// TESTME: delete_
 	// Creates 'delete_' statement object with initialized driver.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline q::delete_<ModelT> delete_(const ModelT& model) const
 	{
-		return q::delete_<ModelT>(model).use(this->db.get());
+		return q::delete_<ModelT>(model).use(this->driver());
 	}
 
 	// TESTME: delete_ (using iterator)
 	// Deletes list of models using iterator.
 	template <
-		db::model_based_iterator_type_c IteratorT,
-		db::model_based_type_c ModelT = iterator_v_type<IteratorT>
+		db::model_based_iterator IteratorT, db::model_based_type ModelT = iterator_v_type<IteratorT>
 	>
 	inline void delete_(IteratorT begin, IteratorT end) const
 	{
@@ -185,7 +183,7 @@ public:
 			return;
 		}
 
-		auto query = q::delete_<ModelT>(*begin++).use(this->db.get());
+		auto query = q::delete_<ModelT>(*begin++).use(this->driver());
 		std::for_each(begin, end, [&query](const ModelT& model) -> void {
 			query.model(model);
 		});
@@ -194,7 +192,7 @@ public:
 
 	// TESTME: delete_ (using initializer list)
 	// Deletes list of models using initializer list.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline void delete_(const std::initializer_list<ModelT>& list) const
 	{
 		using ConstIterator = typename std::initializer_list<ModelT>::const_iterator;
@@ -203,42 +201,42 @@ public:
 
 	// TESTME: avg
 	// Calculates average value of given column in selected rows.
-	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
+	template <db::model_based_type ModelT, db::column_field_type ColumnT>
 	inline auto avg(ColumnT ModelT::* column) const
 	{
-		return q::select<ModelT>().use(this->db.get()).avg(column);
+		return q::select<ModelT>().use(this->driver()).avg(column);
 	}
 
 	// TESTME: count
 	// Calculates selected rows.
-	template <db::model_based_type_c ModelT>
+	template <db::model_based_type ModelT>
 	inline auto count() const
 	{
-		return q::select<ModelT>().use(this->db.get()).count();
+		return q::select<ModelT>().use(this->driver()).count();
 	}
 
 	// TESTME: min
 	// Calculates minimum value of given column in selected rows.
-	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
+	template <db::model_based_type ModelT, db::column_field_type ColumnT>
 	inline auto min(ColumnT ModelT::* column) const
 	{
-		return q::select<ModelT>().use(this->db.get()).min(column);
+		return q::select<ModelT>().use(this->driver()).min(column);
 	}
 
 	// TESTME: max
 	// Calculates maximum value of given column in selected rows.
-	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
+	template <db::model_based_type ModelT, db::column_field_type ColumnT>
 	inline auto max(ColumnT ModelT::* column) const
 	{
-		return q::select<ModelT>().use(this->db.get()).max(column);
+		return q::select<ModelT>().use(this->driver()).max(column);
 	}
 
 	// TESTME: sum
 	// Calculates sum by column of selected rows.
-	template <db::model_based_type_c ModelT, db::column_field_type_c ColumnT>
+	template <db::model_based_type ModelT, db::column_field_type ColumnT>
 	inline auto sum(ColumnT ModelT::* column) const
 	{
-		return q::select<ModelT>().use(this->db.get()).sum(column);
+		return q::select<ModelT>().use(this->driver()).sum(column);
 	}
 };
 

@@ -25,8 +25,7 @@ Driver::Driver(const char* filename)
 	if (sqlite3_open(filename, &driver))
 	{
 		throw RuntimeError(
-			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
-			_ERROR_DETAILS_
+			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)), _ERROR_DETAILS_
 		);
 	}
 
@@ -110,9 +109,7 @@ void Driver::run_insert(const std::string& query, std::string& last_row_id) cons
 	}
 }
 
-void Driver::run_select(
-	const std::string& query, void* container, void(*handle_row)(void*, void*)
-) const
+void Driver::run_select(const std::string& query, void* container, void(*handle_row)(void*, void*)) const
 {
 	if (query.empty())
 	{
@@ -155,16 +152,6 @@ void Driver::run_select(
 		sqlite3_free(message_error);
 		throw SQLError(message, _ERROR_DETAILS_);
 	}
-}
-
-void Driver::run_update(const std::string& query, bool batch) const
-{
-	this->run_query(batch ? "BEGIN TRANSACTION; " + query + " COMMIT TRANSACTION;" : query);
-}
-
-void Driver::run_delete(const std::string& query) const
-{
-	this->run_query(query);
 }
 
 bool Driver::run_transaction(const std::function<bool()>& func) const

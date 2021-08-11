@@ -32,9 +32,7 @@ protected:
 protected:
 	// Helper method which throws 'QueryError' with message and
 	// location for 'arg' argument name.
-	inline void throw_empty_arg(
-		const std::string& arg, int line, const char* function, const char* file
-	) const
+	inline void throw_empty_arg(const std::string& arg, int line, const char* function, const char* file) const
 	{
 		throw QueryError(this->name() + ": '" + arg + "' is required", line, function, file);
 	}
@@ -89,16 +87,20 @@ public:
 	// - `row_map` is row of type std::map<std::string, char*>
 	//   which contains pairs (column_name, column_value).
 	void run_select(
-		const std::string& query,
-		void* container,
-		void(*handle_row)(void* container, void* row_map)
+		const std::string& query, void* container, void(*handle_row)(void* container, void* row_map)
 	) const override;
 
 	// update row(s)
-	void run_update(const std::string& query, bool batch) const override;
+	inline void run_update(const std::string& query, bool batch) const override
+	{
+		this->run_query(batch ? "BEGIN TRANSACTION; " + query + " COMMIT TRANSACTION;" : query);
+	}
 
 	// delete row(s)
-	void run_delete(const std::string& query) const override;
+	inline void run_delete(const std::string& query) const override
+	{
+		this->run_query(query);
+	}
 
 	// wrap 'func()' call in transaction
 	bool run_transaction(const std::function<bool()>& func) const override;

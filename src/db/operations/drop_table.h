@@ -13,12 +13,13 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: DropTable
+// TODO: docs for 'DropTable'
 // Drops a table from the database.
 class DropTable : public TableOperation
 {
@@ -33,8 +34,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
@@ -44,8 +44,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = to_state.tables.at(this->name());

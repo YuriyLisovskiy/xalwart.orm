@@ -107,7 +107,7 @@ TEST_F(TestCase_Q_select, first_ThrowsClientNotSet)
 
 TEST_F(TestCase_Q_select, all_ThrowsClientNotSet)
 {
-	ASSERT_THROW(this->query->all(), orm::QueryError);
+	ASSERT_THROW(auto _ = this->query->all(), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_select, query_ThrowsClientNotSet)

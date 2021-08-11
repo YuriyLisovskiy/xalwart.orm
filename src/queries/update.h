@@ -18,14 +18,14 @@
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type_c ModelT>
+template <db::model_based_type ModelT>
 class update final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "update: 'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::update: 'meta_table_name' is not initialized");
 
 protected:
 
-	// Driver to perform an access to the database.
+	// Driver to perform the access to the database.
 	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Name of the table which is retrieved from
@@ -46,7 +46,7 @@ protected:
 	{
 		if (model.is_null())
 		{
-			throw QueryError("update: unable to update null model", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::update: unable to update null model", _ERROR_DETAILS_);
 		}
 
 		std::string pk_name, pk_val;
@@ -104,18 +104,17 @@ public:
 	{
 		if (!this->sql_driver)
 		{
-			throw QueryError("update: database driver not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::update: database driver not set", _ERROR_DETAILS_);
 		}
 
 		auto sql_builder = this->sql_driver->query_builder();
 		if (!sql_builder)
 		{
-			throw QueryError("update: SQL query builder is not initialized", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::update: SQL query builder is not initialized", _ERROR_DETAILS_);
 		}
 
 		return str::join(
-			" ", this->rows.begin(), this->rows.end(),
-			[this, sql_builder](const auto& row) -> std::string {
+			" ", this->rows.begin(), this->rows.end(), [this, sql_builder](const auto& row) -> std::string {
 				return sql_builder->sql_update(this->table_name, row.first, row.second);
 			}
 		);
@@ -136,8 +135,7 @@ public:
 		if (this->rows.size() > 1)
 		{
 			throw QueryError(
-				"update: trying to update one model, but multiple models were set",
-				_ERROR_DETAILS_
+				"xw::orm::q::update: trying to update one model, but multiple models were set", _ERROR_DETAILS_
 			);
 		}
 

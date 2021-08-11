@@ -21,6 +21,8 @@
 
 __ORM_DB_BEGIN__
 
+// TESTME: get_pk_name
+// TODO: docs for 'get_pk_name'
 template <typename ModelT>
 inline std::string get_pk_name()
 {
@@ -38,12 +40,12 @@ inline std::string get_pk_name()
 	return result;
 }
 
+// TESTME: make_fk
+// TODO: docs for 'make_fk'
 template <typename ModelT>
 inline std::string make_fk()
 {
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 	std::string table_name = ModelT::meta_table_name;
 	if (table_name.ends_with('s'))
 	{
@@ -59,6 +61,8 @@ inline std::string make_fk()
 	return table_name + "_" + pk_name;
 }
 
+// TESTME: get_column_name
+// TODO: docs for 'get_column_name'
 template <typename F, typename O>
 inline std::string get_column_name(F O::* member_pointer, bool quote=false)
 {
@@ -82,24 +86,26 @@ inline std::string get_column_name(F O::* member_pointer, bool quote=false)
 	return quote ? util::quote_str(name) : name;
 }
 
+// TESTME: get_table_name
+// TODO: docs for 'get_table_name'
 template <typename ModelT>
 inline std::string get_table_name(bool quote=false)
 {
-	static_assert(
-		ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized"
-	);
+	static_assert(ModelT::meta_table_name != nullptr, "'meta_table_name' is not initialized");
 	return quote ? util::quote_str(ModelT::meta_table_name) : ModelT::meta_table_name;
 }
 
 template <typename T>
-concept column_field_type_c = std::is_fundamental_v<T> ||
+concept column_field_type = std::is_fundamental_v<T> ||
 	std::is_same_v<std::string, T> ||
 	std::is_same_v<const char*, T> ||
 	std::is_same_v<dt::Date, T> ||
 	std::is_same_v<dt::Time, T> ||
 	std::is_same_v<dt::Datetime, T>;
 
-template <typename ModelT, column_field_type_c FieldT>
+// TESTME: ColumnMeta
+// TODO: docs for 'ColumnMeta'
+template <typename ModelT, column_field_type FieldT>
 struct ColumnMeta
 {
 	using field_type = FieldT;
@@ -143,7 +149,9 @@ inline static const char* DEFAULT_DATE_FORMAT = "%Y-%m-%d";
 inline static const char* DEFAULT_TIME_FORMAT = "%H:%M:%S";
 inline static const char* DEFAULT_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S";
 
-template <column_field_type_c FieldT>
+// TESTME: column_as_field
+// TODO: docs for 'column_as_field'
+template <column_field_type FieldT>
 FieldT column_as_field(const void* data)
 {
 	if constexpr (std::is_same_v<FieldT, dt::Date>)
@@ -162,7 +170,9 @@ FieldT column_as_field(const void* data)
 	return xw::util::as<FieldT>(data);
 }
 
-template <column_field_type_c FieldT>
+// TESTME: field_as_column_v
+// TODO: docs for 'field_as_column_v'
+template <column_field_type FieldT>
 std::string field_as_column_v(const FieldT& field)
 {
 	if constexpr (std::is_fundamental_v<FieldT>)
@@ -193,7 +203,9 @@ std::string field_as_column_v(const FieldT& field)
 	return "";
 }
 
-template <typename ModelT, column_field_type_c FieldT>
+// TESTME: make_column_meta
+// TODO: docs for 'make_column_meta'
+template <typename ModelT, column_field_type FieldT>
 inline ColumnMeta<ModelT, FieldT> make_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr, bool is_pk=false
 )
@@ -211,10 +223,10 @@ inline ColumnMeta<ModelT, FieldT> make_column_meta(
 	);
 }
 
+// TESTME: make_pk_column_meta
+// TODO: docs for 'make_pk_column_meta'
 template <typename ModelT, typename FieldT>
-inline ColumnMeta<ModelT, FieldT> make_pk_column_meta(
-	const std::string& name, FieldT ModelT::* member_ptr
-)
+inline ColumnMeta<ModelT, FieldT> make_pk_column_meta(const std::string& name, FieldT ModelT::* member_ptr)
 {
 	return make_column_meta<ModelT, FieldT>(name, member_ptr, true);
 }

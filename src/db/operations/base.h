@@ -22,6 +22,7 @@
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: TableOperation
+// TODO: docs for 'TableOperation'
 // Base class for operations with table.
 class TableOperation : public abc::IOperation
 {
@@ -35,9 +36,7 @@ public:
 	{
 		if (table_name.empty())
 		{
-			throw ValueError(
-				ce<TableOperation>("", "'name' can not be empty"), _ERROR_DETAILS_
-			);
+			throw ValueError(ce<TableOperation>("", "'name' can not be empty"), _ERROR_DETAILS_);
 		}
 	}
 
@@ -49,6 +48,7 @@ public:
 };
 
 // TESTME: ColumnOperation
+// TODO: docs for 'ColumnOperation'
 // Base class for operations with columns.
 class ColumnOperation : public abc::IOperation
 {
@@ -60,23 +60,16 @@ public:
 	ColumnOperation() = default;
 
 	inline explicit ColumnOperation(std::string table_name, std::string column_name) :
-		table_name_(std::move(table_name)),
-		column_name(std::move(column_name))
+		table_name_(std::move(table_name)), column_name(std::move(column_name))
 	{
 		if (this->table_name_.empty())
 		{
-			throw ValueError(
-				ce<ColumnOperation>("", "'table_name' can not be empty"),
-				_ERROR_DETAILS_
-			);
+			throw ValueError(ce<ColumnOperation>("", "'table_name' can not be empty"), _ERROR_DETAILS_);
 		}
 
 		if (this->column_name.empty())
 		{
-			throw ValueError(
-				ce<ColumnOperation>("", "'column_name' can not be empty"),
-				_ERROR_DETAILS_
-			);
+			throw ValueError(ce<ColumnOperation>("", "'column_name' can not be empty"), _ERROR_DETAILS_);
 		}
 	}
 

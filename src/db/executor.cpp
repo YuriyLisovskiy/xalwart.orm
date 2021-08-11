@@ -62,10 +62,7 @@ MigrationExecutor::MigrationExecutor(
 	{
 		if (!left || !right)
 		{
-			throw NullPointerException(
-				"MigrationExecutor: can not compare nullptr migrations",
-				_ERROR_DETAILS_
-			);
+			throw NullPointerException("MigrationExecutor: can not compare nullptr migrations", _ERROR_DETAILS_);
 		}
 
 		return left->name() < right->name();
@@ -76,9 +73,7 @@ MigrationExecutor::MigrationExecutor(
 	}
 }
 
-void MigrationExecutor::apply(
-	const abc::ISchemaEditor* editor, const std::string& to_migration
-) const
+void MigrationExecutor::apply(const abc::ISchemaEditor* editor, const std::string& to_migration) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();
@@ -158,9 +153,7 @@ void MigrationExecutor::apply(
 	}
 }
 
-void MigrationExecutor::rollback(
-	const abc::ISchemaEditor* editor, const std::string& to_migration
-) const
+void MigrationExecutor::rollback(const abc::ISchemaEditor* editor, const std::string& to_migration) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();

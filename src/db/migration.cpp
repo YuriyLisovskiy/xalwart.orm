@@ -19,8 +19,7 @@ void Migration::create_table(
 	if (!build_columns)
 	{
 		throw NullPointerException(
-			ce<Migration>("create_table", "columns builder must be initialized"),
-			_ERROR_DETAILS_
+			ce<Migration>("create_table", "columns builder must be initialized"), _ERROR_DETAILS_
 		);
 	}
 
@@ -37,9 +36,7 @@ bool Migration::apply(
 	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(
-		editor, ce<Migration>("apply", "schema editor is nullptr")
-	);
+	xw::util::require_non_null(editor, ce<Migration>("apply", "schema editor is nullptr"));
 	return xw::util::require_non_null(this->sql_driver)->run_transaction(
 		[this, editor, success_callback, &state]() -> bool
 		{
@@ -64,14 +61,9 @@ bool Migration::rollback(
 	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(
-		editor,
-		ce<Migration>("rollback", "schema editor is nullptr")
-	);
-
+	xw::util::require_non_null(editor, ce<Migration>("rollback", "schema editor is nullptr"));
 	std::list<std::tuple<std::shared_ptr<abc::IOperation>, ProjectState, ProjectState>> ops_to_run;
 	auto new_state = state;
-
 	for (const auto& operation : this->operations)
 	{
 		auto old_state = new_state;

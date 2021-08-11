@@ -10,8 +10,7 @@
 __ORM_BEGIN__
 
 std::string DefaultSQLBuilder::sql_insert(
-	const std::string& table_name, const std::string& columns,
-	const std::list<std::string>& rows
+	const std::string& table_name, const std::string& columns, const std::list<std::string>& rows
 ) const
 {
 	if (table_name.empty())
@@ -90,9 +89,7 @@ std::string DefaultSQLBuilder::sql_select_(
 	{
 		if (limit < 0)
 		{
-			throw QueryError(
-				"DefaultSQLBuilder: 'offset' is used without 'limit'", _ERROR_DETAILS_
-			);
+			throw QueryError("xw::orm::DefaultSQLBuilder: 'offset' is used without 'limit'", _ERROR_DETAILS_);
 		}
 
 		query += " OFFSET " + std::to_string(offset);
@@ -120,9 +117,7 @@ std::string DefaultSQLBuilder::sql_select_(
 	{
 		if (group_by_cols.empty())
 		{
-			throw QueryError(
-				"DefaultSQLBuilder: 'having' is used without 'group by'", _ERROR_DETAILS_
-			);
+			throw QueryError("xw::orm::DefaultSQLBuilder: 'having' is used without 'group by'", _ERROR_DETAILS_);
 		}
 
 		query += " HAVING " + having_str;
@@ -159,15 +154,12 @@ std::string DefaultSQLBuilder::sql_select(
 	}
 
 	return this->sql_select_(
-		table_name, columns_str, distinct, joins, where_cond,
-		order_by_cols, limit, offset, group_by_cols, having_cond
+		table_name, columns_str, distinct, joins, where_cond, order_by_cols, limit, offset, group_by_cols, having_cond
 	);
 }
 
 std::string DefaultSQLBuilder::sql_update(
-	const std::string& table_name,
-	const std::string& columns_data,
-	const q::Condition& condition
+	const std::string& table_name, const std::string& columns_data, const q::Condition& condition
 ) const
 {
 	if (table_name.empty())

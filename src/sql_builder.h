@@ -18,17 +18,17 @@
 
 __ORM_BEGIN__
 
+// TESTME: DefaultSQLBuilder
+// TODO: docs for 'DefaultSQLBuilder'
 class DefaultSQLBuilder : public abc::ISQLQueryBuilder
 {
 private:
 
 	// Helper method which throws 'QueryError' with message and
 	// location for 'arg' argument name.
-	inline void _throw_empty_arg(
-		const std::string& arg, int line, const char* function, const char* file
-	) const
+	inline void _throw_empty_arg(const std::string& arg, int line, const char* function, const char* file) const
 	{
-		throw QueryError("DefaultSQLBuilder: '" + arg + "' is required", line, function, file);
+		throw QueryError("xw::orm::DefaultSQLBuilder: '" + arg + "' is required", line, function, file);
 	}
 
 public:
@@ -39,9 +39,7 @@ public:
 	// at least one non-empty row.
 	[[nodiscard]]
 	std::string sql_insert(
-		const std::string& table_name,
-		const std::string& columns,
-		const std::list<std::string>& rows
+		const std::string& table_name, const std::string& columns, const std::list<std::string>& rows
 	) const override;
 
 	// Builds 'SELECT' query to string from parts.
@@ -90,18 +88,14 @@ public:
 	// example: "column1 = data1, column2 = data2, ..."
 	[[nodiscard]]
 	std::string sql_update(
-		const std::string& table_name,
-		const std::string& columns_data,
-		const q::Condition& condition
+		const std::string& table_name, const std::string& columns_data, const q::Condition& condition
 	) const override;
 
 	// Generates 'DELETE' query as string.
 	//
 	// 'table_name' must be non-empty string.
 	[[nodiscard]]
-	std::string sql_delete(
-		const std::string& table_name, const q::Condition& where_cond
-	) const override;
+	std::string sql_delete(const std::string& table_name, const q::Condition& where_cond) const override;
 };
 
 __ORM_END__

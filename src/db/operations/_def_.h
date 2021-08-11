@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Definitions of `db/operations` module.
+ * Definitions of 'db/operations' module.
  */
 
 #pragma once

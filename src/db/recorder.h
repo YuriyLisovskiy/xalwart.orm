@@ -25,6 +25,7 @@
 __ORM_DB_BEGIN__
 
 // TESTME: MigrationRecorder
+// TODO: docs for 'MigrationRecorder'
 class MigrationRecorder
 {
 protected:
@@ -39,7 +40,7 @@ protected:
 	inline orm::abc::ISQLDriver* driver() const
 	{
 		return xw::util::require_non_null(
-			this->sql_driver, "MigrationRecorder > driver: SQL driver must not be nullptr"
+			this->sql_driver, "xw::orm::db::MigrationRecorder > driver: SQL driver must not be nullptr"
 		);
 	}
 
@@ -60,9 +61,7 @@ protected:
 	inline bool has_table() const
 	{
 		auto tables = this->driver()->table_names();
-		return xw::util::contains(
-			models::Migration::meta_table_name, tables.begin(), tables.end()
-		);
+		return xw::util::contains(models::Migration::meta_table_name, tables.begin(), tables.end());
 	}
 
 public:
@@ -71,7 +70,7 @@ public:
 	inline explicit MigrationRecorder(orm::abc::ISQLDriver* driver)
 	{
 		this->sql_driver = xw::util::require_non_null(
-			driver, "MigrationRecorder: SQL driver must not be nullptr"
+			driver, "xw::orm::db::MigrationRecorder: SQL driver must not be nullptr"
 		);
 	}
 
@@ -94,9 +93,7 @@ public:
 	inline void record_applied(const std::string& name) const
 	{
 		this->ensure_schema();
-		q::insert(models::Migration(name))
-			.use(this->driver())
-			.commit_one();
+		q::insert(models::Migration(name)).use(this->driver()).commit_one();
 	}
 
 	// Deletes migration record by `name` from the database.
@@ -105,9 +102,7 @@ public:
 	inline void record_rolled_back(const std::string& name) const
 	{
 		this->ensure_schema();
-		this->migrations()
-			.where(q::c(&models::Migration::name) == name)
-			.delete_();
+		this->migrations().where(q::c(&models::Migration::name) == name).delete_();
 	}
 
 	// Deletes all migration records.

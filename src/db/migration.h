@@ -24,13 +24,14 @@
 #include "./operations/drop_column.h"
 #include "./operations/alter_column.h"
 #include "./operations/rename_column.h"
-#include "./state.h"
+#include "./states.h"
 #include "./utility.h"
 
 
 __ORM_DB_BEGIN__
 
 // TESTME: Migration
+// TODO: docs for 'Migration'
 class Migration
 {
 protected:
@@ -62,61 +63,38 @@ protected:
 
 	inline void rename_table(const std::string& old_name, const std::string& new_name)
 	{
-		this->operations.push_back(
-			std::make_shared<ops::RenameTable>(old_name, new_name)
-		);
+		this->operations.push_back(std::make_shared<ops::RenameTable>(old_name, new_name));
 	}
 
-	template <column_migration_type_c T>
-	inline void add_column(
-		const std::string& table_name, const std::string& column_name, const Constraints& c={}
-	)
+	template <column_migration_type T>
+	inline void add_column(const std::string& table_name, const std::string& column_name, const Constraints& c={})
 	{
-		this->operations.push_back(
-			std::make_shared<ops::AddColumn<T>>(table_name, column_name, c)
-		);
+		this->operations.push_back(std::make_shared<ops::AddColumn<T>>(table_name, column_name, c));
 	}
 
-	inline void drop_column(
-		const std::string& table_name, const std::string& column_name
-	)
+	inline void drop_column(const std::string& table_name, const std::string& column_name)
 	{
-		this->operations.push_back(
-			std::make_shared<ops::DropColumn>(table_name, column_name)
-		);
+		this->operations.push_back(std::make_shared<ops::DropColumn>(table_name, column_name));
 	}
 
-	template <column_migration_type_c T>
-	inline void alter_column(
-		const std::string& table_name, const std::string& column_name, const Constraints& c={}
-	)
+	template <column_migration_type T>
+	inline void alter_column(const std::string& table_name, const std::string& column_name, const Constraints& c={})
 	{
-		this->operations.push_back(
-			std::make_shared<ops::AlterColumn<T>>(table_name, column_name, c)
-		);
+		this->operations.push_back(std::make_shared<ops::AlterColumn<T>>(table_name, column_name, c));
 	}
 
-	inline void rename_column(
-		const std::string& table_name, const std::string& old_name, const std::string& new_name
-	)
+	inline void rename_column(const std::string& table_name, const std::string& old_name, const std::string& new_name)
 	{
-		this->operations.push_back(
-			std::make_shared<ops::RenameColumn>(table_name, old_name, new_name)
-		);
+		this->operations.push_back(std::make_shared<ops::RenameColumn>(table_name, old_name, new_name));
 	}
 
 public:
-	inline explicit Migration(
-		orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false
-	) : sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
+	inline explicit Migration(orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false) :
+		sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
 	{
-		xw::util::require_non_null(
-			this->sql_driver, ce<Migration>("", "driver is not initialized")
-		);
+		xw::util::require_non_null(this->sql_driver, ce<Migration>("", "driver is not initialized"));
 		this->sql_schema_editor = this->sql_driver->schema_editor();
-		xw::util::require_non_null(
-			this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized")
-		);
+		xw::util::require_non_null(this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized"));
 	}
 
 	inline void update_state(ProjectState& state) const

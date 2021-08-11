@@ -13,19 +13,19 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: DropColumn
+// TODO: docs for 'DropColumn'
 // Drops a column from table in database.
 class DropColumn : public ColumnOperation
 {
 public:
-	inline explicit DropColumn(
-		const std::string& table_name, const std::string& column_name
-	) : ColumnOperation(table_name, column_name)
+	inline explicit DropColumn(const std::string& table_name, const std::string& column_name) :
+		ColumnOperation(table_name, column_name)
 	{
 	}
 
@@ -37,8 +37,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& table = from_state.get_table_addr(this->table_name());
@@ -48,8 +47,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& table = to_state.get_table_addr(this->table_name());

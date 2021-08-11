@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Definitions of `sqlite3` module.
+ * Definitions of 'sqlite3' module.
  */
 
 #pragma once

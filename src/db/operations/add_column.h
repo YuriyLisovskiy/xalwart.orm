@@ -13,15 +13,16 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 #include "../../exceptions.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: AddColumn
+// TODO: docs for 'AddColumn'
 // Creates a column for table in the database.
-template <column_migration_type_c T>
+template <column_migration_type T>
 class AddColumn : public ColumnOperation
 {
 protected:
@@ -62,8 +63,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
@@ -75,8 +75,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& table = from_state.get_table_addr(this->table_name());

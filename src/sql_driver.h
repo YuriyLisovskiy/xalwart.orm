@@ -19,6 +19,8 @@
 
 __ORM_BEGIN__
 
+// TESTME: DefaultSQLDriver
+// TODO: docs for 'DefaultSQLDriver'
 class DefaultSQLDriver : public abc::ISQLDriver
 {
 protected:

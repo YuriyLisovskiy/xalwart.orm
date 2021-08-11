@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Definitions of `db/models` module.
+ * Definitions of 'db/models' module.
  */
 
 #pragma once

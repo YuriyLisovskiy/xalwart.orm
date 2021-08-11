@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Utilities for `db` module.
+ * Utilities for 'db' module.
  */
 
 #pragma once

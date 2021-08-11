@@ -19,7 +19,7 @@ __ORM_BEGIN__
 
 namespace v
 {
-const inline auto version = Version("0.0.0");
+inline const auto version = Version("0.0.0");
 };
 
 __ORM_END__

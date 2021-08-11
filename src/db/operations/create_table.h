@@ -16,12 +16,13 @@
 
 // Orm libraries.
 #include "./base.h"
-#include "../state.h"
+#include "../states.h"
 
 
 __ORM_DB_OPERATIONS_BEGIN__
 
 // TESTME: CreateTable
+// TODO: docs for 'CreateTable'
 // Creates a table in the database.
 class CreateTable : public TableOperation
 {
@@ -42,8 +43,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = to_state.get_table(this->name());
@@ -53,8 +53,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor,
-		const ProjectState& from_state, const ProjectState& to_state
+		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
@@ -63,7 +62,7 @@ public:
 		)->drop_table(table.name);
 	}
 
-	template <column_migration_type_c T>
+	template <column_migration_type T>
 	inline void column(const std::string& name, const Constraints& c={})
 	{
 		this->columns[name] = ColumnState::create<T>(name, c);

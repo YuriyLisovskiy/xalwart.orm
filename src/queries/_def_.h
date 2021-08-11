@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Definitions of `queries` module.
+ * Definitions of 'queries' module.
  */
 
 #pragma once

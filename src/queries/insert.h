@@ -22,14 +22,14 @@
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type_c ModelT>
+template <db::model_based_type ModelT>
 class insert final
 {
-	static_assert(ModelT::meta_table_name != nullptr, "insert: 'meta_table_name' is not initialized");
+	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::insert: 'meta_table_name' is not initialized");
 
 protected:
 
-	// Driver to perform an access to the database.
+	// Driver to perform the access to the database.
 	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Holds columns names.
@@ -44,7 +44,7 @@ protected:
 	// Converts model into row (string) and appends it to `rows`.
 	//
 	// `is_first`: used to indicate if `append` is called for the
-	// first time. If true, than generates `columns_str`.
+	// first time. If true, then generates `columns_str`.
 	inline void append_row(const ModelT& model)
 	{
 		std::string row;
@@ -58,8 +58,6 @@ protected:
 				}
 			}
 
-//			using field_type = typename std::remove_reference<decltype(column)>::type;
-//			row += db::get_column_value_as_string<ModelT, typename field_type::field_type>(model, column) + ", ";
 			row += column.as_string(model) + ", ";
 			return true;
 		});
@@ -76,9 +74,7 @@ public:
 	{
 		if (model.is_null())
 		{
-			throw QueryError(
-				"insert: unable to insert null model", _ERROR_DETAILS_
-			);
+			throw QueryError("xw::orm::q::insert: unable to insert null model", _ERROR_DETAILS_);
 		}
 
 		std::string columns;
@@ -119,18 +115,16 @@ public:
 	{
 		if (!this->sql_driver)
 		{
-			throw QueryError("insert: SQL driver is not set", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::insert: SQL driver is not set", _ERROR_DETAILS_);
 		}
 
 		auto sql_builder = this->sql_driver->query_builder();
 		if (!sql_builder)
 		{
-			throw QueryError("insert: SQL query builder is initialized", _ERROR_DETAILS_);
+			throw QueryError("xw::orm::q::insert: SQL query builder is initialized", _ERROR_DETAILS_);
 		}
 
-		return sql_builder->sql_insert(
-			db::get_table_name<ModelT>(), this->columns_str, this->rows
-		);
+		return sql_builder->sql_insert(db::get_table_name<ModelT>(), this->columns_str, this->rows);
 	}
 
 	// Appends model to insertion list.
@@ -140,9 +134,7 @@ public:
 	{
 		if (model.is_null())
 		{
-			throw QueryError(
-				"insert: unable to insert null model", _ERROR_DETAILS_
-			);
+			throw QueryError("xw::orm::q::insert: unable to insert null model", _ERROR_DETAILS_);
 		}
 
 		this->append_row(model);
@@ -157,8 +149,7 @@ public:
 		if (this->rows.size() > 1)
 		{
 			throw QueryError(
-				"insert: trying to insert one model, but multiple models were set",
-				_ERROR_DETAILS_
+				"xw::orm::q::insert: trying to insert one model, but multiple models were set", _ERROR_DETAILS_
 			);
 		}
 
@@ -168,14 +159,13 @@ public:
 
 	// Inserts one row and sets inserted primary key
 	// to `pk` as type T.
-	template <db::column_field_type_c T>
+	template <db::column_field_type T>
 	inline void commit_one(T& pk) const
 	{
 		if (this->rows.size() > 1)
 		{
 			throw QueryError(
-				"insert: trying to insert one model, but multiple models were set",
-				_ERROR_DETAILS_
+				"xw::orm::q::insert: trying to insert one model, but multiple models were set", _ERROR_DETAILS_
 			);
 		}
 

@@ -79,6 +79,7 @@ inline const SqlColumnType ColumnTFromType<dt::Time>::type = SqlColumnType::Time
 template <>
 inline const SqlColumnType ColumnTFromType<dt::Datetime>::type = SqlColumnType::DateTime;
 
+// TODO: docs for 'Constraints'
 struct Constraints
 {
 	std::optional<size_t> max_len;
@@ -91,7 +92,7 @@ struct Constraints
 };
 
 template <typename T>
-concept column_migration_type_c = std::is_same_v<T, bool> ||
+concept column_migration_type = std::is_same_v<T, bool> ||
                                   std::is_same_v<T, bool> ||
                                   std::is_same_v<T, std::string> ||
                                   std::is_same_v<T, const char*> ||
@@ -105,6 +106,7 @@ concept column_migration_type_c = std::is_same_v<T, bool> ||
                                   std::is_same_v<T, dt::Time> ||
                                   std::is_same_v<T, dt::Datetime>;
 
+// TODO: docs for 'ForeignKeyConstraints'
 struct ForeignKeyConstraints
 {
 	std::string to;
@@ -113,6 +115,8 @@ struct ForeignKeyConstraints
 	OnAction on_update=OnAction::NoAction;
 };
 
+// TESTME: ColumnState
+// TODO: docs for 'ColumnState'
 struct ColumnState
 {
 	SqlColumnType type;
@@ -120,12 +124,12 @@ struct ColumnState
 	std::string default_value;
 	Constraints constraints;
 
-	template <column_migration_type_c T>
+	template <column_migration_type T>
 	inline static ColumnState create(const std::string& name, const Constraints& c={})
 	{
 		if (name.empty())
 		{
-			throw ValueError("ColumnState > create: 'name' can not be empty", _ERROR_DETAILS_);
+			throw ValueError("xw::orm::db::ColumnState > create: 'name' can not be empty", _ERROR_DETAILS_);
 		}
 
 		std::string default_;
@@ -134,7 +138,7 @@ struct ColumnState
 			if (c.default_.type() != typeid(T))
 			{
 				throw TypeError(
-					"ColumnState > create: type '" + xw::util::demangle(typeid(T).name()) +
+					"xw::orm::db::ColumnState > create: type '" + xw::util::demangle(typeid(T).name()) +
 					"' of default value is not the same as column type - '" +
 					xw::util::demangle(c.default_.type().name()) + "'",
 					_ERROR_DETAILS_
@@ -154,6 +158,8 @@ struct ColumnState
 	}
 };
 
+// TESTME: TableState
+// TODO: docs for 'TableState'
 struct TableState
 {
 	std::string name;
@@ -167,7 +173,7 @@ struct TableState
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"TableState > get_column: column with name '" + column_name +
+				"xw::orm::db::TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -183,7 +189,7 @@ struct TableState
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"TableState > get_column: column with name '" + column_name +
+				"xw::orm::db::TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -199,7 +205,7 @@ struct TableState
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"TableState > get_column: column with name '" + column_name +
+				"xw::orm::db::TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -209,6 +215,8 @@ struct TableState
 	}
 };
 
+// TESTME: ProjectState
+// TODO: docs for 'ProjectState'
 struct ProjectState
 {
 	std::map<std::string, TableState> tables{};
@@ -220,7 +228,7 @@ struct ProjectState
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
+				"xw::orm::db::ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 
@@ -234,7 +242,7 @@ struct ProjectState
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
+				"xw::orm::db::ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 
@@ -248,7 +256,7 @@ struct ProjectState
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
+				"xw::orm::db::ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 

@@ -24,6 +24,7 @@
 
 __ORM_ABC_BEGIN__
 
+// TODO: docs for 'ISQLQueryBuilder'
 class ISQLQueryBuilder
 {
 public:
@@ -31,9 +32,7 @@ public:
 	// insert
 	[[nodiscard]]
 	virtual std::string sql_insert(
-		const std::string& table_name,
-		const std::string& columns,
-		const std::list<std::string>& rows
+		const std::string& table_name, const std::string& columns, const std::list<std::string>& rows
 	) const = 0;
 
 	// select
@@ -68,9 +67,7 @@ public:
 	// update
 	[[nodiscard]]
 	virtual std::string sql_update(
-		const std::string& table_name,
-		const std::string& columns_data,
-		const q::Condition& condition
+		const std::string& table_name, const std::string& columns_data, const q::Condition& condition
 	) const = 0;
 
 	// delete
@@ -78,6 +75,7 @@ public:
 	virtual std::string sql_delete(const std::string& table_name, const q::Condition& where_cond) const = 0;
 };
 
+// TODO: docs for 'ISQLDriver'
 class ISQLDriver
 {
 public:
@@ -106,9 +104,7 @@ public:
 	virtual void run_insert(const std::string& query) const = 0;
 
 	// Returns last inserted row id.
-	virtual void run_insert(
-		const std::string& query, std::string& last_row_id
-	) const = 0;
+	virtual void run_insert(const std::string& query, std::string& last_row_id) const = 0;
 
 	// select rows
 
@@ -118,9 +114,7 @@ public:
 	// - `row_map` is row of type std::map<std::string, char*>
 	//   which contains pairs (column_name, column_value).
 	virtual void run_select(
-		const std::string& query,
-		void* container,
-		void(*handle_row)(void* container, void* row_map)
+		const std::string& query, void* container, void(*handle_row)(void* container, void* row_map)
 	) const = 0;
 
 	// update row(s)

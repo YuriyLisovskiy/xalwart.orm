@@ -19,6 +19,7 @@
 __ORM_DB_BEGIN__
 
 // TESTME: MigrationExecutor
+// TODO: docs for 'MigrationExecutor'
 class MigrationExecutor
 {
 protected:
@@ -38,13 +39,9 @@ public:
 		std::function<void(const std::string&, const std::string&)> log_progress=nullptr
 	);
 
-	void apply(
-		const abc::ISchemaEditor* editor, const std::string& to_migration=""
-	) const;
+	void apply(const abc::ISchemaEditor* editor, const std::string& to_migration="") const;
 
-	void rollback(
-		const abc::ISchemaEditor* editor, const std::string& to_migration=""
-	) const;
+	void rollback(const abc::ISchemaEditor* editor, const std::string& to_migration="") const;
 };
 
 __ORM_DB_END__
