@@ -26,63 +26,60 @@
 
 __ORM_DB_BEGIN__
 
-enum sql_column_type
+enum class SqlColumnType
 {
-	BOOL_T,
-	VARCHAR_T, TEXT_T,
-	SMALLINT_T, INT_T, BIGINT_T,
-	SMALL_SERIAL_T, SERIAL_T, BIG_SERIAL_T,
-	REAL_T, DOUBLE_T, DATE_T, TIME_T, DATETIME_T
+	Bool,
+	VarChar, Text,
+	SmallInt, Int, BigInt,
+	SmallSerial, Serial, BigSerial,
+	Real, Double, Date, Time, DateTime
 };
 
-enum on_action
+enum class OnAction
 {
-	SET_NULL, SET_DEFAULT, RESTRICT, NO_ACTION, CASCADE
+	SetNull, SetDefault, Restrict, NoAction, Cascade
 };
 
 template <typename T>
-struct col_t_from_type { static const sql_column_type type; };
-
-//template <typename T>
-//const sql_column_type col_t_from_type<T>::type = BOOL_T;
+struct ColumnTFromType { static const SqlColumnType type; };
 
 template <>
-inline const sql_column_type col_t_from_type<bool>::type = BOOL_T;
+inline const SqlColumnType ColumnTFromType<bool>::type = SqlColumnType::Bool;
 
 template <>
-inline const sql_column_type col_t_from_type<std::string>::type = TEXT_T;
+inline const SqlColumnType ColumnTFromType<std::string>::type = SqlColumnType::Text;
 
 template <>
-inline const sql_column_type col_t_from_type<const char*>::type = TEXT_T;
+inline const SqlColumnType ColumnTFromType<const char*>::type = SqlColumnType::Text;
 
 template <>
-inline const sql_column_type col_t_from_type<short int>::type = SMALLINT_T;
+inline const SqlColumnType ColumnTFromType<short int>::type = SqlColumnType::SmallInt;
 
 template <>
-inline const sql_column_type col_t_from_type<int>::type = INT_T;
+inline const SqlColumnType ColumnTFromType<int>::type = SqlColumnType::Int;
 
 template <>
-inline const sql_column_type col_t_from_type<long int>::type = BIGINT_T;
+inline const SqlColumnType ColumnTFromType<long int>::type = SqlColumnType::BigInt;
 
 template <>
-inline const sql_column_type col_t_from_type<long long int>::type = BIGINT_T;
+inline const SqlColumnType ColumnTFromType<long long int>::type = SqlColumnType::BigInt;
 
 template <>
-inline const sql_column_type col_t_from_type<float>::type = REAL_T;
+inline const SqlColumnType ColumnTFromType<float>::type = SqlColumnType::Real;
 
 template <>
-inline const sql_column_type col_t_from_type<double>::type = DOUBLE_T;
+inline const SqlColumnType ColumnTFromType<double>::type = SqlColumnType::Double;
 
 template <>
-inline const sql_column_type col_t_from_type<dt::Date>::type = DATE_T;
+inline const SqlColumnType ColumnTFromType<dt::Date>::type = SqlColumnType::Date;
 
 template <>
-inline const sql_column_type col_t_from_type<dt::Time>::type = TIME_T;
+inline const SqlColumnType ColumnTFromType<dt::Time>::type = SqlColumnType::Time;
 
 template <>
-inline const sql_column_type col_t_from_type<dt::Datetime>::type = DATETIME_T;
+inline const SqlColumnType ColumnTFromType<dt::Datetime>::type = SqlColumnType::DateTime;
 
-struct constraints_t
+struct Constraints
 {
 	std::optional<size_t> max_len;
 	std::optional<bool> null;
@@ -108,29 +105,27 @@ concept column_migration_type_c = std::is_same_v<T, bool> ||
                                   std::is_same_v<T, dt::Time> ||
                                   std::is_same_v<T, dt::Datetime>;
 
-struct foreign_key_constraints_t
+struct ForeignKeyConstraints
 {
 	std::string to;
 	std::string key;
-	on_action on_delete=NO_ACTION;
-	on_action on_update=NO_ACTION;
+	OnAction on_delete=OnAction::NoAction;
+	OnAction on_update=OnAction::NoAction;
 };
 
-struct column_state
+struct ColumnState
 {
-	sql_column_type type;
+	SqlColumnType type;
 	std::string name;
 	std::string default_value;
-	constraints_t constraints;
+	Constraints constraints;
 
 	template <column_migration_type_c T>
-	inline static column_state create(const std::string& name, const constraints_t& c={})
+	inline static ColumnState create(const std::string& name, const Constraints& c={})
 	{
 		if (name.empty())
 		{
-			throw ValueError(
-				"column_state > create: 'name' can not be empty", _ERROR_DETAILS_
-			);
+			throw ValueError("ColumnState > create: 'name' can not be empty", _ERROR_DETAILS_);
 		}
 
 		std::string default_;
@@ -139,7 +134,7 @@ struct column_state
 			if (c.default_.type() != typeid(T))
 			{
 				throw TypeError(
-					"column_state > create: type '" + xw::util::demangle(typeid(T).name()) +
+					"ColumnState > create: type '" + xw::util::demangle(typeid(T).name()) +
 					"' of default value is not the same as column type - '" +
 					xw::util::demangle(c.default_.type().name()) + "'",
 					_ERROR_DETAILS_
@@ -149,30 +144,30 @@ struct column_state
 			default_ = field_as_column_v(std::any_cast<T>(c.default_));
 		}
 
-		auto col_type = col_t_from_type<T>::type;
-		if (col_type == TEXT_T && c.max_len.has_value())
+		auto col_type = ColumnTFromType<T>::type;
+		if (col_type == SqlColumnType::Text && c.max_len.has_value())
 		{
-			col_type = VARCHAR_T;
+			col_type = SqlColumnType::VarChar;
 		}
 
-		return column_state{col_type, name, default_, c};
+		return ColumnState{col_type, name, default_, c};
 	}
 };
 
-struct table_state
+struct TableState
 {
 	std::string name;
-	std::unordered_map<std::string, column_state> columns{};
-	std::unordered_map<std::string, foreign_key_constraints_t> foreign_keys{};
+	std::unordered_map<std::string, ColumnState> columns{};
+	std::unordered_map<std::string, ForeignKeyConstraints> foreign_keys{};
 
 	[[nodiscard]]
-	column_state get_column(const std::string& column_name) const
+	ColumnState get_column(const std::string& column_name) const
 	{
 		auto column = this->columns.find(column_name);
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"table_state > get_column: column with name '" + column_name +
+				"TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -182,13 +177,13 @@ struct table_state
 	}
 
 	[[nodiscard]]
-	column_state& get_column_addr(const std::string& column_name)
+	ColumnState& get_column_addr(const std::string& column_name)
 	{
 		auto column = this->columns.find(column_name);
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"table_state > get_column: column with name '" + column_name +
+				"TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -198,13 +193,13 @@ struct table_state
 	}
 
 	[[nodiscard]]
-	const column_state& get_column_addr(const std::string& column_name) const
+	const ColumnState& get_column_addr(const std::string& column_name) const
 	{
 		auto column = this->columns.find(column_name);
 		if (column == this->columns.end())
 		{
 			throw KeyError(
-				"table_state > get_column: column with name '" + column_name +
+				"TableState > get_column: column with name '" + column_name +
 				"' does not exist in '" + this->name + "' table",
 				_ERROR_DETAILS_
 			);
@@ -214,19 +209,18 @@ struct table_state
 	}
 };
 
-struct project_state
+struct ProjectState
 {
-	std::map<std::string, table_state> tables{};
+	std::map<std::string, TableState> tables{};
 
 	[[nodiscard]]
-	table_state get_table(const std::string& name) const
+	TableState get_table(const std::string& name) const
 	{
 		auto table = this->tables.find(name);
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"project_state > get_table: table with name '" + name + "' does not exist",
-				_ERROR_DETAILS_
+				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 
@@ -234,14 +228,13 @@ struct project_state
 	}
 
 	[[nodiscard]]
-	table_state& get_table_addr(const std::string& name)
+	TableState& get_table_addr(const std::string& name)
 	{
 		auto table = this->tables.find(name);
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"project_state > get_table: table with name '" + name + "' does not exist",
-				_ERROR_DETAILS_
+				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 
@@ -249,14 +242,13 @@ struct project_state
 	}
 
 	[[nodiscard]]
-	const table_state& get_table_addr(const std::string& name) const
+	const TableState& get_table_addr(const std::string& name) const
 	{
 		auto table = this->tables.find(name);
 		if (table == this->tables.end())
 		{
 			throw KeyError(
-				"project_state > get_table: table with name '" + name + "' does not exist",
-				_ERROR_DETAILS_
+				"ProjectState > get_table: table with name '" + name + "' does not exist", _ERROR_DETAILS_
 			);
 		}
 

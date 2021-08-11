@@ -15,6 +15,7 @@
 // Base libraries.
 #include <xalwart.base/types/string.h>
 #include <xalwart.base/lazy.h>
+#include <xalwart.base/utility.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -51,10 +52,10 @@ protected:
 	bool q_distinct;
 
 	// Holds boolean condition for SQL 'WHERE' statement.
-	q_value<q::condition_t> q_where;
+	QValue<q::Condition> q_where;
 
 	// Holds columns list for SQL 'ORDER BY' statement.
-	std::list<q::ordering> q_order_by;
+	std::list<q::Ordering> q_order_by;
 
 	// Holds value for SQL 'LIMIT'. The default is -1.
 	long int q_limit;
@@ -66,10 +67,10 @@ protected:
 	std::list<std::string> q_group_by;
 
 	// Holds boolean condition for SQL 'HAVING' statement.
-	q_value<q::condition_t> q_having;
+	QValue<q::Condition> q_having;
 
 	// Holds a list of conditions for SQL 'JOIN' statement.
-	std::list<q::join_t> joins;
+	std::list<q::Join> joins;
 
 	typedef std::function<void(ModelT& model)> relation_callable;
 
@@ -150,7 +151,7 @@ public:
 	// Throws 'QueryError' when driver is not set.
 	template <typename ReturnT>
 	[[nodiscard]]
-	inline ReturnT aggregate(const aggregate_function_t<ReturnT>& func) const
+	inline ReturnT aggregate(const AggregateFunction<ReturnT>& func) const
 	{
 		if (!this->sql_builder)
 		{
@@ -179,7 +180,7 @@ public:
 		ReturnT result;
 		this->sql_driver->run_select(query, &result, [](void* result_ptr, void* row_ptr) -> void {
 			auto& row = *(row_t *)row_ptr;
-			*(ReturnT *)result_ptr = util::as<ReturnT>(row["agg_result"]);
+			*(ReturnT *)result_ptr = xw::util::as<ReturnT>(row["agg_result"]);
 		});
 
 		return result;
@@ -244,7 +245,7 @@ public:
 
 	// Sets SQL `join` condition of two tables. For more info,
 	// check the `xw::q::join` class and related functions.
-	inline select& join(q::join_t join)
+	inline select& join(q::Join join)
 	{
 		this->joins.push_back(std::move(join));
 		return *this;
@@ -288,7 +289,7 @@ public:
 				[driver, fk_column, pk_val, first, second, model_pk]() -> std::list<OtherModelT> {
 					return select<OtherModelT>().use(driver)
 						.template many_to_one<PrimaryKeyT, ModelT>(second, first, model_pk, fk_column)
-						.where(q::column_condition_t(
+							.where(q::ColumnCondition(
 							db::get_table_name<OtherModelT>(),
 							util::quote_str(fk_column), "= " + pk_val
 						))
@@ -367,7 +368,7 @@ public:
 					return select<OtherModelT>().use(driver)
 						.join(q::left_on<OtherModelT, ModelT>(fk_column))
 						.template one_to_many<PrimaryKeyT, ModelT>(second, first, other_model_pk, fk_column)
-						.where(q::column_condition_t(
+						.where(q::ColumnCondition(
 							db::get_table_name<ModelT>(),
 							util::quote_str(db::get_column_name(other_model_pk).c_str()), "= " + model_pk_val
 						))
@@ -476,7 +477,7 @@ public:
 
 						return select<OtherModelT>().use(driver)
 							.distinct()
-							.join(join_t("LEFT", m_table, q::condition_t(cond_str)))
+							.join(Join("LEFT", m_table, q::Condition(cond_str)))
 							.template many_to_many<ModelT>(second, first, o_pk, s_pk, m_table)
 							.all();
 					}
@@ -510,7 +511,7 @@ public:
 	}
 
 	// Sets the condition for 'where' filtering.
-	inline select& where(const q::condition_t& cond)
+	inline select& where(const q::Condition& cond)
 	{
 		if (this->q_where.is_set)
 		{
@@ -525,7 +526,7 @@ public:
 	}
 
 	// Sets columns for ordering.
-	inline select& order_by(const std::initializer_list<q::ordering>& columns)
+	inline select& order_by(const std::initializer_list<q::Ordering>& columns)
 	{
 		if (columns.size())
 		{
@@ -565,7 +566,7 @@ public:
 	}
 
 	// Sets the condition for 'having' filtering.
-	inline select& having(const q::condition_t& cond)
+	inline select& having(const q::Condition& cond)
 	{
 		if (this->q_having.is_set)
 		{
@@ -653,7 +654,7 @@ public:
 		select_query.pop_back();
 
 		auto query = this->sql_builder->sql_delete(
-			this->table_name, condition_t(pk_col + " IN (" + select_query + ")")
+			this->table_name, Condition(pk_col + " IN (" + select_query + ")")
 		);
 		this->sql_driver->run_delete(query);
 	}

@@ -9,9 +9,9 @@
 
 __ORM_DB_BEGIN__
 
-project_state MigrationExecutor::create_initial_state(bool with_applied_migrations) const
+ProjectState MigrationExecutor::create_initial_state(bool with_applied_migrations) const
 {
-	project_state state;
+	ProjectState state;
 	if (with_applied_migrations)
 	{
 		this->recorder.ensure_schema();
@@ -187,7 +187,7 @@ void MigrationExecutor::rollback(
 		return;
 	}
 
-	std::map<std::string, project_state> states;
+	std::map<std::string, ProjectState> states;
 	auto state = this->create_initial_state(false);
 	auto am_it = applied_migrations.begin();
 	for (

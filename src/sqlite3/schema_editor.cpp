@@ -11,9 +11,7 @@
 
 __ORM_SQLITE3_BEGIN__
 
-std::string SchemaEditor::sql_column_constraints(
-	const db::constraints_t& cc, const std::string& default_value
-) const
+std::string SchemaEditor::sql_column_constraints(const db::Constraints& cc, const std::string& default_value) const
 {
 	std::string result;
 	if (cc.primary_key)
@@ -49,36 +47,36 @@ std::string SchemaEditor::sql_column_constraints(
 	return result;
 }
 
-std::string SchemaEditor::sql_type_string(db::sql_column_type type) const
+std::string SchemaEditor::sql_type_string(db::SqlColumnType type) const
 {
 	switch (type)
 	{
-		case db::SMALL_SERIAL_T:
+		case db::SqlColumnType::SmallSerial:
 			return "SMALLINT";
-		case db::SERIAL_T:
+		case db::SqlColumnType::Serial:
 			return "INT";
-		case db::BIG_SERIAL_T:
+		case db::SqlColumnType::BigSerial:
 			return "BIGINT";
-		case db::DATETIME_T:
+		case db::SqlColumnType::DateTime:
 			return "DATETIME";
 		default:
 			return db::DefaultSQLSchemaEditor::sql_type_string(type);
 	}
 }
 
-std::string SchemaEditor::sql_column(const db::column_state& column) const
+std::string SchemaEditor::sql_column(const db::ColumnState& column) const
 {
 	auto column_copy = column;
 	if (column.constraints.autoincrement)
 	{
 		switch (column_copy.type)
 		{
-			case db::SMALL_SERIAL_T:
-			case db::SERIAL_T:
-			case db::BIG_SERIAL_T:
-			case db::SMALLINT_T:
-			case db::BIGINT_T:
-				column_copy.type = db::INT_T;
+			case db::SqlColumnType::SmallSerial:
+			case db::SqlColumnType::Serial:
+			case db::SqlColumnType::BigSerial:
+			case db::SqlColumnType::SmallInt:
+			case db::SqlColumnType::BigInt:
+				column_copy.type = db::SqlColumnType::Int;
 				break;
 			default:
 				break;

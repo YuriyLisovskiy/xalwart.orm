@@ -49,7 +49,7 @@ public:
 		return this->new_name_;
 	}
 
-	inline void update_state(project_state& state) const override
+	inline void update_state(ProjectState& state) const override
 	{
 		auto& table = state.get_table_addr(this->table_name());
 		auto column = table.get_column(this->name());
@@ -69,7 +69,7 @@ public:
 
 	inline void forward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& to_table = to_state.get_table_addr(this->table_name());
@@ -86,7 +86,7 @@ public:
 
 	inline void backward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());

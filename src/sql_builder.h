@@ -56,13 +56,13 @@ public:
 		const std::string& table_name,
 		const std::string& columns,
 		bool distinct,
-		const std::list<q::join_t>& joins,
-		const q::condition_t& where_cond,
-		const std::list<q::ordering>& order_by_cols,
+		const std::list<q::Join>& joins,
+		const q::Condition& where_cond,
+		const std::list<q::Ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::list<std::string>& group_by_cols,
-		const q::condition_t& having_cond
+		const q::Condition& having_cond
 	) const override;
 
 	// Generates 'SELECT' query as string.
@@ -74,13 +74,13 @@ public:
 		const std::string& table_name,
 		const std::list<std::string>& columns,
 		bool distinct,
-		const std::list<q::join_t>& joins,
-		const q::condition_t& where_cond,
-		const std::list<q::ordering>& order_by_cols,
+		const std::list<q::Join>& joins,
+		const q::Condition& where_cond,
+		const std::list<q::Ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::list<std::string>& group_by_cols,
-		const q::condition_t& having_cond
+		const q::Condition& having_cond
 	) const override;
 
 	// Generates 'UPDATE' query as string.
@@ -92,7 +92,7 @@ public:
 	std::string sql_update(
 		const std::string& table_name,
 		const std::string& columns_data,
-		const q::condition_t& condition
+		const q::Condition& condition
 	) const override;
 
 	// Generates 'DELETE' query as string.
@@ -100,7 +100,7 @@ public:
 	// 'table_name' must be non-empty string.
 	[[nodiscard]]
 	std::string sql_delete(
-		const std::string& table_name, const q::condition_t& where_cond
+		const std::string& table_name, const q::Condition& where_cond
 	) const override;
 };
 

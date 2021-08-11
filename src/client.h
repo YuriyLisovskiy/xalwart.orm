@@ -102,7 +102,7 @@ public:
 	// TESTME: get
 	// Retrieve first row from database.
 	template <db::model_based_type_c ModelT>
-	inline ModelT get(const q::condition_t& cond) const
+	inline ModelT get(const q::Condition& cond) const
 	{
 		return q::select<ModelT>().use(this->db.get()).where(cond).first();
 	}
@@ -119,7 +119,7 @@ public:
 	// Creates 'select' statement object with called 'where' method.
 	// So, 'WHERE' condition is set and can not be changed.
 	template <db::model_based_type_c ModelT>
-	inline q::select<ModelT> filter(const q::condition_t& cond) const
+	inline q::select<ModelT> filter(const q::Condition& cond) const
 	{
 		return q::select<ModelT>().use(this->db.get()).where(cond);
 	}

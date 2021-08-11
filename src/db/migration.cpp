@@ -34,9 +34,7 @@ void Migration::create_table(
 }
 
 bool Migration::apply(
-	project_state& state,
-	const abc::ISchemaEditor* editor,
-	const std::function<void()>& success_callback
+	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
 	xw::util::require_non_null(
@@ -63,9 +61,7 @@ bool Migration::apply(
 }
 
 bool Migration::rollback(
-	project_state& state,
-	const abc::ISchemaEditor* editor,
-	const std::function<void()>& success_callback
+	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
 	xw::util::require_non_null(
@@ -73,9 +69,7 @@ bool Migration::rollback(
 		ce<Migration>("rollback", "schema editor is nullptr")
 	);
 
-	std::list<std::tuple<
-		std::shared_ptr<abc::IOperation>, project_state, project_state
-	>> ops_to_run;
+	std::list<std::tuple<std::shared_ptr<abc::IOperation>, ProjectState, ProjectState>> ops_to_run;
 	auto new_state = state;
 
 	for (const auto& operation : this->operations)

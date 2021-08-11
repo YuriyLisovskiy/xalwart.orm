@@ -15,7 +15,7 @@ class SQLErrorTestCase : public ::testing::Test
 {
 public:
 	const char* WhatErrorMessage = "Test error message from SQLErrorTestCase";
-	const char* FullErrorMessage = "SQLError: Test error message from SQLErrorTestCase";
+	const char* FullErrorMessage = "xw::orm::SQLError: Test error message from SQLErrorTestCase";
 	const char* ErrorFunction = "testFunc";
 	const char* ErrorFile = "test_file.cpp";
 	const size_t ErrorLine = 1;

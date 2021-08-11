@@ -39,7 +39,7 @@ protected:
 	//
 	// `second`: condition for 'WHERE' statement.
 	//	Indicates what rows should be updated.
-	std::vector<std::pair<std::string, q::condition_t>> rows;
+	std::vector<std::pair<std::string, q::Condition>> rows;
 
 protected:
 	inline void append_row(const ModelT& model)
@@ -50,7 +50,7 @@ protected:
 		}
 
 		std::string pk_name, pk_val;
-		std::pair<std::string, q::condition_t> row_data;
+		std::pair<std::string, q::Condition> row_data;
 		util::tuple_for_each(ModelT::meta_columns, [model, &pk_name, &pk_val, &row_data](auto& column)
 		{
 			using field_type = typename std::remove_reference<decltype(column)>::type;
@@ -72,7 +72,7 @@ protected:
 		});
 
 		row_data.first = str::rtrim(row_data.first, ", ");
-		row_data.second = q::column_condition_t(this->table_name, pk_name, "= " + pk_val);
+		row_data.second = q::ColumnCondition(this->table_name, pk_name, "= " + pk_val);
 		this->rows.push_back(row_data);
 	}
 

@@ -37,13 +37,13 @@ std::string DefaultSQLBuilder::sql_select_(
 	const std::string& table_name,
 	const std::string& columns,
 	bool distinct,
-	const std::list<q::join_t>& joins,
-	const q::condition_t& where_cond,
-	const std::list<q::ordering>& order_by_cols,
+	const std::list<q::Join>& joins,
+	const q::Condition& where_cond,
+	const std::list<q::Ordering>& order_by_cols,
 	long int limit,
 	long int offset,
 	const std::list<std::string>& group_by_cols,
-	const q::condition_t& having_cond
+	const q::Condition& having_cond
 ) const
 {
 	if (table_name.empty())
@@ -135,13 +135,13 @@ std::string DefaultSQLBuilder::sql_select(
 	const std::string& table_name,
 	const std::list<std::string>& columns,
 	bool distinct,
-	const std::list<q::join_t>& joins,
-	const q::condition_t& where_cond,
-	const std::list<q::ordering>& order_by_cols,
+	const std::list<q::Join>& joins,
+	const q::Condition& where_cond,
+	const std::list<q::Ordering>& order_by_cols,
 	long int limit,
 	long int offset,
 	const std::list<std::string>& group_by_cols,
-	const q::condition_t& having_cond
+	const q::Condition& having_cond
 ) const
 {
 	auto raw_prefix = table_name + ".";
@@ -167,7 +167,7 @@ std::string DefaultSQLBuilder::sql_select(
 std::string DefaultSQLBuilder::sql_update(
 	const std::string& table_name,
 	const std::string& columns_data,
-	const q::condition_t& condition
+	const q::Condition& condition
 ) const
 {
 	if (table_name.empty())
@@ -190,9 +190,7 @@ std::string DefaultSQLBuilder::sql_update(
 	return query + ";";
 }
 
-std::string DefaultSQLBuilder::sql_delete(
-	const std::string& table_name, const q::condition_t& where_cond
-) const
+std::string DefaultSQLBuilder::sql_delete(const std::string& table_name, const q::Condition& where_cond) const
 {
 	if (table_name.empty())
 	{

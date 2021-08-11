@@ -30,9 +30,9 @@ protected:
 
 	[[nodiscard]]
 	virtual inline std::string sql_create_table(
-		const table_state& table,
-		const std::list<column_state>& columns,
-		const std::list<std::tuple<std::string, foreign_key_constraints_t>>& fks
+		const TableState& table,
+		const std::list<ColumnState>& columns,
+		const std::list<std::tuple<std::string, ForeignKeyConstraints>>& fks
 	) const
 	{
 		auto s_columns = str::join(
@@ -67,25 +67,19 @@ protected:
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_add_column(
-		const table_state& table, const column_state& column
-	) const
+	virtual inline std::string sql_add_column(const TableState& table, const ColumnState& column) const
 	{
 		return "ALTER TABLE " + this->quote_name(table.name) + " ADD COLUMN " + this->sql_column(column);
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_drop_column(
-		const table_state& table, const column_state& column
-	) const
+	virtual inline std::string sql_drop_column(const TableState& table, const ColumnState& column) const
 	{
 		return "ALTER TABLE " + this->quote_name(table.name) + " DROP COLUMN " + column.name;
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_update_with_default(
-		const table_state& table, const column_state& col
-	) const
+	virtual inline std::string sql_update_with_default(const TableState& table, const ColumnState& col) const
 	{
 		auto col_name = this->quote_name(col.name);
 		return "UPDATE " + this->quote_name(table.name) + " SET " +
@@ -93,17 +87,13 @@ protected:
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_alter_column(
-		const table_state& table, const std::string& actions
-	) const
+	virtual inline std::string sql_alter_column(const TableState& table, const std::string& actions) const
 	{
 		return "ALTER TABLE " + this->quote_name(table.name) + " " + actions;
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_delete_constraint(
-		const table_state& table, const std::string& name
-	) const
+	virtual inline std::string sql_delete_constraint(const TableState& table, const std::string& name) const
 	{
 		return this->sql_alter_column(table, "DROP CONSTRAINT " + name);
 	}
@@ -111,7 +101,7 @@ protected:
 	// Hook to specialize column renaming for different drivers.
 	[[nodiscard]]
 	virtual inline std::string sql_rename_column(
-		const table_state& table, const column_state& old_col, const column_state& new_col
+		const TableState& table, const ColumnState& old_col, const ColumnState& new_col
 	) const
 	{
 		return this->sql_alter_column(
@@ -121,16 +111,14 @@ protected:
 
 	[[nodiscard]]
 	virtual inline std::string sql_delete_primary_key(
-		const table_state& table, const std::string& constraint_name
+		const TableState& table, const std::string& constraint_name
 	) const
 	{
 		return this->sql_delete_constraint(table, constraint_name);
 	}
 
 	[[nodiscard]]
-	virtual inline std::string sql_create_unique(
-		const table_state& table, const std::list<column_state>& cols
-	) const
+	virtual inline std::string sql_create_unique(const TableState& table, const std::list<ColumnState>& cols) const
 	{
 		auto str_columns = str::join(", ", cols.begin(), cols.end(),
 			[](const auto& col) -> auto { return col.name; }
@@ -146,7 +134,7 @@ protected:
 	// Hook to specialize column type alteration for different drivers.
 	[[nodiscard]]
 	virtual inline std::tuple<std::string, std::list<std::string>> partial_sql_alter_column_type(
-		const table_state& table, const column_state& old_col, const column_state& new_col
+		const TableState& table, const ColumnState& old_col, const ColumnState& new_col
 	) const
 	{
 		return std::make_tuple<std::string, std::list<std::string>>(
@@ -156,7 +144,7 @@ protected:
 
 	// Returns the SQL to use in DEFAULT clause.
 	[[nodiscard]]
-	virtual inline std::string partial_sql_column_default(const column_state& column) const
+	virtual inline std::string partial_sql_column_default(const ColumnState& column) const
 	{
 		return column.default_value;
 	}
@@ -164,8 +152,8 @@ protected:
 	// Hook to specialize column default alteration.
 	[[nodiscard]]
 	virtual inline std::string partial_sql_alter_column_default(
-		const table_state& table,
-		const column_state& old_col, const column_state& new_col,
+		const TableState& table,
+		const ColumnState& old_col, const ColumnState& new_col,
 		bool drop
 	) const
 	{
@@ -186,7 +174,7 @@ protected:
 	// Hook to specialize column null alteration.
 	[[nodiscard]]
 	virtual inline std::string partial_sql_alter_column_null(
-		const table_state& table, const column_state& old_col, const column_state& new_col
+		const TableState& table, const ColumnState& old_col, const ColumnState& new_col
 	) const
 	{
 		auto null = new_col.constraints.null;
@@ -202,24 +190,24 @@ protected:
 	// Other sql builders.
 
 	[[nodiscard]]
-	virtual std::string sql_on_action_constraint(on_action action) const;
+	virtual std::string sql_on_action_constraint(OnAction action) const;
 
 	[[nodiscard]]
 	virtual std::string sql_column_constraints(
-		const constraints_t& constraints, const std::string& default_value
+		const Constraints& constraints, const std::string& default_value
 	) const;
 
 	[[nodiscard]]
-	virtual std::string sql_type_string(sql_column_type type) const;
+	virtual std::string sql_type_string(SqlColumnType type) const;
 
 	[[nodiscard]]
-	virtual std::string sql_column(const column_state& column) const;
+	virtual std::string sql_column(const ColumnState& column) const;
 
 	[[nodiscard]]
 	virtual std::string sql_foreign_key(
 		const std::string& name,
 		const std::string& parent, const std::string& parent_key,
-		on_action on_delete, on_action on_update
+		OnAction on_delete, OnAction on_update
 	) const;
 
 	// Helpers.
@@ -233,7 +221,7 @@ protected:
 	// Some database drivers don't accept default values for certain
 	// columns types (i.e. MySQL longtext and longblob).
 	[[nodiscard]]
-	virtual bool skip_default(const column_state& column) const
+	virtual bool skip_default(const ColumnState& column) const
 	{
 		return false;
 	}
@@ -244,16 +232,16 @@ protected:
 	}
 
 	virtual void sql_column_autoincrement_check(
-		sql_column_type type, bool autoincrement, bool primary_key
+		SqlColumnType type, bool autoincrement, bool primary_key
 	) const;
 
 	[[nodiscard]]
 	virtual bool sql_column_max_len_check(
-		const std::string& name, sql_column_type type,
+		const std::string& name, SqlColumnType type,
 		const std::optional<size_t>& max_len
 	) const;
 
-	virtual inline void delete_primary_key(const table_state& table, bool strict) const
+	virtual inline void delete_primary_key(const TableState& table, bool strict) const
 	{
 		auto constraint_names = this->constraint_names(table, true);
 		auto cn_size = constraint_names.size();
@@ -274,7 +262,7 @@ protected:
 
 	[[nodiscard]]
 	virtual inline std::list<std::string> constraint_names(
-		const table_state& table, bool primary_key
+		const TableState& table, bool primary_key
 	) const
 	{
 		// TODO: implement -> use driver introspection
@@ -282,7 +270,7 @@ protected:
 	}
 
 	[[nodiscard]]
-	virtual bool unique_should_be_added(const column_state& old_col, const column_state& new_col) const
+	virtual bool unique_should_be_added(const ColumnState& old_col, const ColumnState& new_col) const
 	{
 		return (!old_col.constraints.unique && new_col.constraints.unique) ||
 			(old_col.constraints.primary_key && !new_col.constraints.primary_key && new_col.constraints.unique);
@@ -290,7 +278,7 @@ protected:
 
 	[[nodiscard]]
 	virtual inline std::string create_unique_name(
-		const table_state& table, const std::list<column_state>& cols, const std::string& suffix
+		const TableState& table, const std::list<ColumnState>& cols, const std::string& suffix
 	) const
 	{
 		return str::join("_", cols.begin(), cols.end(),
@@ -309,15 +297,15 @@ public:
 		}
 	}
 
-	inline void create_table(const table_state& table) const override
+	inline void create_table(const TableState& table) const override
 	{
-		std::list<column_state> columns;
+		std::list<ColumnState> columns;
 		for (const auto& col : table.columns)
 		{
 			columns.push_back(col.second);
 		}
 
-		std::list<std::tuple<std::string, foreign_key_constraints_t>> foreign_keys;
+		std::list<std::tuple<std::string, ForeignKeyConstraints>> foreign_keys;
 		for (const auto& fk : table.foreign_keys)
 		{
 			foreign_keys.emplace_back(fk.first, fk.second);
@@ -332,7 +320,7 @@ public:
 	}
 
 	inline void rename_table(
-		const table_state& table, const std::string& old_name, const std::string& new_name
+		const TableState& table, const std::string& old_name, const std::string& new_name
 	) const override
 	{
 		if (old_name == new_name)
@@ -345,23 +333,18 @@ public:
 		this->execute(this->sql_rename_table(old_name, new_name));
 	}
 
-	inline void create_column(
-		const table_state& table, const column_state& column
-	) const override
+	inline void create_column(const TableState& table, const ColumnState& column) const override
 	{
 		this->execute(this->sql_add_column(table, column));
 	}
 
-	inline void drop_column(
-		const table_state& table, const column_state& column
-	) const override
+	inline void drop_column(const TableState& table, const ColumnState& column) const override
 	{
 		this->execute(this->sql_drop_column(table, column));
 	}
 
 	inline void alter_column(
-		const table_state& table,
-		const column_state& old_column, const column_state& new_column, bool strict
+		const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
 	) const override
 	{
 		// Was column renamed?

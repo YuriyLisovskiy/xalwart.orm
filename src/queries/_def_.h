@@ -22,7 +22,7 @@ __ORM_Q_BEGIN__
 //  - value: actual value which will be forwarded to query generator;
 //  - is_set: indicates if the value is set or not.
 template <typename T>
-struct q_value
+struct QValue
 {
 	T value;
 	bool is_set = false;

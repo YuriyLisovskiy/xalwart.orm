@@ -42,13 +42,13 @@ public:
 		const std::string& table_name,
 		const std::string& columns,
 		bool distinct,
-		const std::list<q::join_t>& joins,
-		const q::condition_t& where_cond,
-		const std::list<q::ordering>& order_by_cols,
+		const std::list<q::Join>& joins,
+		const q::Condition& where_cond,
+		const std::list<q::Ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::list<std::string>& group_by_cols,
-		const q::condition_t& having_cond
+		const q::Condition& having_cond
 	) const = 0;
 
 	[[nodiscard]]
@@ -56,13 +56,13 @@ public:
 		const std::string& table_name,
 		const std::list<std::string>& columns,
 		bool distinct,
-		const std::list<q::join_t>& joins,
-		const q::condition_t& where_cond,
-		const std::list<q::ordering>& order_by_cols,
+		const std::list<q::Join>& joins,
+		const q::Condition& where_cond,
+		const std::list<q::Ordering>& order_by_cols,
 		long int limit,
 		long int offset,
 		const std::list<std::string>& group_by_cols,
-		const q::condition_t& having_cond
+		const q::Condition& having_cond
 	) const = 0;
 
 	// update
@@ -70,14 +70,12 @@ public:
 	virtual std::string sql_update(
 		const std::string& table_name,
 		const std::string& columns_data,
-		const q::condition_t& condition
+		const q::Condition& condition
 	) const = 0;
 
 	// delete
 	[[nodiscard]]
-	virtual std::string sql_delete(
-		const std::string& table_name, const q::condition_t& where_cond
-	) const = 0;
+	virtual std::string sql_delete(const std::string& table_name, const q::Condition& where_cond) const = 0;
 };
 
 class ISQLDriver

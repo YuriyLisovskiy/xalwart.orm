@@ -26,24 +26,24 @@ __ORM_DB_OPERATIONS_BEGIN__
 class CreateTable : public TableOperation
 {
 protected:
-	std::unordered_map<std::string, column_state> columns{};
-	std::unordered_map<std::string, foreign_key_constraints_t> foreign_keys{};
+	std::unordered_map<std::string, ColumnState> columns{};
+	std::unordered_map<std::string, ForeignKeyConstraints> foreign_keys{};
 
 public:
 	inline explicit CreateTable(const std::string& name) : TableOperation(name)
 	{
 	}
 
-	inline void update_state(project_state& state) const override
+	inline void update_state(ProjectState& state) const override
 	{
-		state.tables[this->name()] = table_state{
+		state.tables[this->name()] = TableState{
 			.name = this->name(), .columns = this->columns, .foreign_keys = this->foreign_keys
 		};
 	}
 
 	inline void forward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = to_state.get_table(this->name());
@@ -54,7 +54,7 @@ public:
 
 	inline void backward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
@@ -64,12 +64,12 @@ public:
 	}
 
 	template <column_migration_type_c T>
-	inline void column(const std::string& name, const constraints_t& c={})
+	inline void column(const std::string& name, const Constraints& c={})
 	{
-		this->columns[name] = column_state::create<T>(name, c);
+		this->columns[name] = ColumnState::create<T>(name, c);
 	}
 
-	inline void foreign_key(const std::string& name, const foreign_key_constraints_t& c)
+	inline void foreign_key(const std::string& name, const ForeignKeyConstraints& c)
 	{
 		this->foreign_keys[name] = c;
 	}

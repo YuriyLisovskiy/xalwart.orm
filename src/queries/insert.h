@@ -9,6 +9,7 @@
 #pragma once
 
 // Base libraries.
+#include <xalwart.base/utility.h>
 #include <xalwart.base/types/string.h>
 
 // Module definitions.
@@ -181,7 +182,7 @@ public:
 		auto query = this->query();
 		std::string raw_pk;
 		this->sql_driver->run_insert(query, raw_pk);
-		pk = util::as<T>(raw_pk.c_str());
+		pk = xw::util::as<T>(raw_pk.c_str());
 	}
 
 	// Inserts row(s) into database.

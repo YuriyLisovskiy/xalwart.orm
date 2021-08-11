@@ -31,21 +31,21 @@ protected:
 	}
 
 	[[nodiscard]]
-	std::string sql_column(const db::column_state& column) const override;
+	std::string sql_column(const db::ColumnState& column) const override;
 
 	[[nodiscard]]
 	std::string sql_column_constraints(
-		const db::constraints_t& constraints, const std::string& default_value
+		const db::Constraints& constraints, const std::string& default_value
 	) const override;
 
 	[[nodiscard]]
-	std::string sql_type_string(db::sql_column_type type) const override;
+	std::string sql_type_string(db::SqlColumnType type) const override;
 
 	inline void sql_column_autoincrement_check(
-		db::sql_column_type type, bool autoincrement, bool primary_key
+		db::SqlColumnType type, bool autoincrement, bool primary_key
 	) const override
 	{
-		if (autoincrement && (type != db::INT_T || !primary_key))
+		if (autoincrement && (type != db::SqlColumnType::Int || !primary_key))
 		{
 			throw ValueError(
 				"'autoincrement' is only allowed on an integer primary key",
@@ -55,8 +55,7 @@ protected:
 	}
 
 	virtual inline void recreate_table(
-		const db::table_state& table,
-		const std::unordered_map<std::string, std::string>& mapping
+		const db::TableState& table, const std::unordered_map<std::string, std::string>& mapping
 	) const
 	{
 		auto columns_definition = str::join(
@@ -98,9 +97,7 @@ public:
 	{
 	}
 
-	inline void drop_column(
-		const db::table_state& table, const db::column_state& column
-	) const override
+	inline void drop_column(const db::TableState& table, const db::ColumnState& column) const override
 	{
 		auto table_copy = table;
 		table_copy.columns.erase(column.name);
@@ -119,8 +116,8 @@ public:
 	}
 
 	inline void alter_column(
-		const db::table_state& table,
-		const db::column_state& old_column, const db::column_state& new_column,
+		const db::TableState& table,
+		const db::ColumnState& old_column, const db::ColumnState& new_column,
 		bool strict
 	) const override
 	{

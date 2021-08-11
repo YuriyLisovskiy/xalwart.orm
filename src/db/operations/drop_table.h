@@ -27,14 +27,14 @@ public:
 	{
 	}
 
-	inline void update_state(project_state& state) const override
+	inline void update_state(ProjectState& state) const override
 	{
 		state.tables.erase(this->name());
 	}
 
 	inline void forward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
@@ -45,7 +45,7 @@ public:
 
 	inline void backward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto table = to_state.tables.at(this->name());

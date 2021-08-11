@@ -69,7 +69,7 @@ protected:
 
 	template <column_migration_type_c T>
 	inline void add_column(
-		const std::string& table_name, const std::string& column_name, const constraints_t& c={}
+		const std::string& table_name, const std::string& column_name, const Constraints& c={}
 	)
 	{
 		this->operations.push_back(
@@ -88,7 +88,7 @@ protected:
 
 	template <column_migration_type_c T>
 	inline void alter_column(
-		const std::string& table_name, const std::string& column_name, const constraints_t& c={}
+		const std::string& table_name, const std::string& column_name, const Constraints& c={}
 	)
 	{
 		this->operations.push_back(
@@ -119,7 +119,7 @@ public:
 		);
 	}
 
-	inline void update_state(project_state& state) const
+	inline void update_state(ProjectState& state) const
 	{
 		for (const auto& operation : this->operations)
 		{
@@ -128,13 +128,13 @@ public:
 	}
 
 	bool apply(
-		project_state& state,
+		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	bool rollback(
-		project_state& state,
+		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;

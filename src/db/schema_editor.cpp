@@ -9,19 +9,19 @@
 
 __ORM_DB_BEGIN__
 
-std::string DefaultSQLSchemaEditor::sql_on_action_constraint(on_action action) const
+std::string DefaultSQLSchemaEditor::sql_on_action_constraint(OnAction action) const
 {
 	switch (action)
 	{
-		case SET_NULL:
+		case OnAction::SetNull:
 			return "SET NULL";
-		case SET_DEFAULT:
+		case OnAction::SetDefault:
 			return "SET DEFAULT";
-		case RESTRICT:
+		case OnAction::Restrict:
 			return "RESTRICT";
-		case NO_ACTION:
+		case OnAction::NoAction:
 			return "NO ACTION";
-		case CASCADE:
+		case OnAction::Cascade:
 			return "CASCADE";
 	}
 
@@ -32,7 +32,7 @@ std::string DefaultSQLSchemaEditor::sql_on_action_constraint(on_action action) c
 }
 
 std::string DefaultSQLSchemaEditor::sql_column_constraints(
-	const constraints_t& constraints, const std::string& default_value
+	const Constraints& constraints, const std::string& default_value
 ) const
 {
 	std::string result;
@@ -65,7 +65,7 @@ std::string DefaultSQLSchemaEditor::sql_column_constraints(
 }
 
 void DefaultSQLSchemaEditor::sql_column_autoincrement_check(
-	sql_column_type type, bool autoincrement, bool primary_key
+	SqlColumnType type, bool autoincrement, bool primary_key
 ) const
 {
 	if (autoincrement)
@@ -73,12 +73,12 @@ void DefaultSQLSchemaEditor::sql_column_autoincrement_check(
 		bool non_int_type = false;
 		switch (type)
 		{
-			case SMALLINT_T:
-			case INT_T:
-			case BIGINT_T:
-			case SMALL_SERIAL_T:
-			case SERIAL_T:
-			case BIG_SERIAL_T:
+			case SqlColumnType::SmallInt:
+			case SqlColumnType::Int:
+			case SqlColumnType::BigInt:
+			case SqlColumnType::SmallSerial:
+			case SqlColumnType::Serial:
+			case SqlColumnType::BigSerial:
 				break;
 			default:
 				non_int_type = true;
@@ -97,13 +97,12 @@ void DefaultSQLSchemaEditor::sql_column_autoincrement_check(
 }
 
 bool DefaultSQLSchemaEditor::sql_column_max_len_check(
-	const std::string& name, sql_column_type type,
-	const std::optional<size_t>& max_len
+	const std::string& name, SqlColumnType type, const std::optional<size_t>& max_len
 ) const
 {
 	if (max_len.has_value())
 	{
-		if (type != VARCHAR_T)
+		if (type != SqlColumnType::VarChar)
 		{
 			throw ValueError(
 				"DefaultSQLSchemaEditor > sql_column_max_len_check:"
@@ -121,53 +120,51 @@ bool DefaultSQLSchemaEditor::sql_column_max_len_check(
 	return false;
 }
 
-std::string DefaultSQLSchemaEditor::sql_type_string(sql_column_type type) const
+std::string DefaultSQLSchemaEditor::sql_type_string(SqlColumnType type) const
 {
 	switch (type)
 	{
-		case BOOL_T:
+		case SqlColumnType::Bool:
 			return "BOOL";
-		case VARCHAR_T:
+		case SqlColumnType::VarChar:
 			return "VARCHAR";
-		case TEXT_T:
+		case SqlColumnType::Text:
 			return "TEXT";
-		case SMALLINT_T:
+		case SqlColumnType::SmallInt:
 			return "SMALLINT";
-		case INT_T:
+		case SqlColumnType::Int:
 			return "INTEGER";
-		case BIGINT_T:
+		case SqlColumnType::BigInt:
 			return "BIGINT";
-		case SMALL_SERIAL_T:
+		case SqlColumnType::SmallSerial:
 			return "SMALLSERIAL";
-		case SERIAL_T:
+		case SqlColumnType::Serial:
 			return "SERIAL";
-		case BIG_SERIAL_T:
+		case SqlColumnType::BigSerial:
 			return "BIGSERIAL";
-		case REAL_T:
+		case SqlColumnType::Real:
 			return "REAL";
-		case DOUBLE_T:
+		case SqlColumnType::Double:
 			return "DOUBLE";
-		case DATE_T:
+		case SqlColumnType::Date:
 			return "DATE";
-		case TIME_T:
+		case SqlColumnType::Time:
 			return "TIME";
-		case DATETIME_T:
+		case SqlColumnType::DateTime:
 			return "TIMESTAMP";
 	}
 
 	throw ValueError(
-		"DefaultSQLSchemaEditor > sql_type_to_string: unknown SQL data type",
-		_ERROR_DETAILS_
+		"DefaultSQLSchemaEditor > sql_type_to_string: unknown SQL data type", _ERROR_DETAILS_
 	);
 }
 
-std::string DefaultSQLSchemaEditor::sql_column(const column_state& column) const
+std::string DefaultSQLSchemaEditor::sql_column(const ColumnState& column) const
 {
 	if (column.name.empty())
 	{
 		throw ValueError(
-			"DefaultSQLSchemaEditor > sql_column: 'name' can not be empty",
-			_ERROR_DETAILS_
+			"DefaultSQLSchemaEditor > sql_column: 'name' can not be empty", _ERROR_DETAILS_
 		);
 	}
 
@@ -188,13 +185,13 @@ std::string DefaultSQLSchemaEditor::sql_column(const column_state& column) const
 std::string DefaultSQLSchemaEditor::sql_foreign_key(
 	const std::string& name,
 	const std::string& parent, const std::string& parent_key,
-	on_action on_delete, on_action on_update
+	OnAction on_delete, OnAction on_update
 ) const
 {
 	auto result = "FOREIGN KEY(" + name + ") REFERENCES " + parent + "(" + parent_key + ")";
 	switch (on_delete)
 	{
-		case NO_ACTION:
+		case OnAction::NoAction:
 			break;
 		default:
 			result += " ON DELETE " + this->sql_on_action_constraint(on_delete);
@@ -203,7 +200,7 @@ std::string DefaultSQLSchemaEditor::sql_foreign_key(
 
 	switch (on_update)
 	{
-		case NO_ACTION:
+		case OnAction::NoAction:
 			break;
 		default:
 			result += " ON UPDATE " + this->sql_on_action_constraint(on_update);

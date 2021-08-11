@@ -46,7 +46,7 @@ public:
 		return this->table_name;
 	}
 
-	inline void update_state(project_state& state) const override
+	inline void update_state(ProjectState& state) const override
 	{
 		auto table = state.get_table(this->old_name());
 		state.tables.erase(table.name);
@@ -56,7 +56,7 @@ public:
 
 	inline void forward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& new_table = to_state.get_table_addr(this->new_name());
@@ -68,7 +68,7 @@ public:
 
 	inline void backward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		std::swap(this->new_table_name, this->table_name);

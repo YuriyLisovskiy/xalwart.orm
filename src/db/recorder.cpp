@@ -21,7 +21,7 @@ void MigrationRecorder::ensure_schema() const
 	table.column<int>("id", {.primary_key=true, .autoincrement=true});
 	table.column<std::string>("name", {.max_len=255, .unique=true});
 	table.column<dt::Datetime>("applied");
-	project_state state;
+	ProjectState state;
 	table.update_state(state);
 	table.forward(editor, state, state);
 }

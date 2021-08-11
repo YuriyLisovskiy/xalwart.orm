@@ -29,7 +29,7 @@ protected:
 	std::function<void(const std::string&, const std::string&)> log_progress;
 
 	[[nodiscard]]
-	inline project_state create_initial_state(bool with_applied_migrations=false) const;
+	inline ProjectState create_initial_state(bool with_applied_migrations=false) const;
 
 public:
 	explicit MigrationExecutor(

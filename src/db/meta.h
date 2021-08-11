@@ -8,6 +8,9 @@
 
 #pragma once
 
+// Base libraries.
+#include <xalwart.base/utility.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -97,7 +100,7 @@ concept column_field_type_c = std::is_fundamental_v<T> ||
 	std::is_same_v<dt::Datetime, T>;
 
 template <typename ModelT, column_field_type_c FieldT>
-struct column_meta_t
+struct ColumnMeta
 {
 	using field_type = FieldT;
 	using model_type = ModelT;
@@ -113,9 +116,9 @@ struct column_meta_t
 	field_builder_type as_field = nullptr;
 	string_builder_type as_string = nullptr;
 
-	column_meta_t() = default;
+	ColumnMeta() = default;
 
-	column_meta_t(
+	ColumnMeta(
 		std::string name, FieldT ModelT::* member_ptr, bool is_pk,
 		field_builder_type field_builder, string_builder_type string_builder
 	) : name(std::move(name)), member_pointer(member_ptr), is_pk(is_pk),
@@ -123,7 +126,7 @@ struct column_meta_t
 	{
 	}
 
-	column_meta_t(const column_meta_t& other)
+	ColumnMeta(const ColumnMeta& other)
 	{
 		if (this != &other)
 		{
@@ -156,7 +159,7 @@ FieldT column_as_field(const void* data)
 		return util::as_datetime(data, DEFAULT_DATETIME_FORMAT);
 	}
 
-	return util::as<FieldT>(data);
+	return xw::util::as<FieldT>(data);
 }
 
 template <column_field_type_c FieldT>
@@ -191,11 +194,11 @@ std::string field_as_column_v(const FieldT& field)
 }
 
 template <typename ModelT, column_field_type_c FieldT>
-inline column_meta_t<ModelT, FieldT> make_column_meta(
+inline ColumnMeta<ModelT, FieldT> make_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr, bool is_pk=false
 )
 {
-	return column_meta_t<ModelT, FieldT>(
+	return ColumnMeta<ModelT, FieldT>(
 		name, member_ptr, is_pk,
 		[](const void* data) -> FieldT
 		{
@@ -209,7 +212,7 @@ inline column_meta_t<ModelT, FieldT> make_column_meta(
 }
 
 template <typename ModelT, typename FieldT>
-inline column_meta_t<ModelT, FieldT> make_pk_column_meta(
+inline ColumnMeta<ModelT, FieldT> make_pk_column_meta(
 	const std::string& name, FieldT ModelT::* member_ptr
 )
 {

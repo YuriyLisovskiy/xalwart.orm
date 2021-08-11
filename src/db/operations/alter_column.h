@@ -25,11 +25,11 @@ template <column_migration_type_c T>
 class AlterColumn : public ColumnOperation
 {
 protected:
-	column_state column_data;
+	ColumnState column_data;
 
 public:
 	inline AlterColumn(
-		const std::string& table_name, const std::string& column_name, const constraints_t& c={}
+		const std::string& table_name, const std::string& column_name, const Constraints& c={}
 	) : ColumnOperation(table_name, column_name)
 	{
 		if (!c.null && !c.default_.has_value())
@@ -43,10 +43,10 @@ public:
 			);
 		}
 
-		this->column_data = column_state::create<T>(column_name, c);
+		this->column_data = ColumnState::create<T>(column_name, c);
 	}
 
-	inline void update_state(project_state& state) const override
+	inline void update_state(ProjectState& state) const override
 	{
 		auto& table = state.get_table_addr(this->table_name());
 		const auto& column = table.get_column_addr(this->name());
@@ -55,7 +55,7 @@ public:
 
 	inline void forward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
@@ -72,7 +72,7 @@ public:
 
 	inline void backward(
 		const abc::ISchemaEditor* editor,
-		const project_state& from_state, const project_state& to_state
+		const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		this->forward(editor, from_state, to_state);

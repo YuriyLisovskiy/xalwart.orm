@@ -287,7 +287,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_update_query_Full)
 	auto actual = this->sql_builder.sql_update(
 		TestBuilder_TestModel::meta_table_name,
 		R"("test"."name" = 'Hello')",
-		orm::q::condition_t(R"("test"."id" = 1)")
+		orm::q::Condition(R"("test"."id" = 1)")
 	);
 	ASSERT_EQ(expected, actual);
 }
@@ -322,7 +322,7 @@ TEST_F(DefaultSQLBuilder_TestCase, make_delete_query_Full)
 	auto expected = R"(DELETE FROM "test" WHERE "test"."id" = 1;)";
 	auto actual = this->sql_builder.sql_delete(
 		TestBuilder_TestModel::meta_table_name,
-		orm::q::condition_t(R"("test"."id" = 1)")
+		orm::q::Condition(R"("test"."id" = 1)")
 	);
 	ASSERT_EQ(expected, actual);
 }

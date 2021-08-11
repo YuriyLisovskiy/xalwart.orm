@@ -15,7 +15,7 @@ class QueryErrorTestCase : public ::testing::Test
 {
 public:
 	const char* WhatErrorMessage = "Test error message from QueryErrorTestCase";
-	const char* FullErrorMessage = "QueryError: Test error message from QueryErrorTestCase";
+	const char* FullErrorMessage = "xw::orm::QueryError: Test error message from QueryErrorTestCase";
 	const char* ErrorFunction = "testFunc";
 	const char* ErrorFile = "test_file.cpp";
 	const size_t ErrorLine = 1;

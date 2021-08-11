@@ -15,7 +15,7 @@ class ModelErrorTestCase : public ::testing::Test
 {
 public:
 	const char* WhatErrorMessage = "Test error message from ModelErrorTestCase";
-	const char* FullErrorMessage = "ModelError: Test error message from ModelErrorTestCase";
+	const char* FullErrorMessage = "xw::orm::ModelError: Test error message from ModelErrorTestCase";
 	const char* ErrorFunction = "testFunc";
 	const char* ErrorFile = "test_file.cpp";
 	const size_t ErrorLine = 1;

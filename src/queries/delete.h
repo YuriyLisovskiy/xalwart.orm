@@ -30,7 +30,7 @@ protected:
 	abc::ISQLDriver* sql_driver = nullptr;
 
 	// Holds condition for SQL 'WHERE' statement.
-	q_value<condition_t> where_cond;
+	QValue<Condition> where_cond;
 
 	// List of primary keys to delete. It will be used by
 	// default if `where` is not called.
@@ -97,7 +97,7 @@ public:
 			{
 				if (column.is_pk)
 				{
-					condition.set(column_condition_t(
+					condition.set(ColumnCondition(
 						db::get_table_name<ModelT>(),
 						column.name,
 						"IN (" + str::join(", ", this->pks.begin(), this->pks.end()) + ")"
@@ -126,7 +126,7 @@ public:
 	}
 
 	// Sets the condition for 'where' filtering.
-	inline delete_& where(const condition_t& cond)
+	inline delete_& where(const Condition& cond)
 	{
 		if (this->where_cond.is_set)
 		{

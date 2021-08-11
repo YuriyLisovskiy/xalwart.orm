@@ -37,14 +37,14 @@ public:
 	}
 };
 
-TEST(TestCase_Conditions, ordering_Ascending)
+TEST(TestCase_Conditions, Ordering_Ascending)
 {
 	auto expected = R"("test_model"."id" ASC)";
 	auto actual = orm::q::asc(&TestModel::id);
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
-TEST(TestCase_Conditions, ordering_Descending)
+TEST(TestCase_Conditions, Ordering_Descending)
 {
 	auto expected = R"("test_model"."id" DESC)";
 	auto actual = orm::q::desc(&TestModel::id);
@@ -150,21 +150,21 @@ TEST(TestCase_Conditions, is_not_null_Id)
 TEST(TestCase_Conditions, LogicalOperatorAnd)
 {
 	std::string expected = R"(("id" = 1 AND "name" = 'John'))";
-	auto actual = orm::q::condition_t("\"id\" = 1") & orm::q::condition_t("\"name\" = 'John'");
+	auto actual = orm::q::Condition("\"id\" = 1") & orm::q::Condition("\"name\" = 'John'");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Conditions, LogicalOperatorOr)
 {
 	std::string expected = R"(("id" = 1 OR "name" = 'John'))";
-	auto actual = orm::q::condition_t("\"id\" = 1") | orm::q::condition_t("\"name\" = 'John'");
+	auto actual = orm::q::Condition("\"id\" = 1") | orm::q::Condition("\"name\" = 'John'");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
 TEST(TestCase_Conditions, LogicalOperatorNot)
 {
 	std::string expected = "NOT (\"id\" = 1)";
-	auto actual = ~orm::q::condition_t("\"id\" = 1");
+	auto actual = ~orm::q::Condition("\"id\" = 1");
 	ASSERT_EQ(expected, (std::string)actual);
 }
 
