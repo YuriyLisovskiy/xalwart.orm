@@ -22,7 +22,7 @@ __ORM_DB_BEGIN__
 template <class T>
 inline std::string ce(const std::string& method, const std::string& msg)
 {
-	return xw::util::demangle(typeid(T).name()) + (method.empty() ? ": " : " > " + method + ": ") + msg;
+	return demangle(typeid(T).name()) + (method.empty() ? ": " : " > " + method + ": ") + msg;
 }
 
 // TESTME: fe

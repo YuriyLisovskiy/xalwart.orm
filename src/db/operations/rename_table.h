@@ -58,7 +58,7 @@ public:
 	{
 		const auto& new_table = to_state.get_table_addr(this->new_name());
 		const auto& old_table = from_state.get_table_addr(this->old_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<RenameTable>("forward/backward", "schema editor is nullptr")
 		)->rename_table(new_table, old_table.name, new_table.name);
 	}

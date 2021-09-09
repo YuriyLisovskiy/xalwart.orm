@@ -69,7 +69,7 @@ public:
 	{
 		const auto& to_table = to_state.get_table_addr(this->table_name());
 		const auto& from_table = from_state.get_table_addr(this->table_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<RenameColumn>("forward", "schema editor is nullptr")
 		)->alter_column(
 			from_table, from_table.get_column_addr(this->name()), to_table.get_column_addr(this->new_name()), false
@@ -82,7 +82,7 @@ public:
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
 		auto& from_table = from_state.get_table_addr(this->table_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<RenameColumn>("backward", "schema editor is nullptr")
 		)->alter_column(
 			from_table, from_table.get_column_addr(this->new_name()), to_table.get_column_addr(this->name()), false

@@ -38,7 +38,7 @@ public:
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<DropTable>("forward", "schema editor is nullptr")
 		)->drop_table(table.name);
 	}
@@ -48,7 +48,7 @@ public:
 	) const override
 	{
 		auto table = to_state.tables.at(this->name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<DropTable>("backward", "schema editor is nullptr")
 		)->create_table(table);
 	}

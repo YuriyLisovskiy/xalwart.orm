@@ -60,7 +60,7 @@ public:
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
 		auto& from_table = from_state.get_table_addr(this->table_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<AlterColumn<T>>("forward/backward", "schema editor is nullptr")
 		)->alter_column(
 			from_table, from_table.get_column_addr(this->name()), to_table.get_column_addr(this->name()), false

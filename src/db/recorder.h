@@ -39,7 +39,7 @@ protected:
 	[[nodiscard]]
 	inline orm::abc::ISQLDriver* driver() const
 	{
-		return xw::util::require_non_null(
+		return require_non_null(
 			this->sql_driver, "xw::orm::db::MigrationRecorder > driver: SQL driver must not be nullptr"
 		);
 	}
@@ -69,7 +69,7 @@ public:
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	inline explicit MigrationRecorder(orm::abc::ISQLDriver* driver)
 	{
-		this->sql_driver = xw::util::require_non_null(
+		this->sql_driver = require_non_null(
 			driver, "xw::orm::db::MigrationRecorder: SQL driver must not be nullptr"
 		);
 	}

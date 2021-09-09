@@ -69,7 +69,7 @@ public:
 		auto& to_table = to_state.get_table_addr(this->table_name());
 		auto& col = to_table.get_column_addr(this->name());
 		auto& from_table = from_state.get_table_addr(this->table_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<AddColumn<T>>("forward", "schema editor is nullptr")
 		)->create_column(from_table, col);
 	}
@@ -79,7 +79,7 @@ public:
 	) const override
 	{
 		auto& table = from_state.get_table_addr(this->table_name());
-		xw::util::require_non_null(
+		require_non_null(
 			editor, ce<AddColumn<T>>("backward", "schema editor is nullptr")
 		)->drop_column(table, table.get_column_addr(this->name()));
 	}

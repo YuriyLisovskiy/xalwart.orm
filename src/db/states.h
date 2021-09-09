@@ -138,9 +138,9 @@ struct ColumnState
 			if (c.default_.type() != typeid(T))
 			{
 				throw TypeError(
-					"xw::orm::db::ColumnState > create: type '" + xw::util::demangle(typeid(T).name()) +
+					"xw::orm::db::ColumnState > create: type '" + demangle(typeid(T).name()) +
 					"' of default value is not the same as column type - '" +
-					xw::util::demangle(c.default_.type().name()) + "'",
+					demangle(c.default_.type().name()) + "'",
 					_ERROR_DETAILS_
 				);
 			}

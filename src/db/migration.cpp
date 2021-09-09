@@ -36,8 +36,8 @@ bool Migration::apply(
 	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(editor, ce<Migration>("apply", "schema editor is nullptr"));
-	return xw::util::require_non_null(this->sql_driver)->run_transaction(
+	require_non_null(editor, ce<Migration>("apply", "schema editor is nullptr"));
+	return require_non_null(this->sql_driver)->run_transaction(
 		[this, editor, success_callback, &state]() -> bool
 		{
 			for (const auto& operation : this->operations)
@@ -61,7 +61,7 @@ bool Migration::rollback(
 	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
-	xw::util::require_non_null(editor, ce<Migration>("rollback", "schema editor is nullptr"));
+	require_non_null(editor, ce<Migration>("rollback", "schema editor is nullptr"));
 	std::list<std::tuple<std::shared_ptr<abc::IOperation>, ProjectState, ProjectState>> ops_to_run;
 	auto new_state = state;
 	for (const auto& operation : this->operations)
@@ -71,7 +71,7 @@ bool Migration::rollback(
 		ops_to_run.emplace_front(operation, old_state, new_state);
 	}
 
-	return xw::util::require_non_null(
+	return require_non_null(
 		this->sql_driver, ce<Migration>("rollback", "driver is nullptr")
 	)->run_transaction(
 		[ops_to_run, editor, success_callback]() -> bool

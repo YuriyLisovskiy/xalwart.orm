@@ -92,9 +92,9 @@ public:
 	inline explicit Migration(orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false) :
 		sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
 	{
-		xw::util::require_non_null(this->sql_driver, ce<Migration>("", "driver is not initialized"));
+		require_non_null(this->sql_driver, ce<Migration>("", "driver is not initialized"));
 		this->sql_schema_editor = this->sql_driver->schema_editor();
-		xw::util::require_non_null(this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized"));
+		require_non_null(this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized"));
 	}
 
 	inline void update_state(ProjectState& state) const
