@@ -376,7 +376,8 @@ public:
 			](ModelType& model) -> void {
 				first(model, Lazy<std::list<OtherModelType>>(
 					[
-						connection, first_t_name, first_pk_name, left_fk, right_fk, first, second, intermediate_table
+						connection, builder, first_t_name, first_pk_name,
+						left_fk, right_fk, first, second, intermediate_table
 					]() -> std::list<OtherModelType> {
 						std::string second_t_name = OtherModelType::meta_table_name;
 						std::string m_table = intermediate_table;
