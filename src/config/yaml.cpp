@@ -9,8 +9,12 @@
 // Base libraries.
 #include <xalwart.base/exceptions.h>
 
+#ifdef USE_SQLITE3
+
 // Orm libraries.
 #include "../sqlite3/config/yaml.h"
+
+#endif // USE_SQLITE3
 
 
 __ORM_CONFIG_BEGIN__
@@ -37,21 +41,22 @@ void YAMLDatabasesComponent::handle_database(const std::string& dbms, const std:
 		);
 	}
 
+#ifdef USE_SQLITE3
 	if (dbms == "sqlite3")
 	{
 		std::shared_ptr<abc::orm::Backend> backend = nullptr;
-		auto component = sqlite3::YAMLSQLite3Component(this->base_directory, backend);
+		auto component = orm::sqlite3::YAMLSQLite3Component(this->base_directory, backend);
 		component.initialize(node);
 		if (backend != nullptr)
 		{
 			this->backends.insert(std::make_pair(name, std::move(backend)));
 		}
+		return;
 	}
-	else
-	{
-		// TODO: add custom database loading
-		throw ImproperlyConfigured("Unsupported database '" + dbms + "'", _ERROR_DETAILS_);
-	}
+#endif // USE_SQLITE3
+
+	// TODO: add custom database loading
+	throw ImproperlyConfigured("Unsupported database '" + dbms + "'", _ERROR_DETAILS_);
 }
 
 __ORM_CONFIG_END__
