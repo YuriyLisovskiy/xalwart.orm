@@ -8,7 +8,7 @@
 
 #include "../../src/queries/insert.h"
 
-#include "./mocked_driver.h"
+#include "./mocked_backend.h"
 
 using namespace xw;
 
@@ -39,54 +39,51 @@ struct TestCase_Q_insert_TestModel : public orm::db::Model
 class TestCase_Q_insert_One : public ::testing::Test
 {
 protected:
-	orm::q::insert<TestCase_Q_insert_TestModel>* query;
+	MockedBackend* backend;
+	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
+	std::shared_ptr<abc::orm::DatabaseConnection> conn;
 
 	void SetUp() override
 	{
-		this->query = new orm::q::insert(TestCase_Q_insert_TestModel());
+		this->backend = new MockedBackend();
+		this->conn = this->backend->get_connection();
+		this->query = new orm::q::Insert<TestCase_Q_insert_TestModel>(
+			this->conn.get(), this->backend->query_builder()
+		);
+		this->query->model(TestCase_Q_insert_TestModel());
 	}
 
 	void TearDown() override
 	{
+		this->backend->release_connection(this->conn);
 		delete this->query;
+		delete this->backend;
 	}
 };
-
-TEST_F(TestCase_Q_insert_One, commit_one_MissingDriverException)
-{
-	ASSERT_THROW(this->query->commit_one(), orm::QueryError);
-}
-
-TEST_F(TestCase_Q_insert_One, commit_one_WithPkArg_MissingDriverException)
-{
-	int pk;
-	ASSERT_THROW(this->query->commit_one(pk), orm::QueryError);
-}
-
-TEST_F(TestCase_Q_insert_One, commit_batch_MissingDriverException)
-{
-	ASSERT_THROW(this->query->commit_batch(), orm::QueryError);
-}
-
-TEST_F(TestCase_Q_insert_One, query_MissingDriverException)
-{
-	ASSERT_THROW(auto _ = this->query->query(), orm::QueryError);
-}
 
 class TestCase_Q_insert_Bulk : public ::testing::Test
 {
 protected:
-	orm::q::insert<TestCase_Q_insert_TestModel>* query;
+	MockedBackend* backend;
+	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
+	std::shared_ptr<abc::orm::DatabaseConnection> conn;
 
 	void SetUp() override
 	{
-		this->query = new orm::q::insert(TestCase_Q_insert_TestModel());
+		this->backend = new MockedBackend();
+		this->conn = this->backend->get_connection();
+		this->query = new orm::q::Insert<TestCase_Q_insert_TestModel>(
+			this->conn.get(), this->backend->query_builder()
+		);
+		this->query->model(TestCase_Q_insert_TestModel());
 		this->query->model(TestCase_Q_insert_TestModel());
 	}
 
 	void TearDown() override
 	{
 		delete this->query;
+		this->backend->release_connection(this->conn);
+		delete this->backend;
 	}
 };
 
@@ -95,25 +92,19 @@ TEST_F(TestCase_Q_insert_Bulk, commit_one_FailDueToBulkMode)
 	ASSERT_THROW(this->query->commit_one(), orm::QueryError);
 }
 
-TEST_F(TestCase_Q_insert_One, commit_one_WithPkArg_FailDueToBulkMode)
-{
-	int pk;
-	ASSERT_THROW(this->query->commit_one(pk), orm::QueryError);
-}
-
 class TestCaseF_Q_insert : public ::testing::Test
 {
 protected:
-	MockedDriver* driver;
+	MockedBackend* backend;
 
 	void SetUp() override
 	{
-		this->driver = new MockedDriver();
+		this->backend = new MockedBackend();
 	}
 
 	void TearDown() override
 	{
-		delete this->driver;
+		delete this->backend;
 	}
 };
 
@@ -123,7 +114,10 @@ TEST_F(TestCaseF_Q_insert, query_SingleModel)
 	model.name = "Steve";
 
 	auto expected = R"(INSERT INTO "test_models" (name) VALUES ('Steve');)";
-	auto actual = orm::q::insert(model).use(this->driver).query();
+	auto w = this->backend->wrap_connection();
+	auto actual = orm::q::Insert<TestCase_Q_insert_TestModel>(
+		w.connection(), this->backend->query_builder()
+	).model(model).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
@@ -136,7 +130,10 @@ TEST_F(TestCaseF_Q_insert, query_MultipleModels)
 	model_2.name = "John";
 
 	auto expected = R"(INSERT INTO "test_models" (name) VALUES ('Steve'), ('John');)";
-	auto actual = orm::q::insert(model_1).model(model_2).use(this->driver).query();
+	auto w = this->backend->wrap_connection();
+	auto actual = orm::q::Insert<TestCase_Q_insert_TestModel>(
+		w.connection(), this->backend->query_builder()
+	).model(model_1).model(model_2).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
@@ -146,7 +143,10 @@ TEST_F(TestCaseF_Q_insert, commit_one_ReturnedStringPk)
 	model.name = "Steve";
 
 	std::string pk;
-	orm::q::insert(model).use(this->driver).commit_one(pk);
+	auto w = this->backend->wrap_connection();
+	orm::q::Insert<TestCase_Q_insert_TestModel>(
+		w.connection(), this->backend->query_builder()
+	).model(model).commit_one(pk);
 	ASSERT_EQ(pk, "1");
 }
 
@@ -156,7 +156,10 @@ TEST_F(TestCaseF_Q_insert, commit_one_SetPk)
 	model.id = 0;
 	model.name = "Steve";
 
-	ASSERT_NO_THROW(orm::q::insert(model).use(this->driver).commit_one(model.id));
+	auto w = this->backend->wrap_connection();
+	ASSERT_NO_THROW(orm::q::Insert<TestCase_Q_insert_TestModel>(
+		w.connection(), this->backend->query_builder()
+	).model(model).commit_one(model.id));
 	ASSERT_EQ(model.id, 1);
 }
 
@@ -168,5 +171,8 @@ TEST_F(TestCaseF_Q_insert, commit_batch_NoThrow)
 	TestCase_Q_insert_TestModel model_2;
 	model_2.name = "John";
 
-	ASSERT_NO_THROW(orm::q::insert(model_1).model(model_2).use(this->driver).commit_batch());
+	auto w = this->backend->wrap_connection();
+	ASSERT_NO_THROW(orm::q::Insert<TestCase_Q_insert_TestModel>(
+		w.connection(), this->backend->query_builder()
+	).model(model_1).model(model_2).commit_batch());
 }

@@ -22,13 +22,54 @@ __ORM_DB_BEGIN__
 // TODO: docs for 'DefaultSchemaEditor'
 class DefaultSQLSchemaEditor : public abc::ISchemaEditor
 {
-protected:
-	orm::abc::ISQLDriver* db;
+public:
+	inline explicit DefaultSQLSchemaEditor(xw::abc::orm::Backend* backend) : backend(backend)
+	{
+		if (!this->backend)
+		{
+			throw NullPointerException("Database backend is nullptr", _ERROR_DETAILS_);
+		}
+	}
+
+	void create_table(const TableState& table) const override;
+
+	inline void drop_table(const std::string& name) const override
+	{
+		this->execute(this->sql_drop_table(name));
+	}
+
+	inline void rename_table(
+		const TableState& table, const std::string& old_name, const std::string& new_name
+	) const override
+	{
+		if (old_name == new_name)
+		{
+			// TODO: !IMPORTANT! Check if driver ignores case
+			//  and if names are the same in lower-case.
+			return;
+		}
+
+		this->execute(this->sql_rename_table(old_name, new_name));
+	}
+
+	inline void create_column(const TableState& table, const ColumnState& column) const override
+	{
+		this->execute(this->sql_add_column(table, column));
+	}
+
+	inline void drop_column(const TableState& table, const ColumnState& column) const override
+	{
+		this->execute(this->sql_drop_column(table, column));
+	}
+
+	void alter_column(
+		const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
+	) const override;
 
 protected:
+	xw::abc::orm::Backend* backend;
 
 	// SQL builders.
-
 	[[nodiscard]]
 	virtual std::string sql_create_table(
 		const TableState& table,
@@ -171,7 +212,14 @@ protected:
 
 	virtual void execute(const std::string& sql) const
 	{
-		this->db->run_query(sql.ends_with(';') ? sql : (sql + ";"));
+		auto connection = this->backend->get_connection();
+		if (!connection)
+		{
+			throw NullPointerException("SQL backend is nullptr", _ERROR_DETAILS_);
+		}
+
+		connection->run_query(sql.ends_with(';') ? sql : (sql + ";"), nullptr, nullptr);
+		this->backend->release_connection(connection);
 	}
 
 	virtual void sql_column_autoincrement_check(SqlColumnType type, bool autoincrement, bool primary_key) const;
@@ -204,52 +252,6 @@ protected:
 	{
 		return str::join("_", cols.begin(), cols.end(), [](const auto& col) -> auto { return col.name; }) + suffix;
 	}
-
-public:
-	inline explicit DefaultSQLSchemaEditor(orm::abc::ISQLDriver* db) : db(db)
-	{
-		if (!this->db)
-		{
-			throw NullPointerException(
-				"xw::orm::db::DefaultSQLSchemaEditor: database driver is nullptr", _ERROR_DETAILS_
-			);
-		}
-	}
-
-	void create_table(const TableState& table) const override;
-
-	inline void drop_table(const std::string& name) const override
-	{
-		this->execute(this->sql_drop_table(name));
-	}
-
-	inline void rename_table(
-		const TableState& table, const std::string& old_name, const std::string& new_name
-	) const override
-	{
-		if (old_name == new_name)
-		{
-			// TODO: !IMPORTANT! Check if driver ignores case
-			//  and if names are the same in lower-case.
-			return;
-		}
-
-		this->execute(this->sql_rename_table(old_name, new_name));
-	}
-
-	inline void create_column(const TableState& table, const ColumnState& column) const override
-	{
-		this->execute(this->sql_add_column(table, column));
-	}
-
-	inline void drop_column(const TableState& table, const ColumnState& column) const override
-	{
-		this->execute(this->sql_drop_column(table, column));
-	}
-
-	void alter_column(
-		const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
-	) const override;
 };
 
 __ORM_DB_END__

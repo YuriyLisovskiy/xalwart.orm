@@ -9,6 +9,139 @@
 
 __ORM_DB_BEGIN__
 
+void DefaultSQLSchemaEditor::create_table(const TableState& table) const
+{
+	std::list<ColumnState> columns;
+	for (const auto& col : table.columns)
+	{
+		columns.push_back(col.second);
+	}
+
+	std::list<std::tuple<std::string, ForeignKeyConstraints>> foreign_keys;
+	for (const auto& fk : table.foreign_keys)
+	{
+		foreign_keys.emplace_back(fk.first, fk.second);
+	}
+
+	this->execute(this->sql_create_table(table, columns, foreign_keys));
+}
+
+void DefaultSQLSchemaEditor::alter_column(
+	const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
+) const
+{
+	// Was column renamed?
+	if (old_column.name != new_column.name)
+	{
+		this->execute(this->sql_rename_column(table, old_column, new_column));
+	}
+
+	std::list<std::string> actions;
+	std::list<std::string> null_actions;
+	std::list<std::string> post_actions;
+
+	// Was type changed?
+	if (old_column.type != new_column.type)
+	{
+		auto [partial_sql, extra_actions] = this->partial_sql_alter_column_type(table, old_column, new_column);
+		actions.push_back(partial_sql);
+		post_actions.insert(post_actions.end(), extra_actions.begin(), extra_actions.end());
+	}
+
+	// When changing a column NULL constraint to NOT NULL with a given
+	// default value, we need to do 4 steps:
+	//  1) add a default for new incoming writes;
+	//  2) update existing NULL rows with new default;
+	//  3) replace NULL constraints with NOT NULL;
+	//  4 drop the default again.
+	// Was default changed?
+	bool needs_db_default = false;
+	auto old_null = old_column.constraints.null;
+	auto new_null = new_column.constraints.null;
+	bool has_change_from_null_to_not_null = old_null.has_value() && old_null.value() &&
+		(!new_null.has_value() || !new_null.value());
+	if (has_change_from_null_to_not_null)
+	{
+		if (
+			!this->skip_default(new_column) &&
+			old_column.default_value != new_column.default_value &&
+			!new_column.default_value.empty()
+		)
+		{
+			needs_db_default = true;
+			actions.push_back(this->partial_sql_alter_column_default(table, old_column, new_column, false));
+		}
+	}
+
+	// Was hull changed?
+	if (old_null != new_null)
+	{
+		auto fragment = this->partial_sql_alter_column_null(table, old_column, new_column);
+		if (!fragment.empty())
+		{
+			null_actions.push_back(fragment);
+		}
+	}
+
+	auto four_way_default_alteration = !new_column.default_value.empty() &&
+		has_change_from_null_to_not_null;
+	if (!actions.empty() || !null_actions.empty())
+	{
+		if (!four_way_default_alteration)
+		{
+			actions.insert(actions.end(), null_actions.begin(), null_actions.end());
+		}
+
+		// TODO: check if driver supports combined alters, i.e. separated by comma.
+
+		// Apply actions.
+		for (const auto& partial_sql : actions)
+		{
+			this->execute(this->sql_alter_column(table, partial_sql));
+		}
+
+		if (four_way_default_alteration)
+		{
+			// Update existing rows with default value.
+			this->execute(this->sql_update_with_default(table, new_column));
+
+			// Since we didn't run a NOT NULL change before we need to do it now.
+			for (const auto& partial_sql : null_actions)
+			{
+				this->execute(this->sql_alter_column(table, partial_sql));
+			}
+		}
+	}
+
+	if (!post_actions.empty())
+	{
+		for (const auto& sql : post_actions)
+		{
+			this->execute(sql);
+		}
+	}
+
+	// If primary_key changed to False, delete the primary key constraint.
+	if (old_column.constraints.primary_key && !new_column.constraints.primary_key)
+	{
+		this->delete_primary_key(table, strict);
+	}
+
+	// Added a unique?
+	if (this->unique_should_be_added(old_column, new_column))
+	{
+		this->execute(this->sql_create_unique(table, {new_column}));
+	}
+
+	// TODO: implement logic for index.
+
+//	if (needs_db_default)
+//	{
+//		auto partial_sql = this->partial_sql_alter_column_default(table, old_column, new_column, true);
+//		this->execute(this->sql_alter_column(table, partial_sql));
+//	}
+}
+
 std::string DefaultSQLSchemaEditor::sql_create_table(
 	const TableState& table,
 	const std::list<ColumnState>& columns,
@@ -206,23 +339,6 @@ void DefaultSQLSchemaEditor::delete_primary_key(const TableState& table, bool st
 	}
 }
 
-void DefaultSQLSchemaEditor::create_table(const TableState& table) const
-{
-	std::list<ColumnState> columns;
-	for (const auto& col : table.columns)
-	{
-		columns.push_back(col.second);
-	}
-
-	std::list<std::tuple<std::string, ForeignKeyConstraints>> foreign_keys;
-	for (const auto& fk : table.foreign_keys)
-	{
-		foreign_keys.emplace_back(fk.first, fk.second);
-	}
-
-	this->execute(this->sql_create_table(table, columns, foreign_keys));
-}
-
 std::string DefaultSQLSchemaEditor::sql_type_string(SqlColumnType type) const
 {
 	switch (type)
@@ -311,122 +427,6 @@ std::string DefaultSQLSchemaEditor::sql_foreign_key(
 	}
 
 	return result;
-}
-
-void DefaultSQLSchemaEditor::alter_column(
-	const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
-) const
-{
-	// Was column renamed?
-	if (old_column.name != new_column.name)
-	{
-		this->execute(this->sql_rename_column(table, old_column, new_column));
-	}
-
-	std::list<std::string> actions;
-	std::list<std::string> null_actions;
-	std::list<std::string> post_actions;
-
-	// Was type changed?
-	if (old_column.type != new_column.type)
-	{
-		auto [partial_sql, extra_actions] = this->partial_sql_alter_column_type(table, old_column, new_column);
-		actions.push_back(partial_sql);
-		post_actions.insert(post_actions.end(), extra_actions.begin(), extra_actions.end());
-	}
-
-	// When changing a column NULL constraint to NOT NULL with a given
-	// default value, we need to do 4 steps:
-	//  1) add a default for new incoming writes;
-	//  2) update existing NULL rows with new default;
-	//  3) replace NULL constraints with NOT NULL;
-	//  4 drop the default again.
-	// Was default changed?
-	bool needs_db_default = false;
-	auto old_null = old_column.constraints.null;
-	auto new_null = new_column.constraints.null;
-	bool has_change_from_null_to_not_null = old_null.has_value() && old_null.value() &&
-		(!new_null.has_value() || !new_null.value());
-	if (has_change_from_null_to_not_null)
-	{
-		if (
-			!this->skip_default(new_column) &&
-			old_column.default_value != new_column.default_value &&
-			!new_column.default_value.empty()
-		)
-		{
-			needs_db_default = true;
-			actions.push_back(this->partial_sql_alter_column_default(table, old_column, new_column, false));
-		}
-	}
-
-	// Was hull changed?
-	if (old_null != new_null)
-	{
-		auto fragment = this->partial_sql_alter_column_null(table, old_column, new_column);
-		if (!fragment.empty())
-		{
-			null_actions.push_back(fragment);
-		}
-	}
-
-	auto four_way_default_alteration = !new_column.default_value.empty() &&
-		has_change_from_null_to_not_null;
-	if (!actions.empty() || !null_actions.empty())
-	{
-		if (!four_way_default_alteration)
-		{
-			actions.insert(actions.end(), null_actions.begin(), null_actions.end());
-		}
-
-		// TODO: check if driver supports combined alters, i.e. separated by comma.
-
-		// Apply actions.
-		for (const auto& partial_sql : actions)
-		{
-			this->execute(this->sql_alter_column(table, partial_sql));
-		}
-
-		if (four_way_default_alteration)
-		{
-			// Update existing rows with default value.
-			this->execute(this->sql_update_with_default(table, new_column));
-
-			// Since we didn't run a NOT NULL change before we need to do it now.
-			for (const auto& partial_sql : null_actions)
-			{
-				this->execute(this->sql_alter_column(table, partial_sql));
-			}
-		}
-	}
-
-	if (!post_actions.empty())
-	{
-		for (const auto& sql : post_actions)
-		{
-			this->execute(sql);
-		}
-	}
-
-	// If primary_key changed to False, delete the primary key constraint.
-	if (old_column.constraints.primary_key && !new_column.constraints.primary_key)
-	{
-		this->delete_primary_key(table, strict);
-	}
-
-	// Added a unique?
-	if (this->unique_should_be_added(old_column, new_column))
-	{
-		this->execute(this->sql_create_unique(table, {new_column}));
-	}
-
-	// TODO: implement logic for index.
-
-//	if (needs_db_default)
-//	{
-//		auto partial_sql = this->partial_sql_alter_column_default(table, old_column, new_column, true);
-//		this->execute(this->sql_alter_column(table, partial_sql));
-//	}
 }
 
 __ORM_DB_END__

@@ -16,41 +16,103 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
+#include "./abstract_query.h"
 #include "../exceptions.h"
 
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type ModelT>
-class insert final
+template <db::model_based_type ModelType>
+class Insert final : public AbstractQuery<ModelType>
 {
-	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::insert: 'meta_table_name' is not initialized");
+public:
+	inline explicit Insert(
+		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder
+	) : AbstractQuery<ModelType>(connection, query_builder)
+	{
+	}
+
+	// Throws 'QueryError' when driver is not set.
+	[[nodiscard]]
+	inline std::string to_sql() const override
+	{
+		return require_non_null(
+			this->query_builder, "SQL query builder is not initialized", _ERROR_DETAILS_
+		)->sql_insert(db::get_table_name<ModelType>(), this->columns_line, this->rows);
+	}
+
+	// Throws 'QueryError' if model is null.
+	inline Insert& model(const ModelType& model)
+	{
+		if (model.is_null())
+		{
+			throw QueryError("Unable to insert null model", _ERROR_DETAILS_);
+		}
+
+		if (this->rows.empty())
+		{
+			this->build_columns_line(model);
+		}
+
+		this->append_model(model);
+		return *this;
+	}
+
+	// Inserts one row and returns inserted pk as string.
+	//
+	// Throws 'QueryError' if more than one model was set.
+	inline void commit_one() const
+	{
+		if (this->rows.size() > 1)
+		{
+			throw QueryError("Trying to insert one model, but multiple models were set", _ERROR_DETAILS_);
+		}
+
+		this->db_connection->run_query(this->to_sql(), nullptr, nullptr);
+	}
+
+	// Inserts one row and sets inserted primary key
+	// to `pk` as type T.
+	template <db::column_field_type T>
+	inline void commit_one(T& pk) const
+	{
+		if (this->rows.size() > 1)
+		{
+			throw QueryError("Trying to insert one model, but multiple models were set", _ERROR_DETAILS_);
+		}
+
+		auto query = this->to_sql();
+		std::string raw_pk;
+		this->db_connection->run_query(query, raw_pk);
+		if (!raw_pk.empty())
+		{
+			pk = xw::util::as<T>(raw_pk.c_str());
+		}
+	}
+
+	inline void commit_batch() const
+	{
+		this->db_connection->run_query(this->to_sql(), nullptr, nullptr);
+	}
 
 protected:
-
-	// Driver to perform the access to the database.
-	abc::ISQLDriver* sql_driver = nullptr;
-
 	// Holds columns names.
 	// Generates during the first model appending.
-	std::string columns_str;
+	std::string columns_line;
 
 	// Collection of rows to insert.
 	std::list<std::string> rows;
 
-protected:
-
 	// Converts model into row (string) and appends it to `rows`.
 	//
 	// `is_first`: used to indicate if `append` is called for the
-	// first time. If true, then generates `columns_str`.
-	inline void append_row(const ModelT& model)
+	// first time. If true, then generates `columns_line`.
+	inline void append_model(const ModelType& model)
 	{
 		std::string row;
-		util::tuple_for_each(ModelT::meta_columns, [&row, model](auto& column)
+		util::tuple_for_each(ModelType::meta_columns, [&row, model](auto& column)
 		{
-			if constexpr (ModelT::meta_omit_pk)
+			if constexpr (ModelType::meta_omit_pk)
 			{
 				if (column.is_pk)
 				{
@@ -65,22 +127,11 @@ protected:
 		this->rows.push_back(str::rtrim(row, ", "));
 	}
 
-public:
-
-	// Appends model to insertion list.
-	//
-	// Throws 'QueryError' if model is null.
-	inline explicit insert(const ModelT& model)
+	inline void build_columns_line(const ModelType& model)
 	{
-		if (model.is_null())
+		util::tuple_for_each(ModelType::meta_columns, [this](auto& column)
 		{
-			throw QueryError("xw::orm::q::insert: unable to insert null model", _ERROR_DETAILS_);
-		}
-
-		std::string columns;
-		util::tuple_for_each(ModelT::meta_columns, [&columns](auto& column)
-		{
-			if constexpr (ModelT::meta_omit_pk)
+			if constexpr (ModelType::meta_omit_pk)
 			{
 				if (column.is_pk)
 				{
@@ -88,98 +139,11 @@ public:
 				}
 			}
 
-			columns += column.name + ", ";
+			this->columns_line += column.name + ", ";
 			return true;
 		});
 
-		this->columns_str = str::rtrim(columns, ", ");
-		this->append_row(model);
-	};
-
-	// Sets SQL driver.
-	virtual insert& use(abc::ISQLDriver* driver)
-	{
-		if (driver)
-		{
-			this->sql_driver = driver;
-		}
-
-		return *this;
-	}
-
-	// Generates query using SQL driver.
-	//
-	// Throws 'QueryError' when driver is not set.
-	[[nodiscard]]
-	inline std::string query() const
-	{
-		if (!this->sql_driver)
-		{
-			throw QueryError("xw::orm::q::insert: SQL driver is not set", _ERROR_DETAILS_);
-		}
-
-		auto sql_builder = this->sql_driver->query_builder();
-		if (!sql_builder)
-		{
-			throw QueryError("xw::orm::q::insert: SQL query builder is initialized", _ERROR_DETAILS_);
-		}
-
-		return sql_builder->sql_insert(db::get_table_name<ModelT>(), this->columns_str, this->rows);
-	}
-
-	// Appends model to insertion list.
-	//
-	// Throws 'QueryError' if model is null.
-	inline insert& model(const ModelT& model)
-	{
-		if (model.is_null())
-		{
-			throw QueryError("xw::orm::q::insert: unable to insert null model", _ERROR_DETAILS_);
-		}
-
-		this->append_row(model);
-		return *this;
-	}
-
-	// Inserts one row and returns inserted pk as string.
-	//
-	// Throws 'QueryError' if more than one model was set.
-	inline void commit_one() const
-	{
-		if (this->rows.size() > 1)
-		{
-			throw QueryError(
-				"xw::orm::q::insert: trying to insert one model, but multiple models were set", _ERROR_DETAILS_
-			);
-		}
-
-		auto query = this->query();
-		this->sql_driver->run_insert(query);
-	}
-
-	// Inserts one row and sets inserted primary key
-	// to `pk` as type T.
-	template <db::column_field_type T>
-	inline void commit_one(T& pk) const
-	{
-		if (this->rows.size() > 1)
-		{
-			throw QueryError(
-				"xw::orm::q::insert: trying to insert one model, but multiple models were set", _ERROR_DETAILS_
-			);
-		}
-
-		auto query = this->query();
-		std::string raw_pk;
-		this->sql_driver->run_insert(query, raw_pk);
-		pk = xw::util::as<T>(raw_pk.c_str());
-	}
-
-	// Inserts row(s) into database.
-	inline void commit_batch() const
-	{
-		auto query = this->query();
-		this->sql_driver->run_insert(query);
+		this->columns_line = str::rtrim(this->columns_line, ", ");
 	}
 };
 

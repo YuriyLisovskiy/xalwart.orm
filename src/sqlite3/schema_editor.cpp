@@ -11,6 +11,62 @@
 
 __ORM_SQLITE3_BEGIN__
 
+void SchemaEditor::drop_column(const db::TableState& table, const db::ColumnState& column) const
+{
+	auto table_copy = table;
+	table_copy.columns.erase(column.name);
+	if (table_copy.foreign_keys.contains(column.name))
+	{
+		table_copy.foreign_keys.erase(column.name);
+	}
+
+	std::unordered_map<std::string, std::string> mapping;
+	for (const auto& col : table_copy.columns)
+	{
+		mapping[col.second.name] = this->quote_name(col.second.name);
+	}
+
+	this->recreate_table(table_copy, mapping);
+}
+
+void SchemaEditor::alter_column(
+	const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
+) const
+{
+	auto table_copy = table;
+	std::unordered_map<std::string, std::string> mapping;
+	for (const auto& column : table_copy.columns)
+	{
+		mapping[column.second.name] = this->quote_name(column.second.name);
+	}
+
+	table_copy.columns.erase(old_column.name);
+	mapping.erase(old_column.name);
+	table_copy.columns[new_column.name] = new_column;
+	auto old_null = old_column.constraints.null;
+	auto new_null = new_column.constraints.null;
+	if (old_null.has_value() && old_null.value() && !(new_null.has_value() && new_null.value()))
+	{
+		mapping[new_column.name] = "coalesce(" +
+			this->quote_name(old_column.name) + ", " +
+			(new_column.default_value.empty() ? "NULL" : new_column.default_value) +
+		")";
+	}
+	else
+	{
+		mapping[new_column.name] = this->quote_name(old_column.name);
+	}
+
+	if (table_copy.foreign_keys.contains(old_column.name) && old_column.name != new_column.name)
+	{
+		auto fk = table_copy.foreign_keys[old_column.name];
+		table_copy.foreign_keys.erase(old_column.name);
+		table_copy.foreign_keys[new_column.name] = fk;
+	}
+
+	this->recreate_table(table_copy, mapping);
+}
+
 std::string SchemaEditor::sql_column_constraints(const db::Constraints& cc, const std::string& default_value) const
 {
 	std::string result;
@@ -102,24 +158,6 @@ void SchemaEditor::recreate_table(
 	this->execute(query);
 }
 
-void SchemaEditor::drop_column(const db::TableState& table, const db::ColumnState& column) const
-{
-	auto table_copy = table;
-	table_copy.columns.erase(column.name);
-	if (table_copy.foreign_keys.contains(column.name))
-	{
-		table_copy.foreign_keys.erase(column.name);
-	}
-
-	std::unordered_map<std::string, std::string> mapping;
-	for (const auto& col : table_copy.columns)
-	{
-		mapping[col.second.name] = this->quote_name(col.second.name);
-	}
-
-	this->recreate_table(table_copy, mapping);
-}
-
 std::string SchemaEditor::sql_column(const db::ColumnState& column) const
 {
 	auto column_copy = column;
@@ -140,44 +178,6 @@ std::string SchemaEditor::sql_column(const db::ColumnState& column) const
 	}
 
 	return db::DefaultSQLSchemaEditor::sql_column(column_copy);
-}
-
-void SchemaEditor::alter_column(
-	const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
-) const
-{
-	auto table_copy = table;
-	std::unordered_map<std::string, std::string> mapping;
-	for (const auto& column : table_copy.columns)
-	{
-		mapping[column.second.name] = this->quote_name(column.second.name);
-	}
-
-	table_copy.columns.erase(old_column.name);
-	mapping.erase(old_column.name);
-	table_copy.columns[new_column.name] = new_column;
-	auto old_null = old_column.constraints.null;
-	auto new_null = new_column.constraints.null;
-	if (old_null.has_value() && old_null.value() && !(new_null.has_value() && new_null.value()))
-	{
-		mapping[new_column.name] = "coalesce(" +
-			this->quote_name(old_column.name) + ", " +
-			(new_column.default_value.empty() ? "NULL" : new_column.default_value) +
-		")";
-	}
-	else
-	{
-		mapping[new_column.name] = this->quote_name(old_column.name);
-	}
-
-	if (table_copy.foreign_keys.contains(old_column.name) && old_column.name != new_column.name)
-	{
-		auto fk = table_copy.foreign_keys[old_column.name];
-		table_copy.foreign_keys.erase(old_column.name);
-		table_copy.foreign_keys[new_column.name] = fk;
-	}
-
-	this->recreate_table(table_copy, mapping);
 }
 
 __ORM_SQLITE3_END__

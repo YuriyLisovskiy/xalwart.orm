@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include "./mocked_backend.h"
 #include "../../src/queries/select.h"
 
 using namespace xw;
@@ -37,16 +38,22 @@ struct TestCase_Q_TestModel : public orm::db::Model
 class TestCase_Q_select : public ::testing::Test
 {
 protected:
-	orm::q::select<TestCase_Q_TestModel>* query;
+	orm::q::Select<TestCase_Q_TestModel>* query;
+	std::shared_ptr<xw::abc::orm::DatabaseConnection> conn;
+	MockedBackend* backend;
 
 	void SetUp() override
 	{
-		this->query = new orm::q::select<TestCase_Q_TestModel>();
+		this->backend = new MockedBackend();
+		this->conn = this->backend->get_connection();
+		this->query = new orm::q::Select<TestCase_Q_TestModel>(this->conn.get(), this->backend->query_builder());
 	}
 
 	void TearDown() override
 	{
 		delete this->query;
+		this->backend->release_connection(this->conn);
+		delete this->backend;
 	}
 };
 
@@ -98,21 +105,6 @@ TEST_F(TestCase_Q_select, group_by_MultipleCalls_NotThrow_WhenFirstCallArgsIsEmp
 TEST_F(TestCase_Q_select, having_NotThrow)
 {
 	ASSERT_NO_THROW(this->query->having(orm::q::c(&TestCase_Q_TestModel::id) == 1));
-}
-
-TEST_F(TestCase_Q_select, first_ThrowsClientNotSet)
-{
-	ASSERT_THROW(this->query->first(), orm::QueryError);
-}
-
-TEST_F(TestCase_Q_select, all_ThrowsClientNotSet)
-{
-	ASSERT_THROW(auto _ = this->query->all(), orm::QueryError);
-}
-
-TEST_F(TestCase_Q_select, query_ThrowsClientNotSet)
-{
-	ASSERT_THROW(auto _ = this->query->query(), orm::QueryError);
 }
 
 TEST_F(TestCase_Q_select, distinct_NoThrow_MultipleCalls)

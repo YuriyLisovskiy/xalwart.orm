@@ -8,96 +8,47 @@
 
 #pragma once
 
+// C++ libraries.
+#include <optional>
+
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
-#include "../exceptions.h"
+#include "./abstract_query.h"
 #include "./conditions.h"
+#include "../exceptions.h"
 
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type ModelT>
-class delete_ final
+template <db::model_based_type ModelType>
+class Delete final : public AbstractQuery<ModelType>
 {
-	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::delete: 'meta_table_name' is not initialized");
-
-protected:
-
-	// Driver to perform an access to the database.
-	abc::ISQLDriver* sql_driver = nullptr;
-
-	// Holds condition for SQL 'WHERE' statement.
-	QValue<Condition> where_cond;
-
-	// List of primary keys to delete. It will be used by
-	// default if `where` is not called.
-	std::vector<std::string> pks{};
-
-protected:
-	inline void append_row(const ModelT& model)
-	{
-		if (model.is_null())
-		{
-			throw QueryError("xw::orm::q::delete: unable to delete null model", _ERROR_DETAILS_);
-		}
-
-		util::tuple_for_each(ModelT::meta_columns, [this, model](auto& column)
-		{
-			if (column.is_pk)
-			{
-				this->pks.push_back(column.as_string(model));
-				return false;
-			}
-
-			return true;
-		});
-	}
-
 public:
-
-	// Appends model's pk to deletion list.
-	explicit delete_(const ModelT& model)
+	inline explicit Delete(
+		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder
+	) : AbstractQuery<ModelType>(connection, query_builder)
 	{
-		this->append_row(model);
-	};
-
-	// Sets SQL driver.
-	virtual delete_& use(abc::ISQLDriver* driver)
-	{
-		if (driver)
-		{
-			this->sql_driver = driver;
-		}
-
-		return *this;
 	}
 
-	// Generates query using SQL driver.
-	//
 	// Throws 'QueryError' when driver is not set.
 	[[nodiscard]]
-	inline std::string query() const
+	inline std::string to_sql() const override
 	{
-		if (!this->sql_driver)
+		require_non_null(this->query_builder, "SQL builder is not initialized", _ERROR_DETAILS_);
+		auto condition = this->where_condition;
+		if (!condition.has_value())
 		{
-			throw QueryError("xw::orm::q::delete: database driver not set", _ERROR_DETAILS_);
-		}
-
-		auto condition = this->where_cond;
-		if (!condition.is_set)
-		{
-			util::tuple_for_each(ModelT::meta_columns, [this, &condition](auto& column)
+			util::tuple_for_each(ModelType::meta_columns, [this, &condition](auto& column)
 			{
 				if (column.is_pk)
 				{
-					condition.set(ColumnCondition(
-						db::get_table_name<ModelT>(),
+					condition = ColumnCondition(
+						db::get_table_name<ModelType>(),
 						column.name,
-						"IN (" + str::join(", ", this->pks.begin(), this->pks.end()) + ")"
-					));
+						"IN (" + str::join(", ", this->primary_keys.begin(), this->primary_keys.end()) + ")"
+					);
 					return false;
 				}
 
@@ -105,32 +56,26 @@ public:
 			});
 		}
 
-		auto sql_builder = this->sql_driver->query_builder();
-		if (!sql_builder)
-		{
-			throw QueryError("xw::orm::q::delete: SQL builder is not initialized", _ERROR_DETAILS_);
-		}
-
-		return sql_builder->sql_delete(db::get_table_name<ModelT>(), condition.value);
+		return this->query_builder->sql_delete(db::get_table_name<ModelType>(), condition.value());
 	}
 
 	// Appends model's pk to deletion list.
-	inline delete_& model(const ModelT& model)
+	inline Delete& model(const ModelType& model)
 	{
-		this->append_row(model);
+		this->append_model(model);
 		return *this;
 	}
 
 	// Sets the condition for 'where' filtering.
-	inline delete_& where(const Condition& cond)
+	inline Delete& where(const Condition& condition)
 	{
-		if (this->where_cond.is_set)
+		if (this->where_condition.has_value())
 		{
-			this->where_cond.set(this->where_cond.value & cond);
+			this->where_condition = this->where_condition.value() & condition;
 		}
 		else
 		{
-			this->where_cond.set(cond);
+			this->where_condition = condition;
 		}
 
 		return *this;
@@ -142,8 +87,36 @@ public:
 	// if it was not set manually.
 	inline void commit() const
 	{
-		auto query = this->query();
-		this->sql_driver->run_delete(query);
+		require_non_null(
+			this->db_connection, "SQL Database connection is not initialized", _ERROR_DETAILS_
+		)->run_query(this->to_sql(), nullptr, nullptr);
+	}
+
+protected:
+	// Holds condition for SQL 'WHERE' statement.
+	std::optional<Condition> where_condition;
+
+	// List of primary keys to delete. It will be used by
+	// default if `where` is not called.
+	std::vector<std::string> primary_keys{};
+
+	inline void append_model(const ModelType& model)
+	{
+		if (model.is_null())
+		{
+			throw QueryError("Unable to delete null model", _ERROR_DETAILS_);
+		}
+
+		util::tuple_for_each(ModelType::meta_columns, [this, model](auto& column)
+		{
+			if (column.is_pk)
+			{
+				this->primary_keys.push_back(column.as_string(model));
+				return false;
+			}
+
+			return true;
+		});
 	}
 };
 

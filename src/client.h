@@ -8,6 +8,9 @@
 
 #pragma once
 
+// TODO: remove!
+/*
+
 // Base libraries.
 #include <xalwart.base/utility.h>
 
@@ -241,3 +244,4 @@ public:
 };
 
 __ORM_END__
+*/

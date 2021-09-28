@@ -12,6 +12,9 @@
 #include <list>
 #include <memory>
 
+// Base libraries.
+#include <xalwart.base/abc/orm.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -34,7 +37,56 @@ __ORM_DB_BEGIN__
 // TODO: docs for 'Migration'
 class Migration
 {
-protected:
+public:
+	inline explicit Migration(xw::abc::orm::Backend* backend, std::string identifier, bool initial=false) :
+		identifier(std::move(identifier)), is_initial(initial)
+	{
+		require_non_null(backend, ce<Migration>("", "driver is not initialized"));
+		this->sql_backend = dynamic_cast<orm::abc::SQLBackend*>(backend);
+		if (!this->sql_backend)
+		{
+			throw ValueError(
+				"'xw::orm::db::Migration' requires 'xw::orm::abc::SQLBackend'-based backend", _ERROR_DETAILS_
+			);
+		}
+
+		this->sql_schema_editor = this->sql_backend->schema_editor();
+		require_non_null(this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized"));
+	}
+
+	inline void update_state(ProjectState& state) const
+	{
+		for (const auto& operation : this->operations)
+		{
+			operation->update_state(state);
+		}
+	}
+
+	bool apply(
+		ProjectState& state,
+		const abc::ISchemaEditor* schema_editor,
+		const std::function<void()>& success_callback=nullptr
+	) const;
+
+	bool rollback(
+		ProjectState& state,
+		const abc::ISchemaEditor* schema_editor,
+		const std::function<void()>& success_callback=nullptr
+	) const;
+
+	[[nodiscard]]
+	inline std::string name() const
+	{
+		return this->identifier;
+	}
+
+	[[nodiscard]]
+	inline bool initial() const
+	{
+		return this->is_initial;
+	}
+
+	protected:
 	std::string identifier;
 
 	std::list<std::shared_ptr<abc::IOperation>> operations;
@@ -43,11 +95,9 @@ protected:
 	bool is_initial = false;
 
 	// Database driver for running transactions.
-	orm::abc::ISQLDriver* sql_driver;
+	orm::abc::SQLBackend* sql_backend;
 
 	abc::ISchemaEditor* sql_schema_editor;
-
-protected:
 
 	// Operations.
 	void create_table(
@@ -88,45 +138,27 @@ protected:
 		this->operations.push_back(std::make_shared<ops::RenameColumn>(table_name, old_name, new_name));
 	}
 
-public:
-	inline explicit Migration(orm::abc::ISQLDriver* driver, std::string identifier, bool initial=false) :
-		sql_driver(driver), identifier(std::move(identifier)), is_initial(initial)
-	{
-		require_non_null(this->sql_driver, ce<Migration>("", "driver is not initialized"));
-		this->sql_schema_editor = this->sql_driver->schema_editor();
-		require_non_null(this->sql_schema_editor, ce<Migration>("", "schema editor is not initialized"));
-	}
-
-	inline void update_state(ProjectState& state) const
-	{
-		for (const auto& operation : this->operations)
-		{
-			operation->update_state(state);
-		}
-	}
-
-	bool apply(
+protected:
+	void apply_unsafe(
+		xw::abc::orm::DatabaseConnection* connection,
 		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
-	bool rollback(
+	void rollback_unsafe(
+		xw::abc::orm::DatabaseConnection* connection,
 		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
-	[[nodiscard]]
-	inline std::string name() const
+	inline void rollback_and_release_connection(
+		const std::shared_ptr<xw::abc::orm::DatabaseConnection>& connection
+	) const
 	{
-		return this->identifier;
-	}
-
-	[[nodiscard]]
-	inline bool initial() const
-	{
-		return this->is_initial;
+		connection->rollback_transaction();
+		this->sql_backend->release_connection(connection);
 	}
 };
 

@@ -28,50 +28,12 @@ __ORM_DB_BEGIN__
 // TODO: docs for 'MigrationRecorder'
 class MigrationRecorder
 {
-protected:
-	orm::abc::ISQLDriver* sql_driver;
-
-protected:
-
-	// Ensures if SQL driver is non-nullptr.
-	//
-	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	[[nodiscard]]
-	inline orm::abc::ISQLDriver* driver() const
-	{
-		return require_non_null(
-			this->sql_driver, "xw::orm::db::MigrationRecorder > driver: SQL driver must not be nullptr"
-		);
-	}
-
-	// Returns select query for `MigrationModel` with SQL driver.
-	//
-	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	[[nodiscard]]
-	inline q::select<models::Migration> migrations() const
-	{
-		return q::select<models::Migration>().use(this->driver());
-	}
-
-	// Returns `true` if the table of 'MigrationModel' exists,
-	// `false` otherwise.
-	//
-	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	[[nodiscard]]
-	inline bool has_table() const
-	{
-		auto tables = this->driver()->table_names();
-		return xw::util::contains(models::Migration::meta_table_name, tables.begin(), tables.end());
-	}
-
 public:
 
-	// Throws `NullPointerException` if `sql_driver` is nullptr.
-	inline explicit MigrationRecorder(orm::abc::ISQLDriver* driver)
+	// Throws `NullPointerException` if `sql_backend` is nullptr.
+	inline explicit MigrationRecorder(orm::abc::SQLBackend* backend)
 	{
-		this->sql_driver = require_non_null(
-			driver, "xw::orm::db::MigrationRecorder: SQL driver must not be nullptr"
-		);
+		this->sql_backend = require_non_null(backend, "SQL backend must not be nullptr", _ERROR_DETAILS_);
 	}
 
 	// Ensures the table exists and has the correct schema.
@@ -84,7 +46,8 @@ public:
 	[[nodiscard]]
 	inline std::list<models::Migration> applied_migrations() const
 	{
-		return this->migrations().all();
+		auto wrapper = this->backend()->wrap_connection();
+		return this->migrations(wrapper.connection()).all();
 	}
 
 	// Records that a migration was applied.
@@ -93,7 +56,11 @@ public:
 	inline void record_applied(const std::string& name) const
 	{
 		this->ensure_schema();
-		q::insert(models::Migration(name)).use(this->driver()).commit_one();
+		auto* backend = this->backend();
+		auto wrapper = backend->wrap_connection();
+		q::Insert<models::Migration>(wrapper.connection(), backend->query_builder())
+			.model(models::Migration(name))
+			.commit_one();
 	}
 
 	// Deletes migration record by `name` from the database.
@@ -102,7 +69,8 @@ public:
 	inline void record_rolled_back(const std::string& name) const
 	{
 		this->ensure_schema();
-		this->migrations().where(q::c(&models::Migration::name) == name).delete_();
+		auto wrapper = this->sql_backend->wrap_connection();
+		this->migrations(wrapper.connection()).where(q::c(&models::Migration::name) == name).delete_();
 	}
 
 	// Deletes all migration records.
@@ -110,7 +78,42 @@ public:
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	inline void flush_records() const
 	{
-		this->migrations().delete_();
+		auto wrapper = this->sql_backend->wrap_connection();
+		this->migrations(wrapper.connection()).delete_();
+	}
+
+protected:
+	orm::abc::SQLBackend* sql_backend;
+
+	// Ensures if SQL backend is non-nullptr.
+	//
+	// Throws `NullPointerException` if `sql_driver` is nullptr.
+	[[nodiscard]]
+	inline orm::abc::SQLBackend* backend() const
+	{
+		return require_non_null(
+			this->sql_backend, "xw::orm::db::MigrationRecorder > backend: SQL backend must not be nullptr"
+		);
+	}
+
+	// Returns select query for `MigrationModel` with SQL driver.
+	//
+	// Throws `NullPointerException` if `sql_driver` is nullptr.
+	[[nodiscard]]
+	inline q::Select<models::Migration> migrations(xw::abc::orm::DatabaseConnection* connection) const
+	{
+		return q::Select<models::Migration>(connection, this->backend()->query_builder());
+	}
+
+	// Returns `true` if the table of 'MigrationModel' exists,
+	// `false` otherwise.
+	//
+	// Throws `NullPointerException` if `sql_driver` is nullptr.
+	[[nodiscard]]
+	inline bool has_table() const
+	{
+		auto tables = this->backend()->get_table_names();
+		return xw::util::contains(models::Migration::meta_table_name, tables.begin(), tables.end());
 	}
 };
 

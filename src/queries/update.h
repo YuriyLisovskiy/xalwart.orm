@@ -12,24 +12,76 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
+#include "./abstract_query.h"
 #include "../exceptions.h"
 
 
 __ORM_Q_BEGIN__
 
-template <db::model_based_type ModelT>
-class update final
+template <db::model_based_type ModelType>
+class Update final : public AbstractQuery<ModelType>
 {
-	static_assert(ModelT::meta_table_name != nullptr, "xw::orm::q::update: 'meta_table_name' is not initialized");
+public:
+	inline explicit Update(
+		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder, bool in_transaction=false
+	) : AbstractQuery<ModelType>(connection, query_builder)
+	{
+		this->in_transaction = in_transaction;
+		this->table_name = db::get_table_name<ModelType>();
+	};
+
+	// Throws 'QueryError' when driver is not set.
+	[[nodiscard]]
+	inline std::string to_sql() const override
+	{
+		require_non_null(this->query_builder, "SQL query builder is not initialized", _ERROR_DETAILS_);
+		return str::join(
+			" ", this->rows.begin(), this->rows.end(), [this](const auto& row) -> std::string {
+				return this->query_builder->sql_update(this->table_name, row.first, row.second);
+			}
+		);
+	}
+
+	// Throws 'QueryError' if model is null.
+	inline Update& model(const ModelType& model)
+	{
+		this->append_model(model);
+		return *this;
+	}
+
+	// Updates single row in database.
+	inline void commit_one() const
+	{
+		if (this->rows.size() > 1)
+		{
+			throw QueryError("Trying to update one model, but multiple models were set", _ERROR_DETAILS_);
+		}
+
+		this->db_connection->run_query(this->to_sql(), nullptr, nullptr);
+	}
+
+	// Updates multiple rows in database.
+	inline void commit_batch() const
+	{
+		if (!this->in_transaction)
+		{
+			this->db_connection->begin_transaction();
+		}
+
+		this->db_connection->run_query(this->to_sql(), nullptr, nullptr);
+		if (!this->in_transaction)
+		{
+			this->db_connection->end_transaction();
+		}
+	}
 
 protected:
-
-	// Driver to perform the access to the database.
-	abc::ISQLDriver* sql_driver = nullptr;
+	// Marks if committing will be executed already in transaction.
+	// If 'false', 'commit_batch()' will wrap an SQL query in transaction.
+	bool in_transaction;
 
 	// Name of the table which is retrieved from
-	// `ModelT::meta_table_name` static member.
+	// `ModelType::meta_table_name` static member.
 	std::string table_name;
 
 	// Holds rows to update.
@@ -41,17 +93,16 @@ protected:
 	//	Indicates what rows should be updated.
 	std::vector<std::pair<std::string, q::Condition>> rows;
 
-protected:
-	inline void append_row(const ModelT& model)
+	inline void append_model(const ModelType& model)
 	{
 		if (model.is_null())
 		{
-			throw QueryError("xw::orm::q::update: unable to update null model", _ERROR_DETAILS_);
+			throw QueryError("Unable to update null model", _ERROR_DETAILS_);
 		}
 
 		std::string pk_name, pk_val;
 		std::pair<std::string, q::Condition> row_data;
-		util::tuple_for_each(ModelT::meta_columns, [model, &pk_name, &pk_val, &row_data](auto& column)
+		util::tuple_for_each(ModelType::meta_columns, [model, &pk_name, &pk_val, &row_data](auto& column)
 		{
 			using field_type = typename std::remove_reference<decltype(column)>::type;
 			using T = typename field_type::field_type;
@@ -61,7 +112,7 @@ protected:
 				pk_val = column.as_string(model);
 				pk_name = column.name;
 
-				if constexpr (ModelT::meta_omit_pk)
+				if constexpr (ModelType::meta_omit_pk)
 				{
 					return true;
 				}
@@ -74,80 +125,6 @@ protected:
 		row_data.first = str::rtrim(row_data.first, ", ");
 		row_data.second = q::ColumnCondition(this->table_name, pk_name, "= " + pk_val);
 		this->rows.push_back(row_data);
-	}
-
-public:
-
-	// Prepares model's data.
-	inline explicit update(const ModelT& model)
-	{
-		this->table_name = db::get_table_name<ModelT>();
-		this->append_row(model);
-	};
-
-	// Sets SQL driver.
-	inline update& use(abc::ISQLDriver* driver)
-	{
-		if (driver)
-		{
-			this->sql_driver = driver;
-		}
-
-		return *this;
-	}
-
-	// Generates query using SQL driver.
-	//
-	// Throws 'QueryError' when driver is not set.
-	[[nodiscard]]
-	inline std::string query() const
-	{
-		if (!this->sql_driver)
-		{
-			throw QueryError("xw::orm::q::update: database driver not set", _ERROR_DETAILS_);
-		}
-
-		auto sql_builder = this->sql_driver->query_builder();
-		if (!sql_builder)
-		{
-			throw QueryError("xw::orm::q::update: SQL query builder is not initialized", _ERROR_DETAILS_);
-		}
-
-		return str::join(
-			" ", this->rows.begin(), this->rows.end(), [this, sql_builder](const auto& row) -> std::string {
-				return sql_builder->sql_update(this->table_name, row.first, row.second);
-			}
-		);
-	}
-
-	// Appends model to updating list.
-	//
-	// Throws 'QueryError' if model is null.
-	inline update& model(const ModelT& model)
-	{
-		this->append_row(model);
-		return *this;
-	}
-
-	// Updates one row in database.
-	inline void commit_one() const
-	{
-		if (this->rows.size() > 1)
-		{
-			throw QueryError(
-				"xw::orm::q::update: trying to update one model, but multiple models were set", _ERROR_DETAILS_
-			);
-		}
-
-		auto query = this->query();
-		this->sql_driver->run_update(query, false);
-	}
-
-	// Updates multiple rows in database.
-	inline void commit_batch() const
-	{
-		auto query = this->query();
-		this->sql_driver->run_update(query, true);
 	}
 };
 

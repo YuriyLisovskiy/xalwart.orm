@@ -8,7 +8,7 @@
 
 #include "../../src/queries/delete.h"
 
-#include "./mocked_driver.h"
+#include "./mocked_backend.h"
 
 using namespace xw;
 
@@ -39,35 +39,30 @@ struct TestCaseF_Q_delete_TestModel : public orm::db::Model
 class TestCaseF_Q_delete : public ::testing::Test
 {
 protected:
-	MockedDriver* driver;
-	orm::q::delete_<TestCaseF_Q_delete_TestModel>* query;
+	MockedBackend* backend;
+	orm::q::Delete<TestCaseF_Q_delete_TestModel>* query;
+	std::shared_ptr<xw::abc::orm::DatabaseConnection> conn;
 
 	void SetUp() override
 	{
-		this->driver = new MockedDriver();
-
 		TestCaseF_Q_delete_TestModel model;
 		model.id = 0;
 		model.name = "Steve";
-		this->query = new orm::q::delete_(model);
+		this->backend = new MockedBackend();
+		this->conn = this->backend->get_connection();
+		this->query = new orm::q::Delete<TestCaseF_Q_delete_TestModel>(
+			conn.get(), this->backend->query_builder()
+		);
+		this->query->model(model);
 	}
 
 	void TearDown() override
 	{
-		delete this->driver;
 		delete this->query;
+		this->backend->release_connection(this->conn);
+		delete this->backend;
 	}
 };
-
-TEST_F(TestCaseF_Q_delete, commit_MissingDriverException)
-{
-	ASSERT_THROW(this->query->commit(), orm::QueryError);
-}
-
-TEST_F(TestCaseF_Q_delete, query_MissingDriverException)
-{
-	ASSERT_THROW(auto _ = this->query->query(), orm::QueryError);
-}
 
 TEST_F(TestCaseF_Q_delete, model_NoThrow)
 {
@@ -84,34 +79,38 @@ TEST_F(TestCaseF_Q_delete, model_ThrowsNullModel)
 TEST_F(TestCaseF_Q_delete, where_CalledMoreThanOnce)
 {
 	auto expected = R"(DELETE FROM "test_models" WHERE ("test_models"."id" = 1 AND "test_models"."name" LIKE '%hn');)";
-	auto actual = this->query->use(this->driver)
-		.where(orm::q::c(&TestCaseF_Q_delete_TestModel::id) == 1)
-		.where(orm::q::like(&TestCaseF_Q_delete_TestModel::name, "%hn")).query();
+	auto actual = this->query->where(orm::q::c(&TestCaseF_Q_delete_TestModel::id) == 1)
+		.where(orm::q::like(&TestCaseF_Q_delete_TestModel::name, "%hn")).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
-TEST(TestCase_Q_delete, constructor_ThrowsNullModel)
+TEST_F(TestCaseF_Q_delete, constructor_ThrowsNullConnection)
 {
-	TestCaseF_Q_delete_TestModel null_model;
-	null_model.mark_as_null();
 	ASSERT_THROW(
-		auto _ = orm::q::delete_(null_model),
-		orm::QueryError
+		orm::q::Delete<TestCaseF_Q_delete_TestModel>(nullptr, this->backend->query_builder()),
+		NullPointerException
+	);
+}
+
+TEST_F(TestCaseF_Q_delete, constructor_ThrowsNullQueryBuilder)
+{
+	ASSERT_THROW(
+		orm::q::Delete<TestCaseF_Q_delete_TestModel>(this->conn.get(), nullptr),
+		NullPointerException
 	);
 }
 
 TEST_F(TestCaseF_Q_delete, query_SingleModel)
 {
 	auto expected = R"(DELETE FROM "test_models" WHERE "test_models"."id" IN (0);)";
-	auto actual = this->query->use(this->driver).query();
+	auto actual = this->query->to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
 TEST_F(TestCaseF_Q_delete, query_CustomCondition)
 {
 	auto expected = R"(DELETE FROM "test_models" WHERE "test_models"."name" = 'John';)";
-	auto actual = this->query->use(this->driver)
-		.where(orm::q::c(&TestCaseF_Q_delete_TestModel::name) == "John").query();
+	auto actual = this->query->where(orm::q::c(&TestCaseF_Q_delete_TestModel::name) == "John").to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
@@ -125,11 +124,11 @@ TEST_F(TestCaseF_Q_delete, query_MultipleModels)
 	TestCaseF_Q_delete_TestModel model_2;
 	model_2.id = 2;
 
-	auto actual = this->query->use(this->driver).model(model_1).model(model_2).query();
+	auto actual = this->query->model(model_1).model(model_2).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
 TEST_F(TestCaseF_Q_delete, commit_NoThrow)
 {
-	ASSERT_NO_THROW(this->query->use(this->driver).commit());
+	ASSERT_NO_THROW(this->query->commit());
 }

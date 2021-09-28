@@ -14,6 +14,9 @@
 #include <functional>
 #include <list>
 
+// Base libraries.
+#include <xalwart.base/abc/orm.h>
+
 // Module definitions.
 #include "./_def_.h"
 
@@ -24,8 +27,8 @@
 
 __ORM_ABC_BEGIN__
 
-// TODO: docs for 'ISQLQueryBuilder'
-class ISQLQueryBuilder
+// TODO: docs for 'SQLQueryBuilder'
+class SQLQueryBuilder
 {
 public:
 
@@ -75,15 +78,13 @@ public:
 	virtual std::string sql_delete(const std::string& table_name, const q::Condition& where_cond) const = 0;
 };
 
-// TODO: docs for 'ISQLDriver'
-class ISQLDriver
+class ConnectionWrapper;
+
+// TODO: docs for 'SQLBackend'
+class SQLBackend : public xw::abc::orm::Backend
 {
 public:
-	virtual ~ISQLDriver() = default;
-
-	// Returns the name of SQL driver.
-	[[nodiscard]]
-	virtual std::string name() const = 0;
+	virtual ConnectionWrapper wrap_connection() = 0;
 
 	// Returns SQL schema editor related to driver.
 	[[nodiscard]]
@@ -91,40 +92,55 @@ public:
 
 	// Returns SQL query builder related to driver.
 	[[nodiscard]]
-	virtual ISQLQueryBuilder* query_builder() const = 0;
+	virtual SQLQueryBuilder* query_builder() const = 0;
+};
 
-	[[nodiscard]]
-	virtual std::vector<std::string> table_names() const = 0;
+// Requests connection from backend and returns it back when
+// object is destroyed.
+//
+// Usage example:
+// {
+//   {
+//     auto connection = backend->wrap_connection();
+//     ...
+//   } // inner scope: wrapper object will return the connection automatically
+// } // global scope
+class ConnectionWrapper final
+{
+public:
+	explicit inline ConnectionWrapper(SQLBackend* backend) : _backend(backend)
+	{
+		require_non_null(this->_backend, "SQL backend is nullptr", _ERROR_DETAILS_);
+	}
 
-	// Runs any SQL query.
-	virtual void run_query(const std::string& query) const = 0;
+	inline ~ConnectionWrapper()
+	{
+		this->release();
+	}
 
-	// insert row(s)
+	inline xw::abc::orm::DatabaseConnection* connection()
+	{
+		if (!this->_connection)
+		{
+			this->_connection = this->_backend->get_connection();
+		}
 
-	virtual void run_insert(const std::string& query) const = 0;
+		return require_non_null(this->_connection.get(), _ERROR_DETAILS_);
+	}
 
-	// Returns last inserted row id.
-	virtual void run_insert(const std::string& query, std::string& last_row_id) const = 0;
+	inline void release()
+	{
+		if (this->_connection)
+		{
+			this->_backend->release_connection(this->_connection);
+		}
 
-	// select rows
+		this->_connection = nullptr;
+	}
 
-	// In function 'handler_row(void*, void*)':
-	// - `container` is initial container which is passed here as
-	//   the second parameter;
-	// - `row_map` is row of type std::map<std::string, char*>
-	//   which contains pairs (column_name, column_value).
-	virtual void run_select(
-		const std::string& query, void* container, void(*handle_row)(void* container, void* row_map)
-	) const = 0;
-
-	// update row(s)
-	virtual void run_update(const std::string& query, bool batch) const = 0;
-
-	// delete row(s)
-	virtual void run_delete(const std::string& query) const = 0;
-
-	// transaction
-	virtual bool run_transaction(const std::function<bool()>& func) const = 0;
+private:
+	SQLBackend* _backend;
+	std::shared_ptr<xw::abc::orm::DatabaseConnection> _connection;
 };
 
 __ORM_ABC_END__

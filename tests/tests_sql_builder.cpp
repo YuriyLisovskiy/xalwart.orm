@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/sql_driver.h"
+#include "../src/sql_builder.h"
 
 using namespace xw;
 

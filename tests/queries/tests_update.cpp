@@ -8,7 +8,7 @@
 
 #include "../../src/queries/update.h"
 
-#include "./mocked_driver.h"
+#include "./mocked_backend.h"
 
 using namespace xw;
 
@@ -37,52 +37,41 @@ struct TestCase_Q_update_TestModel : public orm::db::Model
 	}
 };
 
-TEST(TestCase_Q_update, constructor_ThrowsNullModel)
-{
-	TestCase_Q_update_TestModel model;
-	model.mark_as_null();
-	ASSERT_THROW(auto _ = orm::q::update(model), orm::QueryError);
-}
-
-TEST(TestCase_Q_update, query_ThrowsDriverIsNotSet)
-{
-	TestCase_Q_update_TestModel model;
-	ASSERT_THROW(auto _ = orm::q::update(model).query(), orm::QueryError);
-}
-
-TEST(TestCase_Q_update, commit_one_ThrowsDriverIsNotSet)
-{
-	TestCase_Q_update_TestModel model;
-	ASSERT_THROW(orm::q::update(model).commit_one(), orm::QueryError);
-}
-
-TEST(TestCase_Q_update, commit_batch_ThrowsDriverIsNotSet)
-{
-	TestCase_Q_update_TestModel model;
-	ASSERT_THROW(orm::q::update(model).commit_batch(), orm::QueryError);
-}
-
-TEST(TestCase_Q_update, commit_one_ThrowsMultipleModelsWereSet)
-{
-	TestCase_Q_update_TestModel model_1, model_2;
-	ASSERT_THROW(orm::q::update(model_1).model(model_2).commit_one(), orm::QueryError);
-}
-
 class TestCaseF_Q_update : public ::testing::Test
 {
 protected:
-	MockedDriver* driver;
+	MockedBackend* backend;
+	std::shared_ptr<abc::orm::DatabaseConnection> conn;
 
 	void SetUp() override
 	{
-		this->driver = new MockedDriver();
+		this->backend = new MockedBackend();
+		this->conn = this->backend->get_connection();
 	}
 
 	void TearDown() override
 	{
-		delete this->driver;
+		this->backend->release_connection(this->conn);
+		delete this->backend;
 	}
 };
+
+TEST_F(TestCaseF_Q_update, constructor_ThrowsNullModel)
+{
+	TestCase_Q_update_TestModel model;
+	model.mark_as_null();
+	ASSERT_THROW(auto _ = orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model), orm::QueryError);
+}
+
+TEST_F(TestCaseF_Q_update, commit_one_ThrowsMultipleModelsWereSet)
+{
+	TestCase_Q_update_TestModel model_1, model_2;
+	ASSERT_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model_1).model(model_2).commit_one(), orm::QueryError);
+}
 
 TEST_F(TestCaseF_Q_update, query_SingleRow)
 {
@@ -91,7 +80,9 @@ TEST_F(TestCaseF_Q_update, query_SingleRow)
 	model.name = "John";
 
 	auto expected = R"(UPDATE "test" SET name = 'John' WHERE "test"."id" = 1;)";
-	auto actual = orm::q::update(model).use(this->driver).query();
+	auto actual = orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
@@ -106,7 +97,9 @@ TEST_F(TestCaseF_Q_update, query_MultipleRows)
 	model_2.name = "Steve";
 
 	auto expected = R"(UPDATE "test" SET name = 'John' WHERE "test"."id" = 1; UPDATE "test" SET name = 'Steve' WHERE "test"."id" = 2;)";
-	auto actual = orm::q::update(model_1).model(model_2).use(this->driver).query();
+	auto actual = orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model_1).model(model_2).to_sql();
 	ASSERT_EQ(expected, actual);
 }
 
@@ -116,7 +109,9 @@ TEST_F(TestCaseF_Q_update, commit_one_NoThrow)
 	model.id = 1;
 	model.name = "John";
 
-	ASSERT_NO_THROW(orm::q::update(model).use(this->driver).commit_one());
+	ASSERT_NO_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model).commit_one());
 }
 
 TEST_F(TestCaseF_Q_update, commit_batch_NoThrow)
@@ -129,5 +124,7 @@ TEST_F(TestCaseF_Q_update, commit_batch_NoThrow)
 	model_2.id = 2;
 	model_2.name = "Steve";
 
-	ASSERT_NO_THROW(orm::q::update(model_1).model(model_2).use(this->driver).commit_batch());
+	ASSERT_NO_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
+		this->conn.get(), this->backend->query_builder()
+	).model(model_1).model(model_2).commit_batch());
 }

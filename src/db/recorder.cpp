@@ -16,7 +16,7 @@ void MigrationRecorder::ensure_schema() const
 		return;
 	}
 
-	auto editor = this->driver()->schema_editor();
+	auto editor = this->backend()->schema_editor();
 	ops::CreateTable table(models::Migration::meta_table_name);
 	table.column<int>("id", {.primary_key=true, .autoincrement=true});
 	table.column<std::string>("name", {.max_len=255, .unique=true});

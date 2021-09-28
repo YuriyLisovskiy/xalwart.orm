@@ -24,6 +24,17 @@ __ORM_SQLITE3_BEGIN__
 // TODO: docs for 'SchemaEditor'
 class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
+public:
+	inline explicit SchemaEditor(xw::abc::orm::Backend* backend) : db::DefaultSQLSchemaEditor(backend)
+	{
+	}
+
+	void drop_column(const db::TableState& table, const db::ColumnState& column) const override;
+
+	inline void alter_column(
+		const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
+	) const override;
+
 protected:
 	[[nodiscard]]
 	inline std::string sql_drop_table(const std::string& name) const override
@@ -48,26 +59,13 @@ protected:
 	{
 		if (autoincrement && (type != db::SqlColumnType::Int || !primary_key))
 		{
-			throw ValueError(
-				"'autoincrement' is only allowed on an integer primary key", _ERROR_DETAILS_
-			);
+			throw ValueError("'autoincrement' is only allowed on an integer primary key", _ERROR_DETAILS_);
 		}
 	}
 
 	virtual void recreate_table(
 		const db::TableState& table, const std::unordered_map<std::string, std::string>& mapping
 	) const;
-
-public:
-	inline explicit SchemaEditor(orm::abc::ISQLDriver* db) : db::DefaultSQLSchemaEditor(db)
-	{
-	}
-
-	void drop_column(const db::TableState& table, const db::ColumnState& column) const override;
-
-	inline void alter_column(
-		const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
-	) const override;
 };
 
 __ORM_SQLITE3_END__

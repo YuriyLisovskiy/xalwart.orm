@@ -20,7 +20,7 @@ __ORM_BEGIN__
 
 // TESTME: DefaultSQLBuilder
 // TODO: docs for 'DefaultSQLBuilder'
-class DefaultSQLBuilder : public abc::ISQLQueryBuilder
+class DefaultSQLBuilder : public abc::SQLQueryBuilder
 {
 private:
 
