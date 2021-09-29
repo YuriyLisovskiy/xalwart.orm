@@ -27,10 +27,10 @@ __ORM_BEGIN__
 
 // TESTME: DefaultSQLBackend
 // TODO: docs for 'DefaultSQLBackend'
-class DefaultSQLBackend : public abc::SQLBackend
+class DefaultSQLBackend : public abc::ISQLBackend
 {
 public:
-	using ConnectionBuilder = std::function<std::shared_ptr<xw::abc::orm::DatabaseConnection>()>;
+	using ConnectionBuilder = std::function<std::shared_ptr<abc::IDatabaseConnection>()>;
 
 	explicit inline DefaultSQLBackend(size_t pool_size, ConnectionBuilder builder) :
 		_pool_size(pool_size), _connection_builder(std::move(builder))
@@ -48,21 +48,21 @@ public:
 
 	void create_pool() final;
 
-	inline abc::ConnectionWrapper wrap_connection() final
+	inline ConnectionWrapper wrap_connection() final
 	{
-		return abc::ConnectionWrapper(this);
+		return ConnectionWrapper(this);
 	}
 
 	// Provides a free connection from pool to access the database.
 	// If there is not any connection available, waits for it.
 	// This is a blocking operation.
-	std::shared_ptr<xw::abc::orm::DatabaseConnection> get_connection() override;
+	std::shared_ptr<abc::IDatabaseConnection> get_connection() override;
 
 	// Returns used connection to pool.
 	// The code that requested a connection, ALWAYS should return
 	// it back after using it, otherwise this connection will be
 	// lost.
-	void release_connection(const std::shared_ptr<xw::abc::orm::DatabaseConnection>& connection) override;
+	void release_connection(const std::shared_ptr<abc::IDatabaseConnection>& connection) override;
 
 	// TESTME: schema_editor
 	// Instantiates default schema editor if it was not
@@ -70,11 +70,11 @@ public:
 	[[nodiscard]]
 	db::abc::ISchemaEditor* schema_editor() const override;
 
-	// TESTME: query_builder
+	// TESTME: sql_builder
 	// Instantiates default SQL query builder if it was not
 	// done yet and returns it.
 	[[nodiscard]]
-	abc::SQLQueryBuilder* query_builder() const override;
+	abc::ISQLQueryBuilder* sql_builder() const override;
 
 protected:
 
@@ -82,12 +82,12 @@ protected:
 	mutable std::shared_ptr<db::abc::ISchemaEditor> sql_schema_editor = nullptr;
 
 	// SQL query builder related to SQL driver.
-	mutable std::shared_ptr<abc::SQLQueryBuilder> sql_query_builder = nullptr;
+	mutable std::shared_ptr<abc::ISQLQueryBuilder> sql_query_builder = nullptr;
 
 private:
 	std::mutex _mutex;
 	std::condition_variable _condition;
-	std::queue<std::shared_ptr<xw::abc::orm::DatabaseConnection>> _connection_pool;
+	std::queue<std::shared_ptr<abc::IDatabaseConnection>> _connection_pool;
 	const size_t _pool_size;
 	ConnectionBuilder _connection_builder;
 };

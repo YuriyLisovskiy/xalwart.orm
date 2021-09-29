@@ -25,10 +25,17 @@
 #include "./db/abc.h"
 
 
+__ORM_BEGIN__
+
+class ConnectionWrapper;
+
+__ORM_END__
+
+
 __ORM_ABC_BEGIN__
 
-// TODO: docs for 'SQLQueryBuilder'
-class SQLQueryBuilder
+// TODO: docs for 'ISQLQueryBuilder'
+class ISQLQueryBuilder
 {
 public:
 
@@ -78,10 +85,8 @@ public:
 	virtual std::string sql_delete(const std::string& table_name, const q::Condition& where_cond) const = 0;
 };
 
-class ConnectionWrapper;
-
-// TODO: docs for 'SQLBackend'
-class SQLBackend : public xw::abc::orm::Backend
+// TODO: docs for 'ISQLBackend'
+class ISQLBackend : public IBackend
 {
 public:
 	virtual ConnectionWrapper wrap_connection() = 0;
@@ -92,8 +97,13 @@ public:
 
 	// Returns SQL query builder related to driver.
 	[[nodiscard]]
-	virtual SQLQueryBuilder* query_builder() const = 0;
+	virtual ISQLQueryBuilder* sql_builder() const = 0;
 };
+
+__ORM_ABC_END__
+
+
+__ORM_BEGIN__
 
 // Requests connection from backend and returns it back when
 // object is destroyed.
@@ -108,7 +118,7 @@ public:
 class ConnectionWrapper final
 {
 public:
-	explicit inline ConnectionWrapper(SQLBackend* backend) : _backend(backend)
+	explicit inline ConnectionWrapper(abc::ISQLBackend* backend) : _backend(backend)
 	{
 		require_non_null(this->_backend, "SQL backend is nullptr", _ERROR_DETAILS_);
 	}
@@ -118,7 +128,7 @@ public:
 		this->release();
 	}
 
-	inline xw::abc::orm::DatabaseConnection* connection()
+	inline abc::IDatabaseConnection* connection()
 	{
 		if (!this->_connection)
 		{
@@ -139,8 +149,8 @@ public:
 	}
 
 private:
-	SQLBackend* _backend;
-	std::shared_ptr<xw::abc::orm::DatabaseConnection> _connection;
+	abc::ISQLBackend* _backend;
+	std::shared_ptr<abc::IDatabaseConnection> _connection;
 };
 
-__ORM_ABC_END__
+__ORM_END__

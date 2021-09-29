@@ -83,7 +83,7 @@ void Migration::create_table(
 }
 
 void Migration::apply_unsafe(
-	xw::abc::orm::DatabaseConnection* connection,
+	orm::abc::IDatabaseConnection* connection,
 	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
@@ -104,7 +104,7 @@ void Migration::apply_unsafe(
 }
 
 void Migration::rollback_unsafe(
-	xw::abc::orm::DatabaseConnection* connection,
+	orm::abc::IDatabaseConnection* connection,
 	ProjectState& state,
 	const abc::ISchemaEditor* editor,
 	const std::function<void()>& success_callback

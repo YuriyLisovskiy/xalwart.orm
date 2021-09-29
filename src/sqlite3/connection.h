@@ -29,7 +29,7 @@
 
 __ORM_SQLITE3_BEGIN__
 
-class SQLite3Connection : public xw::abc::orm::DatabaseConnection
+class SQLite3Connection : public abc::IDatabaseConnection
 {
 public:
 	explicit SQLite3Connection(const char* filename);

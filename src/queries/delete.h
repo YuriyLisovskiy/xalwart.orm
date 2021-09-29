@@ -27,8 +27,8 @@ class Delete final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Delete(
-		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder
-	) : AbstractQuery<ModelType>(connection, query_builder)
+		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+	) : AbstractQuery<ModelType>(connection, builder)
 	{
 	}
 

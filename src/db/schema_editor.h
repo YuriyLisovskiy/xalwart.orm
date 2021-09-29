@@ -23,7 +23,7 @@ __ORM_DB_BEGIN__
 class DefaultSQLSchemaEditor : public abc::ISchemaEditor
 {
 public:
-	inline explicit DefaultSQLSchemaEditor(xw::abc::orm::Backend* backend) : backend(backend)
+	inline explicit DefaultSQLSchemaEditor(orm::abc::IBackend* backend) : backend(backend)
 	{
 		if (!this->backend)
 		{
@@ -67,7 +67,7 @@ public:
 	) const override;
 
 protected:
-	xw::abc::orm::Backend* backend;
+	orm::abc::IBackend* backend;
 
 	// SQL builders.
 	[[nodiscard]]

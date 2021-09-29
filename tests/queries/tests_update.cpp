@@ -41,7 +41,7 @@ class TestCaseF_Q_update : public ::testing::Test
 {
 protected:
 	MockedBackend* backend;
-	std::shared_ptr<abc::orm::DatabaseConnection> conn;
+	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
@@ -61,7 +61,7 @@ TEST_F(TestCaseF_Q_update, constructor_ThrowsNullModel)
 	TestCase_Q_update_TestModel model;
 	model.mark_as_null();
 	ASSERT_THROW(auto _ = orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model), orm::QueryError);
 }
 
@@ -69,7 +69,7 @@ TEST_F(TestCaseF_Q_update, commit_one_ThrowsMultipleModelsWereSet)
 {
 	TestCase_Q_update_TestModel model_1, model_2;
 	ASSERT_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model_1).model(model_2).commit_one(), orm::QueryError);
 }
 
@@ -81,7 +81,7 @@ TEST_F(TestCaseF_Q_update, query_SingleRow)
 
 	auto expected = R"(UPDATE "test" SET name = 'John' WHERE "test"."id" = 1;)";
 	auto actual = orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model).to_sql();
 	ASSERT_EQ(expected, actual);
 }
@@ -98,7 +98,7 @@ TEST_F(TestCaseF_Q_update, query_MultipleRows)
 
 	auto expected = R"(UPDATE "test" SET name = 'John' WHERE "test"."id" = 1; UPDATE "test" SET name = 'Steve' WHERE "test"."id" = 2;)";
 	auto actual = orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model_1).model(model_2).to_sql();
 	ASSERT_EQ(expected, actual);
 }
@@ -110,7 +110,7 @@ TEST_F(TestCaseF_Q_update, commit_one_NoThrow)
 	model.name = "John";
 
 	ASSERT_NO_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model).commit_one());
 }
 
@@ -125,6 +125,6 @@ TEST_F(TestCaseF_Q_update, commit_batch_NoThrow)
 	model_2.name = "Steve";
 
 	ASSERT_NO_THROW(orm::q::Update<TestCase_Q_update_TestModel>(
-		this->conn.get(), this->backend->query_builder()
+		this->conn.get(), this->backend->sql_builder()
 	).model(model_1).model(model_2).commit_batch());
 }

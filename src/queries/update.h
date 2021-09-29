@@ -23,8 +23,8 @@ class Update final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Update(
-		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder, bool in_transaction=false
-	) : AbstractQuery<ModelType>(connection, query_builder)
+		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder, bool in_transaction=false
+	) : AbstractQuery<ModelType>(connection, builder)
 	{
 		this->in_transaction = in_transaction;
 		this->table_name = db::get_table_name<ModelType>();

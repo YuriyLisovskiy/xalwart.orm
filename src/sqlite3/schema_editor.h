@@ -25,7 +25,7 @@ __ORM_SQLITE3_BEGIN__
 class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
 public:
-	inline explicit SchemaEditor(xw::abc::orm::Backend* backend) : db::DefaultSQLSchemaEditor(backend)
+	inline explicit SchemaEditor(abc::IBackend* backend) : db::DefaultSQLSchemaEditor(backend)
 	{
 	}
 

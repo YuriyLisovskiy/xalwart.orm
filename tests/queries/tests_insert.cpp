@@ -41,14 +41,14 @@ class TestCase_Q_insert_One : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
-	std::shared_ptr<abc::orm::DatabaseConnection> conn;
+	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
 		this->backend = new MockedBackend();
 		this->conn = this->backend->get_connection();
 		this->query = new orm::q::Insert<TestCase_Q_insert_TestModel>(
-			this->conn.get(), this->backend->query_builder()
+			this->conn.get(), this->backend->sql_builder()
 		);
 		this->query->model(TestCase_Q_insert_TestModel());
 	}
@@ -66,14 +66,14 @@ class TestCase_Q_insert_Bulk : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
-	std::shared_ptr<abc::orm::DatabaseConnection> conn;
+	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
 		this->backend = new MockedBackend();
 		this->conn = this->backend->get_connection();
 		this->query = new orm::q::Insert<TestCase_Q_insert_TestModel>(
-			this->conn.get(), this->backend->query_builder()
+			this->conn.get(), this->backend->sql_builder()
 		);
 		this->query->model(TestCase_Q_insert_TestModel());
 		this->query->model(TestCase_Q_insert_TestModel());
@@ -116,7 +116,7 @@ TEST_F(TestCaseF_Q_insert, query_SingleModel)
 	auto expected = R"(INSERT INTO "test_models" (name) VALUES ('Steve');)";
 	auto w = this->backend->wrap_connection();
 	auto actual = orm::q::Insert<TestCase_Q_insert_TestModel>(
-		w.connection(), this->backend->query_builder()
+		w.connection(), this->backend->sql_builder()
 	).model(model).to_sql();
 	ASSERT_EQ(expected, actual);
 }
@@ -132,7 +132,7 @@ TEST_F(TestCaseF_Q_insert, query_MultipleModels)
 	auto expected = R"(INSERT INTO "test_models" (name) VALUES ('Steve'), ('John');)";
 	auto w = this->backend->wrap_connection();
 	auto actual = orm::q::Insert<TestCase_Q_insert_TestModel>(
-		w.connection(), this->backend->query_builder()
+		w.connection(), this->backend->sql_builder()
 	).model(model_1).model(model_2).to_sql();
 	ASSERT_EQ(expected, actual);
 }
@@ -145,7 +145,7 @@ TEST_F(TestCaseF_Q_insert, commit_one_ReturnedStringPk)
 	std::string pk;
 	auto w = this->backend->wrap_connection();
 	orm::q::Insert<TestCase_Q_insert_TestModel>(
-		w.connection(), this->backend->query_builder()
+		w.connection(), this->backend->sql_builder()
 	).model(model).commit_one(pk);
 	ASSERT_EQ(pk, "1");
 }
@@ -158,7 +158,7 @@ TEST_F(TestCaseF_Q_insert, commit_one_SetPk)
 
 	auto w = this->backend->wrap_connection();
 	ASSERT_NO_THROW(orm::q::Insert<TestCase_Q_insert_TestModel>(
-		w.connection(), this->backend->query_builder()
+		w.connection(), this->backend->sql_builder()
 	).model(model).commit_one(model.id));
 	ASSERT_EQ(model.id, 1);
 }
@@ -173,6 +173,6 @@ TEST_F(TestCaseF_Q_insert, commit_batch_NoThrow)
 
 	auto w = this->backend->wrap_connection();
 	ASSERT_NO_THROW(orm::q::Insert<TestCase_Q_insert_TestModel>(
-		w.connection(), this->backend->query_builder()
+		w.connection(), this->backend->sql_builder()
 	).model(model_1).model(model_2).commit_batch());
 }

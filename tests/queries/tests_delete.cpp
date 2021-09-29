@@ -41,7 +41,7 @@ class TestCaseF_Q_delete : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Delete<TestCaseF_Q_delete_TestModel>* query;
-	std::shared_ptr<xw::abc::orm::DatabaseConnection> conn;
+	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
@@ -51,7 +51,7 @@ protected:
 		this->backend = new MockedBackend();
 		this->conn = this->backend->get_connection();
 		this->query = new orm::q::Delete<TestCaseF_Q_delete_TestModel>(
-			conn.get(), this->backend->query_builder()
+			conn.get(), this->backend->sql_builder()
 		);
 		this->query->model(model);
 	}
@@ -87,7 +87,7 @@ TEST_F(TestCaseF_Q_delete, where_CalledMoreThanOnce)
 TEST_F(TestCaseF_Q_delete, constructor_ThrowsNullConnection)
 {
 	ASSERT_THROW(
-		orm::q::Delete<TestCaseF_Q_delete_TestModel>(nullptr, this->backend->query_builder()),
+		orm::q::Delete<TestCaseF_Q_delete_TestModel>(nullptr, this->backend->sql_builder()),
 		NullPointerException
 	);
 }

@@ -24,10 +24,6 @@ inline const auto version = Version("0.0.0");
 
 __ORM_END__
 
-// xw::orm::abc
-#define __ORM_ABC_BEGIN__ __ORM_BEGIN__ namespace abc {
-#define __ORM_ABC_END__ } __ORM_END__
-
 // xw::orm::util
 #define __ORM_UTILITY_BEGIN__ __ORM_BEGIN__ namespace util {
 #define __ORM_UTILITY_END__ } __ORM_END__

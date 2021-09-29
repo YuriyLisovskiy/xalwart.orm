@@ -10,7 +10,7 @@
 __ORM_DB_BEGIN__
 
 MigrationExecutor::MigrationExecutor(
-	orm::abc::SQLBackend* backend,
+	orm::abc::ISQLBackend* backend,
 	std::list<std::shared_ptr<Migration>> migrations,
 	std::function<void(const std::string&, const std::string&)> log_progress
 ) : recorder(backend), migrations(std::move(migrations)), log_progress(std::move(log_progress))

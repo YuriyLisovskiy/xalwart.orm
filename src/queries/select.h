@@ -33,8 +33,8 @@ class Select final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Select(
-		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder
-	) : AbstractQuery<ModelType>(connection, query_builder), q_distinct(false), q_limit(-1), q_offset(-1)
+		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+	) : AbstractQuery<ModelType>(connection, builder), q_distinct(false), q_limit(-1), q_offset(-1)
 	{
 		this->table_name = db::get_table_name<ModelType>();
 		this->pk_name = db::get_pk_name<ModelType>();

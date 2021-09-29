@@ -44,7 +44,7 @@ void YAMLDatabasesComponent::handle_database(const std::string& dbms, const std:
 #ifdef USE_SQLITE3
 	if (dbms == "sqlite3")
 	{
-		std::shared_ptr<abc::orm::Backend> backend = nullptr;
+		std::shared_ptr<abc::IBackend> backend = nullptr;
 		auto component = orm::sqlite3::YAMLSQLite3Component(this->base_directory, backend);
 		component.initialize(node);
 		if (backend != nullptr)

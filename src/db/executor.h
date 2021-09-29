@@ -24,7 +24,7 @@ class MigrationExecutor
 {
 public:
 	explicit MigrationExecutor(
-		orm::abc::SQLBackend* backend,
+		orm::abc::ISQLBackend* backend,
 		std::list<std::shared_ptr<Migration>> migrations,
 		std::function<void(const std::string&, const std::string&)> log_progress=nullptr
 	);

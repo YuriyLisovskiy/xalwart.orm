@@ -30,8 +30,8 @@ public:
 
 	// Appends model's pk to deletion list.
 	explicit AbstractQuery(
-		xw::abc::orm::DatabaseConnection* connection, abc::SQLQueryBuilder* query_builder
-	) : db_connection(connection), query_builder(query_builder)
+		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+	) : db_connection(connection), query_builder(builder)
 	{
 		require_non_null(this->db_connection, "Database connection is nullptr", _ERROR_DETAILS_);
 		require_non_null(this->query_builder, "SQL query builder is nullptr", _ERROR_DETAILS_);
@@ -41,9 +41,8 @@ public:
 	virtual std::string to_sql() const = 0;
 
 protected:
-	xw::abc::orm::DatabaseConnection* db_connection = nullptr;
-
-	abc::SQLQueryBuilder* query_builder = nullptr;
+	abc::IDatabaseConnection* db_connection = nullptr;
+	abc::ISQLQueryBuilder* query_builder = nullptr;
 };
 
 __ORM_END__

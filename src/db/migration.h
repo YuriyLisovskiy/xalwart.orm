@@ -38,15 +38,15 @@ __ORM_DB_BEGIN__
 class Migration
 {
 public:
-	inline explicit Migration(xw::abc::orm::Backend* backend, std::string identifier, bool initial=false) :
+	inline explicit Migration(orm::abc::IBackend* backend, std::string identifier, bool initial=false) :
 		identifier(std::move(identifier)), is_initial(initial)
 	{
 		require_non_null(backend, ce<Migration>("", "driver is not initialized"));
-		this->sql_backend = dynamic_cast<orm::abc::SQLBackend*>(backend);
+		this->sql_backend = dynamic_cast<orm::abc::ISQLBackend*>(backend);
 		if (!this->sql_backend)
 		{
 			throw ValueError(
-				"'xw::orm::db::Migration' requires 'xw::orm::abc::SQLBackend'-based backend", _ERROR_DETAILS_
+				"'xw::orm::db::Migration' requires 'xw::orm::abc::ISQLBackend'-based backend", _ERROR_DETAILS_
 			);
 		}
 
@@ -95,7 +95,7 @@ public:
 	bool is_initial = false;
 
 	// Database driver for running transactions.
-	orm::abc::SQLBackend* sql_backend;
+	orm::abc::ISQLBackend* sql_backend;
 
 	abc::ISchemaEditor* sql_schema_editor;
 
@@ -140,21 +140,21 @@ public:
 
 protected:
 	void apply_unsafe(
-		xw::abc::orm::DatabaseConnection* connection,
+		orm::abc::IDatabaseConnection* connection,
 		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	void rollback_unsafe(
-		xw::abc::orm::DatabaseConnection* connection,
+		orm::abc::IDatabaseConnection* connection,
 		ProjectState& state,
 		const abc::ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	inline void rollback_and_release_connection(
-		const std::shared_ptr<xw::abc::orm::DatabaseConnection>& connection
+		const std::shared_ptr<orm::abc::IDatabaseConnection>& connection
 	) const
 	{
 		connection->rollback_transaction();

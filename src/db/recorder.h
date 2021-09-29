@@ -31,7 +31,7 @@ class MigrationRecorder
 public:
 
 	// Throws `NullPointerException` if `sql_backend` is nullptr.
-	inline explicit MigrationRecorder(orm::abc::SQLBackend* backend)
+	inline explicit MigrationRecorder(orm::abc::ISQLBackend* backend)
 	{
 		this->sql_backend = require_non_null(backend, "SQL backend must not be nullptr", _ERROR_DETAILS_);
 	}
@@ -58,7 +58,7 @@ public:
 		this->ensure_schema();
 		auto* backend = this->backend();
 		auto wrapper = backend->wrap_connection();
-		q::Insert<models::Migration>(wrapper.connection(), backend->query_builder())
+		q::Insert<models::Migration>(wrapper.connection(), backend->sql_builder())
 			.model(models::Migration(name))
 			.commit_one();
 	}
@@ -83,13 +83,13 @@ public:
 	}
 
 protected:
-	orm::abc::SQLBackend* sql_backend;
+	orm::abc::ISQLBackend* sql_backend;
 
 	// Ensures if SQL backend is non-nullptr.
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	[[nodiscard]]
-	inline orm::abc::SQLBackend* backend() const
+	inline orm::abc::ISQLBackend* backend() const
 	{
 		return require_non_null(
 			this->sql_backend, "xw::orm::db::MigrationRecorder > backend: SQL backend must not be nullptr"
@@ -100,9 +100,9 @@ protected:
 	//
 	// Throws `NullPointerException` if `sql_driver` is nullptr.
 	[[nodiscard]]
-	inline q::Select<models::Migration> migrations(xw::abc::orm::DatabaseConnection* connection) const
+	inline q::Select<models::Migration> migrations(orm::abc::IDatabaseConnection* connection) const
 	{
-		return q::Select<models::Migration>(connection, this->backend()->query_builder());
+		return q::Select<models::Migration>(connection, this->backend()->sql_builder());
 	}
 
 	// Returns `true` if the table of 'MigrationModel' exists,

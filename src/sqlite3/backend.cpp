@@ -23,7 +23,7 @@
 __ORM_SQLITE3_BEGIN__
 
 Backend::Backend(size_t pool_size, const char* filename) : DefaultSQLBackend(
-	pool_size, [filename]() -> std::shared_ptr<xw::abc::orm::DatabaseConnection>
+	pool_size, [filename]() -> std::shared_ptr<abc::IDatabaseConnection>
 	{
 		return std::make_shared<SQLite3Connection>(filename);
 	}
@@ -35,7 +35,7 @@ db::abc::ISchemaEditor* Backend::schema_editor() const
 {
 	if (!this->sql_schema_editor)
 	{
-		this->sql_schema_editor = std::make_shared<SchemaEditor>((xw::abc::orm::Backend*)this);
+		this->sql_schema_editor = std::make_shared<SchemaEditor>((abc::IBackend*)this);
 	}
 
 	return this->sql_schema_editor.get();

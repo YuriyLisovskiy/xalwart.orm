@@ -39,14 +39,14 @@ class TestCase_Q_select : public ::testing::Test
 {
 protected:
 	orm::q::Select<TestCase_Q_TestModel>* query;
-	std::shared_ptr<xw::abc::orm::DatabaseConnection> conn;
+	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
 	MockedBackend* backend;
 
 	void SetUp() override
 	{
 		this->backend = new MockedBackend();
 		this->conn = this->backend->get_connection();
-		this->query = new orm::q::Select<TestCase_Q_TestModel>(this->conn.get(), this->backend->query_builder());
+		this->query = new orm::q::Select<TestCase_Q_TestModel>(this->conn.get(), this->backend->sql_builder());
 	}
 
 	void TearDown() override

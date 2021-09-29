@@ -22,7 +22,7 @@ void DefaultSQLBackend::create_pool()
 	}
 }
 
-std::shared_ptr<xw::abc::orm::DatabaseConnection> DefaultSQLBackend::get_connection()
+std::shared_ptr<abc::IDatabaseConnection> DefaultSQLBackend::get_connection()
 {
 	std::unique_lock<std::mutex> lock(this->_mutex);
 	while (this->_connection_pool.empty())
@@ -35,7 +35,7 @@ std::shared_ptr<xw::abc::orm::DatabaseConnection> DefaultSQLBackend::get_connect
 	return connection;
 }
 
-void DefaultSQLBackend::release_connection(const std::shared_ptr<xw::abc::orm::DatabaseConnection>& connection)
+void DefaultSQLBackend::release_connection(const std::shared_ptr<abc::IDatabaseConnection>& connection)
 {
 	std::unique_lock<std::mutex> lock(this->_mutex);
 	this->_connection_pool.push(connection);
@@ -43,7 +43,7 @@ void DefaultSQLBackend::release_connection(const std::shared_ptr<xw::abc::orm::D
 	this->_condition.notify_one();
 }
 
-abc::SQLQueryBuilder* DefaultSQLBackend::query_builder() const
+abc::ISQLQueryBuilder* DefaultSQLBackend::sql_builder() const
 {
 	if (!this->sql_query_builder)
 	{
@@ -57,7 +57,7 @@ db::abc::ISchemaEditor* DefaultSQLBackend::schema_editor() const
 {
 	if (!this->sql_schema_editor)
 	{
-		this->sql_schema_editor = std::make_shared<db::DefaultSQLSchemaEditor>((xw::abc::orm::Backend*)this);
+		this->sql_schema_editor = std::make_shared<db::DefaultSQLSchemaEditor>((abc::IBackend*)this);
 	}
 
 	return this->sql_schema_editor.get();
