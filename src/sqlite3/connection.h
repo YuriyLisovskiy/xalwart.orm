@@ -55,43 +55,33 @@ public:
 
 	void run_query(const std::string& sql_query, std::string& last_row_id) const override;
 
-	// Throws 'QueryError' if the transaction was already started.
 	inline void begin_transaction() const final
 	{
-		if (this->in_transaction)
+		if (!this->in_transaction)
 		{
-			throw QueryError("Transaction is already started", _ERROR_DETAILS_);
+			this->in_transaction = true;
+			this->run_query_unsafe("BEGIN TRANSACTION;", nullptr, nullptr);
 		}
-
-		this->in_transaction = true;
-		this->run_query_unsafe("BEGIN TRANSACTION;", nullptr, nullptr);
 	}
 
 	// If 'end_transaction' ALWAYS should be used after all SQL
 	// statements were run if 'begin_transaction' was called.
-	//
-	// Throws 'QueryError' if the transaction was not started.
 	inline void end_transaction() const final
 	{
-		if (!this->in_transaction)
+		if (this->in_transaction)
 		{
-			throw QueryError("Transaction is not started", _ERROR_DETAILS_);
+			this->in_transaction = false;
+			this->run_query_unsafe("COMMIT TRANSACTION;", nullptr, nullptr);
 		}
-
-		this->in_transaction = false;
-		this->run_query_unsafe("COMMIT TRANSACTION;", nullptr, nullptr);
 	}
 
-	// Throws 'QueryError' if the transaction was not started.
 	inline void rollback_transaction() const final
 	{
-		if (!this->in_transaction)
+		if (this->in_transaction)
 		{
-			throw QueryError("Transaction is not started", _ERROR_DETAILS_);
+			this->in_transaction = false;
+			this->run_query_unsafe("ROLLBACK TRANSACTION;", nullptr, nullptr);
 		}
-
-		this->in_transaction = false;
-		this->run_query_unsafe("ROLLBACK TRANSACTION;", nullptr, nullptr);
 	}
 
 protected:

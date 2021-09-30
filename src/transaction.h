@@ -37,6 +37,7 @@ public:
 		connection(connection), sql_builder(builder)
 	{
 		this->check_state();
+		this->connection->begin_transaction();
 	}
 
 	inline Transaction(const Transaction& other) noexcept
