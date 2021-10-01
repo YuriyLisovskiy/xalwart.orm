@@ -117,10 +117,11 @@ void SQLite3Connection::run_query_unsafe(
 			[](void* data, int argc, char** argv, char** column_names) -> int {
 				auto& handler = *(function_type*)data;
 				std::vector<char*> vector;
+				vector.reserve(argc);
 				for (int i = 0; i < argc; i++)
 				{
 					// TODO: check what if column value is nullptr!
-					vector[i] = argv[i];
+					vector.emplace_back(argv[i]);
 				}
 
 				handler(vector);
