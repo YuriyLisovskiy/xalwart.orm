@@ -8,8 +8,12 @@ set(LIBRARY_VERSION "0.0.0")
 
 project(${LIBRARY_NAME})
 
-set(GNU_INCLUDE_DIR /usr/local/include)
-set(GNU_LIB_DIR /usr/local/lib)
+set(ROOT_DIR /usr/local)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
+set(LIB_DIR ${ROOT_DIR}/lib)
+
+include_directories(${INCLUDE_DIR})
+link_directories(${LIB_DIR})
 
 option(XW_BUILD_LIB "Build the library." ON)
 if (${XW_BUILD_LIB})
