@@ -19,7 +19,8 @@ SQLite3Connection::SQLite3Connection(const char* filename) : in_transaction(fals
 	}
 
 	::sqlite3* driver;
-	if (sqlite3_open(filename, &driver))
+	if (sqlite3_open_v2(filename, &driver, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr))
+//	if (sqlite3_open(filename, &driver))
 	{
 		throw RuntimeError(
 			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),

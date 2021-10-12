@@ -36,15 +36,14 @@ void YAMLSQLite3Component::initialize(const YAML::Node& node) const
 		);
 	}
 
-	auto full_filename = path::Path(this->filename);
-	if (!path::Path(full_filename).is_absolute())
+	auto full_filepath = path::Path(this->filename);
+	if (!path::Path(full_filepath).is_absolute())
 	{
-		full_filename = this->base_directory / full_filename;
+		full_filepath = this->base_directory / full_filepath;
 	}
 
-	this->backend = std::make_shared<sqlite3::Backend>(
-		this->pool_size, full_filename.to_string().c_str()
-	);
+	auto string_filename = full_filepath.to_string();
+	this->backend = std::make_shared<sqlite3::Backend>(this->pool_size, string_filename.c_str());
 	this->backend->create_pool();
 }
 
