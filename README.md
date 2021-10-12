@@ -3,6 +3,7 @@
 [![cmake](https://img.shields.io/badge/cmake-%3E=2.8.12-success)](https://cmake.org/)
 [![alpine](https://img.shields.io/badge/Alpine_Linux-0D597F?style=flat&logo=alpine-linux&logoColor=white)](https://alpinelinux.org/)
 [![ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+[![macOS](https://img.shields.io/badge/macOS-343D46?style=flat&logo=apple&logoColor=F0F0F0)](https://www.apple.com/macos)
 
 ### Build Status
 | @ | Build |
@@ -11,10 +12,14 @@
 | Master branch: | [![CI](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/ci.yml?query=branch%3Amaster) |
 
 ## Requirements
-The following compilers are tested with the CI system, and are known to work
-on Alpine Linux and Ubuntu.
+The following compilers are tested with the CI system, and are known to work on:
+
+Alpine Linux and Ubuntu:
 * g++ 10 or later
 * clang++ 10 or later
+
+macOS:
+* clang++ 12 or later
 
 To build the library from source CMake 2.8.12 or later is required.
 
@@ -22,13 +27,16 @@ To build the library from source CMake 2.8.12 or later is required.
 The following library is required:
 - [xalwart.base](https://github.com/YuriyLisovskiy/xalwart.base) 0.x.x or later
 
-### Available drivers:
-* `sqlite3` (`USE_SQLITE3`):
+Available drivers:
+* `sqlite3` (`XW_USE_SQLITE3`):
     ```bash
+    # Ubuntu
     sudo apt-get install sqlite3 libsqlite3-dev
+    
+    # macOS (if not installed by default)
+    brew install sqlite3
     ```
-  To enable this driver, add the next line into `CMakeLists.txt`
-  before building an application:
+  Enable it in `CMakeLists.txt`:
   ```cmake
   add_compile_definitions(USE_SQLITE3)
   ```

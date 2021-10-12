@@ -13,6 +13,11 @@ function(add_tests SUB_DIR SUB_NAME)
     list(FILTER SOURCES EXCLUDE REGEX ".*main.cpp$")
     set(FULL_BIN ${BINARY}-${SUB_NAME})
     add_executable(${FULL_BIN} ${SOURCES} ${TESTS_DIR}/main.cpp)
+
+    if (NOT APPLE)
+        target_link_libraries(${BINARY} PUBLIC stdc++fs)
+    endif()
+
     target_link_libraries(${FULL_BIN} PUBLIC gtest)
 
     if (${XW_USE_SQLITE3})
