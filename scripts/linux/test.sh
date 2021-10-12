@@ -35,13 +35,13 @@ if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
   cmake -D CMAKE_C_COMPILER="${CC_NAME}" \
         -D CMAKE_CXX_COMPILER="${CXX_NAME}" \
         -D CMAKE_BUILD_TYPE=Release \
-        -D XW_BUILD_LIB=OFF \
-        -D XW_BUILD_TESTS=ON \
+        -D XW_CONFIGURE_LIB=OFF \
+        -D XW_CONFIGURE_TESTS=ON \
         ..
 elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
   cmake -D CMAKE_BUILD_TYPE=Release \
-        -D XW_BUILD_LIB=OFF \
-        -D XW_BUILD_TESTS=ON \
+        -D XW_CONFIGURE_LIB=OFF \
+        -D XW_CONFIGURE_TESTS=ON \
         ..
 else
   echo "System is not supported: ${SYSTEM_NAME}" && exit 1

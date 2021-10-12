@@ -155,8 +155,8 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
-                -D XW_BUILD_LIB=OFF \
-                -D XW_BUILD_TESTS=ON \
+                -D XW_CONFIGURE_LIB=OFF \
+                -D XW_CONFIGURE_TESTS=ON \
                 ..
           make unittests-all
           valgrind --leak-check=full ./tests/unittests-all
