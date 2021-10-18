@@ -7,8 +7,8 @@ on:
       - dev
       - release
 jobs:
-  compile-lib:
-    name: Build the library and upload it to artifacts
+  linux-build:
+    name: '[Linux] Build the library'
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -43,9 +43,9 @@ jobs:
           name: xalwart.orm-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           path: xalwart.orm-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           retention-days: 90
-  test:
-    name: "${{ matrix.os.name }}-${{ matrix.os.version }} [${{ matrix.compiler }}-${{ matrix.compiler_version }}]"
-    needs: [ compile-lib ]
+  linux-test:
+    name: '[Linux] Testing [${{ matrix.os.name }}-${{ matrix.os.version }}] [${{ matrix.compiler }}-${{ matrix.compiler_version }}]'
+    needs: [ linux-build ]
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -81,3 +81,82 @@ jobs:
                           -v ${{ github.workspace }}:/app \
                           xalwart/gtest:1.11.0-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.os.name }}-${{ matrix.os.version }} \
                           bash /app/scripts/linux/test.sh ${{ matrix.os.name }} ${{ matrix.compiler }} ${{ matrix.compiler_version }}
+  macos-build:
+    name: '[macOS] Build the library'
+    runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os_name: [ macos ]
+        os_version: [ 11 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download Base Library
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          workflow: ci.yml
+          branch: dev
+          name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
+          path: /usr/local
+          repo: YuriyLisovskiy/xalwart.base
+      - name: Build the Library
+        run: |
+          mkdir build && cd build
+          cmake -D CMAKE_BUILD_TYPE=Release ..
+          sudo mkdir -p /usr/local/include && sudo mkdir -p /usr/local/lib
+          make xalwart.orm && sudo make install
+          cd && mkdir ~/target-build && cd ~/target-build
+          mkdir -p include && mkdir -p lib && cd
+          sudo cp -r /usr/local/include/xalwart.orm ~/target-build/include
+          sudo cp -r /usr/local/lib/libxalwart.orm* ~/target-build/lib
+      - name: Upload the Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: xalwart.orm-${{ matrix.os_name }}-${{ matrix.os_version }}
+          path: ~/target-build
+          retention-days: 60
+  macos-test:
+    name: '[macOS] Testing [${{ matrix.os_name }}-${{ matrix.os_version }}] [clang]'
+    needs: [ macos-build ]
+    runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os_name: [ macos ]
+        os_version: [ 11 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Valgrind
+        run: |
+          brew tap LouisBrunner/valgrind
+          brew install --HEAD LouisBrunner/valgrind/valgrind
+      - name: Install Google Test Framework
+        run: |
+          brew install googletest
+      - name: Create Target Directories
+        run: |
+          sudo mkdir -p /usr/local
+      - name: Download Base Library
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          workflow: ci.yml
+          branch: dev
+          name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
+          path: /usr/local
+          repo: YuriyLisovskiy/xalwart.base
+      - name: Download the Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: xalwart.orm-${{ matrix.os_name }}-${{ matrix.os_version }}
+          path: /usr/local
+      - name: Build and Run Tests
+        run: |
+          mkdir build && cd build
+          cmake -D CMAKE_BUILD_TYPE=Release \
+                -D XW_CONFIGURE_LIB=OFF \
+                -D XW_CONFIGURE_TESTS=ON \
+                ..
+          make unittests-all
+          valgrind --leak-check=full ./tests/unittests-all

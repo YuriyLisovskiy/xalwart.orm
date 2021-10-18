@@ -11,6 +11,7 @@
 // C++ libraries.
 #include <list>
 #include <optional>
+#include <functional>
 
 // Base libraries.
 #include <xalwart.base/types/string.h>
@@ -514,19 +515,37 @@ public:
 	[[nodiscard]]
 	inline std::list<ModelType> all() const
 	{
-		std::pair<std::list<ModelType>, std::list<relation_callable>> collection{{}, this->relations};
+		return this->all<ModelType>(nullptr);
+	}
+
+	template <typename To>
+	inline std::list<To> all(const std::function<To(const ModelType&)>& transform) const
+	{
+		std::pair<std::list<To>, std::list<relation_callable>> collection{{}, this->relations};
 		require_non_null(
 			this->db_connection, "SQL Database connection is not initialized", _ERROR_DETAILS_
-		)->run_query(this->to_sql(), [&collection](const auto& map) -> void {
+		)->run_query(this->to_sql(), [&collection, &transform](const auto& map) -> void {
 			ModelType model;
 			model.from_map(map);
-
-			for (auto& callable : collection.second)
+			if constexpr (std::is_same_v<To, ModelType>)
 			{
-				callable(model);
+				for (auto& callable : collection.second)
+				{
+					callable(model);
+				}
 			}
 
-			collection.first.push_back(model);
+			if (transform)
+			{
+				collection.first.push_back(transform(model));
+			}
+			else
+			{
+				if constexpr (std::is_same_v<To, ModelType>)
+				{
+					collection.first.push_back(model);
+				}
+			}
 		}, nullptr);
 
 		return collection.first;

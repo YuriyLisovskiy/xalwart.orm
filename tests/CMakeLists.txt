@@ -13,14 +13,24 @@ function(add_tests SUB_DIR SUB_NAME)
     list(FILTER SOURCES EXCLUDE REGEX ".*main.cpp$")
     set(FULL_BIN ${BINARY}-${SUB_NAME})
     add_executable(${FULL_BIN} ${SOURCES} ${TESTS_DIR}/main.cpp)
-    target_link_libraries(${FULL_BIN} PUBLIC gtest stdc++fs)
+
+    if (NOT APPLE)
+        target_link_libraries(${FULL_BIN} PUBLIC stdc++fs)
+    endif()
+
+    target_link_libraries(${FULL_BIN} PUBLIC gtest)
 
     if (${XW_USE_SQLITE3})
         add_compile_definitions(USE_SQLITE3)
-        target_link_libraries(${FULL_BIN} PUBLIC sqlite3)
+        # Search for sqlite3
+        find_library(
+            SQLITE3 sqlite3 REQUIRED
+            PATHS ${DEFAULT_INCLUDE_PATHS}
+        )
+        target_link_libraries(${FULL_BIN} PUBLIC ${SQLITE3})
     endif()
 
-    target_link_libraries(${FULL_BIN} PUBLIC ${FRAMEWORK_NAME}.base ${LIBRARY_NAME})
+    target_link_libraries(${FULL_BIN} PUBLIC ${XALWART_BASE} ${LIBRARY_NAME})
 endfunction()
 
 function(add_sub_tests SUB_NAME)

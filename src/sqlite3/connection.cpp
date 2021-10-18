@@ -19,10 +19,12 @@ SQLite3Connection::SQLite3Connection(const char* filename) : in_transaction(fals
 	}
 
 	::sqlite3* driver;
-	if (sqlite3_open(filename, &driver))
+	if (sqlite3_open_v2(filename, &driver, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr))
+//	if (sqlite3_open(filename, &driver))
 	{
 		throw RuntimeError(
-			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)), _ERROR_DETAILS_
+			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
+			_ERROR_DETAILS_
 		);
 	}
 
@@ -117,10 +119,11 @@ void SQLite3Connection::run_query_unsafe(
 			[](void* data, int argc, char** argv, char** column_names) -> int {
 				auto& handler = *(function_type*)data;
 				std::vector<char*> vector;
+				vector.reserve(argc);
 				for (int i = 0; i < argc; i++)
 				{
 					// TODO: check what if column value is nullptr!
-					vector[i] = argv[i];
+					vector.emplace_back(argv[i]);
 				}
 
 				handler(vector);

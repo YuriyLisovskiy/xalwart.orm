@@ -8,11 +8,12 @@
 
 #pragma once
 
-// C++ libraries.
+// STL libraries.
 #include <string>
 #include <map>
 #include <any>
 #include <optional>
+#include <unordered_map>
 
 // Base libraries.
 #include <xalwart.base/utility.h>
