@@ -24,22 +24,26 @@ void YAMLSQLite3Component::initialize(const YAML::Node& node) const
 	if (this->filename.empty())
 	{
 		throw ImproperlyConfigured(
-			"'file' of sqlite3 database configuration should be non-empty string", _ERROR_DETAILS_
+			"'file' of sqlite3 database configuration should be non-empty string",
+			_ERROR_DETAILS_
 		);
 	}
 
 	if (this->pool_size < 1)
 	{
-		throw ImproperlyConfigured("'connections' should be positive integer", _ERROR_DETAILS_);
+		throw ImproperlyConfigured(
+			"'connections' should be positive integer", _ERROR_DETAILS_
+		);
 	}
 
-	auto full_filename = this->filename;
-	if (!path::is_absolute(full_filename))
+	auto full_filepath = path::Path(this->filename);
+	if (!path::Path(full_filepath).is_absolute())
 	{
-		full_filename = path::join(this->base_directory, full_filename);
+		full_filepath = this->base_directory / full_filepath;
 	}
 
-	this->backend = std::make_shared<sqlite3::Backend>(this->pool_size, full_filename.c_str());
+	auto string_filename = full_filepath.to_string();
+	this->backend = std::make_shared<sqlite3::Backend>(this->pool_size, string_filename.c_str());
 	this->backend->create_pool();
 }
 

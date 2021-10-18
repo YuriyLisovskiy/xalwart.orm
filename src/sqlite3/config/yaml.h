@@ -18,6 +18,7 @@
 #include <xalwart.base/config/components/yaml/default.h>
 #include <xalwart.base/vendor/yaml/yaml-cpp/yaml.h>
 #include <xalwart.base/abc/orm.h>
+#include <xalwart.base/path.h>
 
 // Module definitions.
 #include "../_def_.h"
@@ -31,7 +32,7 @@ class YAMLSQLite3Component : public xw::config::YAMLMapComponent
 {
 public:
 	explicit YAMLSQLite3Component(
-		std::string base_directory, std::shared_ptr<abc::IBackend>& backend
+		path::Path base_directory, std::shared_ptr<abc::IBackend>& backend
 	) : base_directory(std::move(base_directory)), backend(backend)
 	{
 		this->register_component("file", std::make_unique<xw::config::YAMLScalarComponent>(this->filename));
@@ -41,7 +42,7 @@ public:
 	void initialize(const YAML::Node& node) const override;
 
 protected:
-	std::string base_directory;
+	path::Path base_directory;
 	std::shared_ptr<abc::IBackend>& backend;
 
 	std::string filename;
