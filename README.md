@@ -21,11 +21,11 @@ Alpine Linux and Ubuntu:
 macOS:
 * clang++ 12 or later
 
-To build the library from source CMake 2.8.12 or later is required.
+To build the library from source CMake 3.12 or later is required.
 
 ### Dependencies
 The following library is required:
-- [xalwart.base](https://github.com/YuriyLisovskiy/xalwart.base) 0.x.x or later
+- [xalwart.base](https://github.com/YuriyLisovskiy/xalwart.base) 0.0.0 or later
 
 Available drivers:
 * `sqlite3` (`SQLITE3`):
@@ -42,8 +42,11 @@ Available drivers:
   ```
 
 ## Compile from Source
-* `BUILD_SHARED_LIBS` means to build a shared or static library (`ON` by default).
-* `XW_USE_DB_DRIVER_NAME` marks the name of a driver that will be used in ORM.
+* `BUILD_SHARED_LIBS`: build a shared or static library (`ON` by default).
+* `LIBRARY_ROOT`: installation directory root (`/usr/local` by default).
+* `LIBRARY_INCLUDE_DIR`: include installation directory (`${LIBRARY_ROOT}/include` by default).
+* `LIBRARY_LINK_DIR`: library installation directory (`${LIBRARY_ROOT}/lib` by default).
+* `XW_USE_DB_DRIVER_NAME`: the name of a driver that will be used in ORM.
   `DB_DRIVER_NAME` should be replaced by one of the available drivers shown
   in [dependencies](#dependencies), example: `XW_USE_SQLITE3`.
 ```bash
