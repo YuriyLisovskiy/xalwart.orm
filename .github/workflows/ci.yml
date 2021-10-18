@@ -8,7 +8,7 @@ on:
       - release
 jobs:
   linux-build:
-    name: [Linux] Build the library
+    name: '[Linux] Build the library'
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -44,7 +44,7 @@ jobs:
           path: xalwart.orm-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           retention-days: 90
   linux-test:
-    name: [Linux] Testing [${{ matrix.os.name }}-${{ matrix.os.version }}] [${{ matrix.compiler }}-${{ matrix.compiler_version }}]
+    name: '[Linux] Testing [${{ matrix.os.name }}-${{ matrix.os.version }}] [${{ matrix.compiler }}-${{ matrix.compiler_version }}]'
     needs: [ linux-build ]
     runs-on: ubuntu-18.04
     strategy:
@@ -82,7 +82,7 @@ jobs:
                           xalwart/gtest:1.11.0-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.os.name }}-${{ matrix.os.version }} \
                           bash /app/scripts/linux/test.sh ${{ matrix.os.name }} ${{ matrix.compiler }} ${{ matrix.compiler_version }}
   macos-build:
-    name: [macOS] Build the library
+    name: '[macOS] Build the library'
     runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
@@ -117,7 +117,7 @@ jobs:
           path: ~/target-build
           retention-days: 60
   macos-test:
-    name: [macOS] Testing [${{ matrix.os_name }}-${{ matrix.os_version }}] [clang]
+    name: '[macOS] Testing [${{ matrix.os_name }}-${{ matrix.os_version }}] [clang]'
     needs: [ macos-build ]
     runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
     strategy:
