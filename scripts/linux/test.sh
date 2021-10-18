@@ -22,6 +22,9 @@ function install_lib {
 # Install base library.
 install_lib "base"
 
+# Install orm library.
+install_lib "orm"
+
 # Update linker cache.
 ldconfig /etc/ld.so.conf.d
 
