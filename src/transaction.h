@@ -90,6 +90,12 @@ public:
 		this->connection->end_transaction();
 	}
 
+	inline void rollback() const
+	{
+		this->check_state();
+		this->connection->rollback_transaction();
+	}
+
 	template <class T>
 	inline q::Insert<T> insert()
 	{

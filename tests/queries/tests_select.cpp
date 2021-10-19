@@ -23,15 +23,9 @@ struct TestCase_Q_TestModel : public orm::db::Model
 		orm::db::make_column_meta("name", &TestCase_Q_TestModel::name)
 	};
 
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(TestCase_Q_TestModel::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(TestCase_Q_TestModel::meta_columns, attr_name);
+		this->__orm_set_column_data__(TestCase_Q_TestModel::meta_columns, column_name, data);
 	}
 };
 

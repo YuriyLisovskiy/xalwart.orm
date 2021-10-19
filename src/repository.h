@@ -10,6 +10,7 @@
 
 // C++ libraries.
 #include <memory>
+#include <functional>
 
 // Base libraries.
 #include <xalwart.base/abc/orm.h>
@@ -121,11 +122,10 @@ public:
 		return q::Delete<T>(this->connection.get(), this->sql_backend->sql_builder());
 	}
 
-	inline Transaction transaction()
-	{
-		this->ensure_connection();
-		return Transaction(this->connection.get(), this->sql_backend->sql_builder());
-	}
+	void transaction(const std::function<void(Transaction&)>& func);
+
+	// Requests and releases the database connection.
+	void wrap(const std::function<void(Repository*)>& func);
 
 protected:
 	abc::ISQLBackend* sql_backend = nullptr;
@@ -142,9 +142,9 @@ protected:
 
 	inline void ensure_connection()
 	{
-		this->check_state();
 		if (!this->connection)
 		{
+			this->check_state();
 			this->connection = this->sql_backend->get_connection();
 		}
 	}
@@ -160,7 +160,6 @@ private:
 	{
 		this->sql_backend = other.sql_backend;
 		other.sql_backend = nullptr;
-
 		this->connection = std::move(other.connection);
 		other.connection = nullptr;
 	}

@@ -10,13 +10,17 @@
 
 // C++ libraries.
 #include <map>
+#include <string>
+#include <sstream>
 
 // Base libraries.
-#include <xalwart.base/object/object.h>
 #include <xalwart.base/exceptions.h>
 #include <xalwart.base/types/utility.h>
 #include <xalwart.base/string_utils.h>
 #include <xalwart.base/lazy.h>
+#include <xalwart.base/abc/base.h>
+#include <xalwart.base/object/meta.h>
+#include <xalwart.base/object/object.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -31,17 +35,9 @@ __ORM_DB_BEGIN__
 // Model supports single pk only!
 // TESTME: Model
 // TODO: docs for 'Model'
-class Model : public obj::Object
+class Model : public xw::abc::IStringSerializable
 {
-private:
-
-	// Null model indicator.
-	// Used in queries when selecting one row and
-	// 'SELECT' statement returns nothing.
-	bool _is_null_model = false;
-
 public:
-
 	// Must be overwritten in child class.
 	static constexpr const char* meta_table_name = nullptr;
 
@@ -54,118 +50,19 @@ public:
 	// Must be overwritten in child class.
 	inline static constexpr std::tuple<> meta_columns = {};
 
-protected:
+	Model() = default;
 
-	// Copies base class. Must be called when copy-constructor
-	// is overridden.
-	inline void copy_base(const Model& other)
+	[[nodiscard]]
+	inline std::string to_string() const override
 	{
-		this->_is_null_model = other._is_null_model;
-	}
-
-	template <typename ...Columns>
-	inline std::shared_ptr<const Object> get_attribute_from(
-		const std::tuple<Columns...>& columns, const char* attr_name
-	) const
-	{
-		std::shared_ptr<const Object> obj;
-		util::tuple_for_each(columns, [this, attr_name, &obj](auto& column)
+		if (this->_is_null_model)
 		{
-			if (column.name == std::string(attr_name))
-			{
-				using column_type = typename std::remove_reference<decltype(column)>::type;
-				using model_type = typename column_type::model_type;
-				using field_type = typename column_type::field_type;
-				if constexpr (std::is_same_v<field_type, dt::Date>)
-				{
-					obj = std::make_shared<types::Date>(
-						((model_type*)this)->*column.member_pointer, DEFAULT_DATE_FORMAT
-					);
-				}
-				else if constexpr (std::is_same_v<field_type, dt::Time>)
-				{
-					obj = std::make_shared<types::Time>(
-						((model_type*)this)->*column.member_pointer, DEFAULT_TIME_FORMAT
-					);
-				}
-				else if constexpr (std::is_same_v<field_type, dt::Datetime>)
-				{
-					obj = std::make_shared<types::Datetime>(
-						((model_type*)this)->*column.member_pointer, DEFAULT_DATETIME_FORMAT
-					);
-				}
-				else
-				{
-					obj = types::to_object(((model_type*)this)->*column.member_pointer);
-				}
-
-				return false;
-			}
-
-			return true;
-		});
-
-		if (!obj)
-		{
-			throw AttributeError(
-				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
-				_ERROR_DETAILS_
-			);
+			return "null";
 		}
 
-		return obj;
-	}
-
-	template <typename ...Columns>
-	void set_attribute_to(const std::tuple<Columns...>& columns, const char* attr_name, const void* data)
-	{
-		bool is_set = false;
-		util::tuple_for_each(columns, [this, attr_name, data, &is_set](auto& column)
-		{
-			if (column.name == std::string(attr_name))
-			{
-				using column_type = typename std::remove_reference<decltype(column)>::type;
-				using model_type = typename column_type::model_type;
-				size_t len = std::strlen((char*)data);
-				std::string str_val = {(char*)data, (char*)data + len + 1};
-				((model_type*)this)->*column.member_pointer = column.as_field(str_val.c_str());
-				is_set = true;
-				return false;
-			}
-
-			return true;
-		});
-
-		if (!is_set)
-		{
-			throw AttributeError(
-				"'" + this->__type__().name() + "' object has no attribute '" + std::string(attr_name) + "'",
-				_ERROR_DETAILS_
-			);
-		}
-	}
-
-public:
-
-	// By default, throws 'NotImplementedException'.
-	// Overwriting is recommended in child classes
-	// for models' comparison.
-	[[nodiscard]]
-	inline short __cmp__(const Object* other) const override
-	{
-		throw NotImplementedException("'__cmp__' is not implemented", _ERROR_DETAILS_);
-	}
-
-	[[nodiscard]]
-	inline std::string __str__() const override
-	{
-		return this->_is_null_model ? "null" : obj::Object::__str__();
-	}
-
-	[[nodiscard]]
-	inline std::string __repr__() const override
-	{
-		return this->__str__();
+		std::stringstream oss;
+		oss << static_cast<const void*>(this);
+		return "<" + demangle(typeid(*this).name()) + " object at " + oss.str() + ">";
 	}
 
 	// Marks model as null-model. This action can not be undone.
@@ -188,47 +85,112 @@ public:
 		{
 			if (field.second)
 			{
-				this->__set_attr__(field.first.c_str(), field.second);
+				this->__orm_set_column__(field.first, field.second);
 			}
 		}
 	}
 
-	// Operator equals.
-	inline bool operator== (const Model& other) const
+protected:
+	// Copies base class. Must be called when copy-constructor
+	// is overridden.
+	inline void copy_base(const Model& other)
 	{
-		return this->__cmp__(&other) == 0;
+		this->_is_null_model = other._is_null_model;
 	}
 
-	// Operator not equals.
-	inline bool operator!= (const Model& other) const
+	template <typename ...Columns>
+	inline std::shared_ptr<const obj::Object> __orm_column_data_to_object__(
+		const std::tuple<Columns...>& columns, const std::string& column_name
+	) const
 	{
-		return this->__cmp__(&other) != 0;
+		std::shared_ptr<const obj::Object> object;
+		util::tuple_for_each(columns, [this, column_name, &object](auto& column)
+		{
+			if (column.name == column_name)
+			{
+				using column_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename column_type::model_type;
+				using field_type = typename column_type::field_type;
+				if constexpr (std::is_same_v<field_type, dt::Date>)
+				{
+					object = std::make_shared<types::Date>(
+						((model_type*)this)->*column.member_pointer, DEFAULT_DATE_FORMAT
+					);
+				}
+				else if constexpr (std::is_same_v<field_type, dt::Time>)
+				{
+					object = std::make_shared<types::Time>(
+						((model_type*)this)->*column.member_pointer, DEFAULT_TIME_FORMAT
+					);
+				}
+				else if constexpr (std::is_same_v<field_type, dt::Datetime>)
+				{
+					object = std::make_shared<types::Datetime>(
+						((model_type*)this)->*column.member_pointer, DEFAULT_DATETIME_FORMAT
+					);
+				}
+				else
+				{
+					object = types::to_object(((model_type*)this)->*column.member_pointer);
+				}
+
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!object)
+		{
+			this->_throw_column_not_found(column_name);
+		}
+
+		return object;
 	}
 
-	// Operator less.
-	inline bool operator< (const Model& other) const
+	template <typename ...Columns>
+	void __orm_set_column_data__(
+		const std::tuple<Columns...>& columns, const std::string& column_name, const char* data
+	)
 	{
-		return this->__cmp__(&other) == -1;
+		bool is_set = false;
+		util::tuple_for_each(columns, [this, column_name, data, &is_set](auto& column)
+		{
+			if (column.name == column_name)
+			{
+				using column_type = typename std::remove_reference<decltype(column)>::type;
+				using model_type = typename column_type::model_type;
+				size_t len = std::strlen(data);
+				std::string str_val = {data, data + len + 1};
+				((model_type*)this)->*column.member_pointer = column.as_field(str_val.c_str());
+				is_set = true;
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!is_set)
+		{
+			this->_throw_column_not_found(column_name);
+		}
 	}
 
-	// Operator less or equals.
-	inline bool operator<= (const Model& other) const
-	{
-		auto res = this->__cmp__(&other);
-		return res == 0 || res == -1;
-	}
+	virtual void __orm_set_column__(const std::string& column_name, const char* data) = 0;
 
-	// Operator greater.
-	inline bool operator> (const Model& other) const
-	{
-		return this->__cmp__(&other) == 1;
-	}
+private:
+	// Null model indicator.
+	// Used in queries when selecting one row and
+	// 'SELECT' statement returns nothing.
+	bool _is_null_model = false;
 
-	// Operator greater or equals.
-	inline bool operator>= (const Model& other) const
+	inline void _throw_column_not_found(const std::string& column_name) const
 	{
-		auto res = this->__cmp__(&other);
-		return res == 0 || res == 1;
+		throw AttributeError(
+			"'" + demangle(typeid(*this).name()) + "' object has not column '" +
+				column_name + "' mapped to the database",
+			_ERROR_DETAILS_
+		);
 	}
 };
 
