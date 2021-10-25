@@ -13,7 +13,7 @@
 #include <functional>
 
 // Base libraries.
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -38,9 +38,9 @@ public:
 	{
 	}
 
-	explicit inline Repository(abc::IBackend* backend)
+	explicit inline Repository(IBackend* backend)
 	{
-		this->sql_backend = dynamic_cast<abc::ISQLBackend*>(backend);
+		this->sql_backend = dynamic_cast<ISQLBackend*>(backend);
 		this->check_state();
 	}
 
@@ -128,8 +128,8 @@ public:
 	void wrap(const std::function<void(Repository*)>& func);
 
 protected:
-	abc::ISQLBackend* sql_backend = nullptr;
-	std::shared_ptr<abc::IDatabaseConnection> connection = nullptr;
+	ISQLBackend* sql_backend = nullptr;
+	std::shared_ptr<IDatabaseConnection> connection = nullptr;
 
 	inline void check_state() const
 	{

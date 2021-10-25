@@ -35,7 +35,7 @@ class TestCase_Q_insert_One : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
-	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
+	std::shared_ptr<orm::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
@@ -60,7 +60,7 @@ class TestCase_Q_insert_Bulk : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Insert<TestCase_Q_insert_TestModel>* query;
-	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
+	std::shared_ptr<orm::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{

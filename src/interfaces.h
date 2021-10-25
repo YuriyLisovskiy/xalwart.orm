@@ -1,5 +1,5 @@
 /**
- * abc.h
+ * interfaces.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -15,14 +15,14 @@
 #include <list>
 
 // Base libraries.
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
 #include "./queries/conditions.h"
-#include "./db/abc.h"
+#include "./db/interfaces.h"
 
 
 __ORM_BEGIN__
@@ -32,7 +32,7 @@ class ConnectionWrapper;
 __ORM_END__
 
 
-__ORM_ABC_BEGIN__
+__ORM_BEGIN__
 
 // TODO: docs for 'ISQLQueryBuilder'
 class ISQLQueryBuilder
@@ -93,17 +93,12 @@ public:
 
 	// Returns SQL schema editor related to driver.
 	[[nodiscard]]
-	virtual db::abc::ISchemaEditor* schema_editor() const = 0;
+	virtual db::ISchemaEditor* schema_editor() const = 0;
 
 	// Returns SQL query builder related to driver.
 	[[nodiscard]]
 	virtual ISQLQueryBuilder* sql_builder() const = 0;
 };
-
-__ORM_ABC_END__
-
-
-__ORM_BEGIN__
 
 // Requests connection from backend and returns it back when
 // object is destroyed.
@@ -118,7 +113,7 @@ __ORM_BEGIN__
 class ConnectionWrapper final
 {
 public:
-	explicit inline ConnectionWrapper(abc::ISQLBackend* backend) : _backend(backend)
+	explicit inline ConnectionWrapper(ISQLBackend* backend) : _backend(backend)
 	{
 		require_non_null(this->_backend, "SQL backend is nullptr", _ERROR_DETAILS_);
 	}
@@ -128,7 +123,7 @@ public:
 		this->release();
 	}
 
-	inline abc::IDatabaseConnection* connection()
+	inline IDatabaseConnection* connection()
 	{
 		if (!this->_connection)
 		{
@@ -149,8 +144,8 @@ public:
 	}
 
 private:
-	abc::ISQLBackend* _backend;
-	std::shared_ptr<abc::IDatabaseConnection> _connection;
+	ISQLBackend* _backend;
+	std::shared_ptr<IDatabaseConnection> _connection;
 };
 
 __ORM_END__

@@ -18,7 +18,7 @@
 #include <xalwart.base/types/utility.h>
 #include <xalwart.base/string_utils.h>
 #include <xalwart.base/lazy.h>
-#include <xalwart.base/abc/base.h>
+#include <xalwart.base/interfaces/base.h>
 #include <xalwart.base/object/meta.h>
 #include <xalwart.base/object/object.h>
 
@@ -35,7 +35,7 @@ __ORM_DB_BEGIN__
 // Model supports single pk only!
 // TESTME: Model
 // TODO: docs for 'Model'
-class Model : public xw::abc::IStringSerializable
+class Model : public xw::IStringSerializable
 {
 public:
 	// Must be overwritten in child class.

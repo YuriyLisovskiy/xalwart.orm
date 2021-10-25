@@ -12,18 +12,18 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./abc.h"
-#include "../abc.h"
+#include "./interfaces.h"
+#include "../interfaces.h"
 
 
 __ORM_DB_BEGIN__
 
 // TESTME: DefaultSchemaEditor
 // TODO: docs for 'DefaultSchemaEditor'
-class DefaultSQLSchemaEditor : public abc::ISchemaEditor
+class DefaultSQLSchemaEditor : public ISchemaEditor
 {
 public:
-	inline explicit DefaultSQLSchemaEditor(orm::abc::IBackend* backend) : backend(backend)
+	inline explicit DefaultSQLSchemaEditor(orm::IBackend* backend) : backend(backend)
 	{
 		if (!this->backend)
 		{
@@ -67,7 +67,7 @@ public:
 	) const override;
 
 protected:
-	orm::abc::IBackend* backend;
+	orm::IBackend* backend;
 
 	// SQL builders.
 	[[nodiscard]]

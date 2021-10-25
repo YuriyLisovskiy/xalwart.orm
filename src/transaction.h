@@ -9,13 +9,13 @@
 #pragma once
 
 // C++ libraries.
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./abc.h"
+#include "./interfaces.h"
 #include "./queries/insert.h"
 #include "./queries/select.h"
 #include "./queries/update.h"
@@ -33,7 +33,7 @@ public:
 	{
 	}
 
-	explicit inline Transaction(abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder) :
+	explicit inline Transaction(IDatabaseConnection* connection, ISQLQueryBuilder* builder) :
 		connection(connection), sql_builder(builder)
 	{
 		this->check_state();
@@ -125,8 +125,8 @@ public:
 	}
 
 protected:
-	abc::IDatabaseConnection* connection = nullptr;
-	abc::ISQLQueryBuilder* sql_builder = nullptr;
+	IDatabaseConnection* connection = nullptr;
+	ISQLQueryBuilder* sql_builder = nullptr;
 
 	inline void check_state() const
 	{

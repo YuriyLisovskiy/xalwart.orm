@@ -11,7 +11,7 @@
 using namespace xw;
 
 
-class MockedConnection : public orm::abc::IDatabaseConnection
+class MockedConnection : public orm::IDatabaseConnection
 {
 public:
 	[[nodiscard]]
@@ -50,7 +50,7 @@ public:
 class MockedBackend : public orm::DefaultSQLBackend
 {
 public:
-	MockedBackend() : orm::DefaultSQLBackend(1, []() -> std::shared_ptr<orm::abc::IDatabaseConnection>
+	MockedBackend() : orm::DefaultSQLBackend(1, []() -> std::shared_ptr<orm::IDatabaseConnection>
 	{
 		return std::make_shared<MockedConnection>();
 	})

@@ -33,7 +33,7 @@ class TestCase_Q_select : public ::testing::Test
 {
 protected:
 	orm::q::Select<TestCase_Q_TestModel>* query;
-	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
+	std::shared_ptr<orm::IDatabaseConnection> conn;
 	MockedBackend* backend;
 
 	void SetUp() override

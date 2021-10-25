@@ -10,7 +10,7 @@
 __ORM_DB_BEGIN__
 
 MigrationExecutor::MigrationExecutor(
-	orm::abc::ISQLBackend* backend,
+	orm::ISQLBackend* backend,
 	std::list<std::shared_ptr<Migration>> migrations,
 	std::function<void(const std::string&, const std::string&)> log_progress
 ) : recorder(backend), migrations(std::move(migrations)), log_progress(std::move(log_progress))
@@ -30,7 +30,7 @@ MigrationExecutor::MigrationExecutor(
 	}
 }
 
-void MigrationExecutor::apply(const abc::ISchemaEditor* editor, const std::string& to_migration) const
+void MigrationExecutor::apply(const ISchemaEditor* editor, const std::string& to_migration) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();
@@ -110,7 +110,7 @@ void MigrationExecutor::apply(const abc::ISchemaEditor* editor, const std::strin
 	}
 }
 
-void MigrationExecutor::rollback(const abc::ISchemaEditor* editor, const std::string& to_migration) const
+void MigrationExecutor::rollback(const ISchemaEditor* editor, const std::string& to_migration) const
 {
 	this->recorder.ensure_schema();
 	auto applied_migrations = this->recorder.applied_migrations();

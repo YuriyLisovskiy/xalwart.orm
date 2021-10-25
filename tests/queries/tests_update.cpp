@@ -35,7 +35,7 @@ class TestCaseF_Q_update : public ::testing::Test
 {
 protected:
 	MockedBackend* backend;
-	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
+	std::shared_ptr<orm::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{

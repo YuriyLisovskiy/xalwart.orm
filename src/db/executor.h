@@ -24,14 +24,14 @@ class MigrationExecutor
 {
 public:
 	explicit MigrationExecutor(
-		orm::abc::ISQLBackend* backend,
+		orm::ISQLBackend* backend,
 		std::list<std::shared_ptr<Migration>> migrations,
 		std::function<void(const std::string&, const std::string&)> log_progress=nullptr
 	);
 
-	void apply(const abc::ISchemaEditor* editor, const std::string& to_migration="") const;
+	void apply(const ISchemaEditor* editor, const std::string& to_migration="") const;
 
-	void rollback(const abc::ISchemaEditor* editor, const std::string& to_migration="") const;
+	void rollback(const ISchemaEditor* editor, const std::string& to_migration="") const;
 
 protected:
 	MigrationRecorder recorder;

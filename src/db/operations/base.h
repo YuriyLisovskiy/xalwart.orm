@@ -15,7 +15,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
+#include "../interfaces.h"
 #include "../utility.h"
 
 
@@ -24,7 +24,7 @@ __ORM_DB_OPERATIONS_BEGIN__
 // TESTME: TableOperation
 // TODO: docs for 'TableOperation'
 // Base class for operations with table.
-class TableOperation : public abc::IOperation
+class TableOperation : public IOperation
 {
 protected:
 	mutable std::string table_name;
@@ -50,7 +50,7 @@ public:
 // TESTME: ColumnOperation
 // TODO: docs for 'ColumnOperation'
 // Base class for operations with columns.
-class ColumnOperation : public abc::IOperation
+class ColumnOperation : public IOperation
 {
 protected:
 	std::string table_name_;

@@ -15,7 +15,7 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
+#include "../interfaces.h"
 
 
 __ORM_BEGIN__
@@ -30,7 +30,7 @@ public:
 
 	// Appends model's pk to deletion list.
 	explicit AbstractQuery(
-		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+		IDatabaseConnection* connection, ISQLQueryBuilder* builder
 	) : db_connection(connection), query_builder(builder)
 	{
 		require_non_null(this->db_connection, "Database connection is nullptr", _ERROR_DETAILS_);
@@ -41,8 +41,8 @@ public:
 	virtual std::string to_sql() const = 0;
 
 protected:
-	abc::IDatabaseConnection* db_connection = nullptr;
-	abc::ISQLQueryBuilder* query_builder = nullptr;
+	IDatabaseConnection* db_connection = nullptr;
+	ISQLQueryBuilder* query_builder = nullptr;
 };
 
 __ORM_END__

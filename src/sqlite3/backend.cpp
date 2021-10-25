@@ -13,7 +13,7 @@
 
 // Base libraries.
 #include <xalwart.base/string_utils.h>
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Orm libraries.
 #include "./connection.h"
@@ -23,7 +23,7 @@
 __ORM_SQLITE3_BEGIN__
 
 Backend::Backend(size_t pool_size, const char* filename) : DefaultSQLBackend(
-	pool_size, [filename]() -> std::shared_ptr<abc::IDatabaseConnection>
+	pool_size, [filename]() -> std::shared_ptr<IDatabaseConnection>
 	{
 		return std::make_shared<SQLite3Connection>(filename);
 	}
@@ -31,11 +31,11 @@ Backend::Backend(size_t pool_size, const char* filename) : DefaultSQLBackend(
 {
 }
 
-db::abc::ISchemaEditor* Backend::schema_editor() const
+db::ISchemaEditor* Backend::schema_editor() const
 {
 	if (!this->sql_schema_editor)
 	{
-		this->sql_schema_editor = std::make_shared<SchemaEditor>((abc::IBackend*)this);
+		this->sql_schema_editor = std::make_shared<SchemaEditor>((IBackend*)this);
 	}
 
 	return this->sql_schema_editor.get();

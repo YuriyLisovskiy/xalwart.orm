@@ -35,7 +35,7 @@ class TestCaseF_Q_delete : public ::testing::Test
 protected:
 	MockedBackend* backend;
 	orm::q::Delete<TestCaseF_Q_delete_TestModel>* query;
-	std::shared_ptr<orm::abc::IDatabaseConnection> conn;
+	std::shared_ptr<orm::IDatabaseConnection> conn;
 
 	void SetUp() override
 	{
