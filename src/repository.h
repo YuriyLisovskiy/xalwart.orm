@@ -41,7 +41,6 @@ public:
 	explicit inline Repository(IBackend* backend)
 	{
 		this->sql_backend = dynamic_cast<ISQLBackend*>(backend);
-		this->check_state();
 	}
 
 	inline Repository(Repository&& other) noexcept
