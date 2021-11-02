@@ -41,7 +41,12 @@ void DefaultSQLSchemaEditor::alter_column(
 	std::list<std::string> post_actions;
 
 	// Was type changed?
-	if (old_column.type != new_column.type)
+	if (
+		old_column.type != new_column.type || (
+			new_column.type == SqlColumnType::VarChar &&
+			old_column.constraints.max_len != new_column.constraints.max_len
+		)
+	)
 	{
 		auto [partial_sql, extra_actions] = this->partial_sql_alter_column_type(table, old_column, new_column);
 		actions.push_back(partial_sql);
@@ -175,6 +180,28 @@ std::string DefaultSQLSchemaEditor::sql_create_unique(
 		table,
 		"ADD CONSTRAINT " + this->create_unique_name(table, cols, "_unique") +
 		" UNIQUE (" + str_columns + ")"
+	);
+}
+
+std::tuple<std::string, std::list<std::string>> DefaultSQLSchemaEditor::partial_sql_alter_column_type(
+	const TableState& table, const ColumnState& old_col, const ColumnState& new_col
+) const
+{
+	std::string type_string = this->sql_type_string(new_col.type);
+	if (new_col.type == SqlColumnType::VarChar)
+	{
+		if (new_col.constraints.max_len.has_value())
+		{
+			type_string += "(" + std::to_string(new_col.constraints.max_len.value()) + ")";
+		}
+		else
+		{
+			type_string = this->sql_type_string(SqlColumnType::Text);
+		}
+	}
+
+	return std::make_tuple<std::string, std::list<std::string>>(
+		"ALTER COLUMN " + this->quote_name(new_col.name) + " TYPE " + type_string, {}
 	);
 }
 

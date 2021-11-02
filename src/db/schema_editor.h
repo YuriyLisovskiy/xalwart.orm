@@ -145,14 +145,9 @@ protected:
 
 	// Hook to specialize column type alteration for different drivers.
 	[[nodiscard]]
-	virtual inline std::tuple<std::string, std::list<std::string>> partial_sql_alter_column_type(
+	virtual std::tuple<std::string, std::list<std::string>> partial_sql_alter_column_type(
 		const TableState& table, const ColumnState& old_col, const ColumnState& new_col
-	) const
-	{
-		return std::make_tuple<std::string, std::list<std::string>>(
-			"ALTER COLUMN " + this->quote_name(new_col.name) + " TYPE " + this->sql_type_string(new_col.type), {}
-		);
-	}
+	) const;
 
 	// Returns the SQL to use in DEFAULT clause.
 	[[nodiscard]]
