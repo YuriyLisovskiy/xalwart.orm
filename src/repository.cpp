@@ -6,15 +6,47 @@
 
 #include "./repository.h"
 
-// C++ libraries.
-// TODO
+// STL libraries.
+#include <iostream>
 
-// Orm libraries.
-// TODO
+// ORM libraries.
+#include "./exceptions.h"
 
 
 __ORM_BEGIN__
 
-// TODO: remove!
+void Repository::transaction(const std::function<void(Transaction&)>& func)
+{
+	this->ensure_connection();
+	this->wrap([&](auto*)
+	{
+		auto tr = Transaction(this->connection.get(), this->sql_backend->sql_builder());
+		try
+		{
+			func(tr);
+			tr.rollback();
+		}
+		catch (const SQLError& exc)
+		{
+			tr.rollback();
+			throw exc;
+		}
+	});
+}
+
+void Repository::wrap(const std::function<void(Repository*)>& func)
+{
+	this->ensure_connection();
+	try
+	{
+		func(this);
+		this->free_connection();
+	}
+	catch (const std::exception& exc)
+	{
+		this->free_connection();
+		throw;
+	}
+}
 
 __ORM_END__

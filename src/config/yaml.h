@@ -15,7 +15,7 @@
 
 // Base libraries.
 #include <xalwart.base/config/components/yaml/default.h>
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 #include <xalwart.base/path.h>
 
 // Module definitions.
@@ -34,7 +34,7 @@ class YAMLDatabasesComponent : public xw::config::YAMLSequenceComponent
 {
 public:
 	explicit inline YAMLDatabasesComponent(
-		path::Path base_directory, std::map<std::string, std::shared_ptr<abc::IBackend>>& backends
+		path::Path base_directory, std::map<std::string, std::shared_ptr<IBackend>>& backends
 	) : YAMLSequenceComponent(
 		[this](const YAML::Node& node)
 		{
@@ -48,7 +48,7 @@ public:
 
 protected:
 	path::Path base_directory;
-	std::map<std::string, std::shared_ptr<abc::IBackend>>& backends;
+	std::map<std::string, std::shared_ptr<IBackend>>& backends;
 
 	void handle_database(const std::string& dbms, const std::string& name, const YAML::Node& node);
 };

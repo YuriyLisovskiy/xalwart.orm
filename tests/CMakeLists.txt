@@ -21,13 +21,13 @@ function(add_tests SUB_DIR SUB_NAME)
     target_link_libraries(${FULL_BIN} PUBLIC gtest)
 
     if (${XW_USE_SQLITE3})
-        add_compile_definitions(USE_SQLITE3)
         # Search for sqlite3
         find_library(
             SQLITE3 sqlite3 REQUIRED
             PATHS ${DEFAULT_INCLUDE_PATHS}
         )
         target_link_libraries(${FULL_BIN} PUBLIC ${SQLITE3})
+        add_compile_definitions(USE_SQLITE3)
     endif()
 
     target_link_libraries(${FULL_BIN} PUBLIC ${XALWART_BASE} ${LIBRARY_NAME})

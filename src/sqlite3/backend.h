@@ -38,7 +38,7 @@ public:
 	// Instantiates SQLite3 schema editor if it was not
 	// done yet and returns it.
 	[[nodiscard]]
-	db::abc::ISchemaEditor* schema_editor() const override;
+	db::ISchemaEditor* schema_editor() const override;
 
 	[[nodiscard]]
 	std::vector<std::string> get_table_names() override;

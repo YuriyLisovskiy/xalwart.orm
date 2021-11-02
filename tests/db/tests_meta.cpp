@@ -26,15 +26,9 @@ protected:
 			orm::db::make_pk_column_meta("id", &TestCase_Model_meta::TestModel::id)
 		};
 
-		inline void __set_attr__(const char* attr_name, const void* data) override
+		inline void __orm_set_column__(const std::string& column_name, const char* data) override
 		{
-			this->set_attribute_to(TestModel::meta_columns, attr_name, data);
-		}
-
-		[[nodiscard]]
-		inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-		{
-			return this->get_attribute_from(TestModel::meta_columns, attr_name);
+			this->__orm_set_column_data__(TestModel::meta_columns, column_name, data);
 		}
 	};
 };
@@ -79,15 +73,9 @@ public:
 		orm::db::make_pk_column_meta("custom_identifier", &TestCase_meta_TestM::custom_identifier)
 	};
 
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(TestCase_meta_TestM::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(TestCase_meta_TestM::meta_columns, attr_name);
+		this->__orm_set_column_data__(TestCase_meta_TestM::meta_columns, column_name, data);
 	}
 };
 

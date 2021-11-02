@@ -51,15 +51,9 @@ public:
 		orm::db::make_pk_column_meta("custom_identifier", &TestM::custom_identifier)
 	};
 
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(TestM::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(TestM::meta_columns, attr_name);
+		this->__orm_set_column_data__(TestM::meta_columns, column_name, data);
 	}
 };
 
@@ -92,15 +86,9 @@ public:
 		orm::db::make_pk_column_meta("another_id", &MultiPkModel::another_id)
 	};
 
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(MultiPkModel::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(MultiPkModel::meta_columns, attr_name);
+		this->__orm_set_column_data__(MultiPkModel::meta_columns, column_name, data);
 	}
 };
 

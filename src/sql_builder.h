@@ -13,14 +13,14 @@
 #include "./_def_.h"
 
 // Orm libraries.
-#include "./abc.h"
+#include "./interfaces.h"
 
 
 __ORM_BEGIN__
 
 // TESTME: DefaultSQLBuilder
 // TODO: docs for 'DefaultSQLBuilder'
-class DefaultSQLBuilder : public abc::ISQLQueryBuilder
+class DefaultSQLBuilder : public ISQLQueryBuilder
 {
 private:
 

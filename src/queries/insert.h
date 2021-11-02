@@ -27,7 +27,7 @@ class Insert final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Insert(
-		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+		IDatabaseConnection* connection, ISQLQueryBuilder* builder
 	) : AbstractQuery<ModelType>(connection, builder)
 	{
 	}

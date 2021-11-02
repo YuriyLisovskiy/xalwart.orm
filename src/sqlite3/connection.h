@@ -18,7 +18,7 @@
 #include <sqlite3.h>
 
 // Base libraries.
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Module definitions.
 #include "./_def_.h"
@@ -29,7 +29,7 @@
 
 __ORM_SQLITE3_BEGIN__
 
-class SQLite3Connection : public abc::IDatabaseConnection
+class SQLite3Connection : public IDatabaseConnection
 {
 public:
 	explicit SQLite3Connection(const char* filename);

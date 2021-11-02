@@ -20,15 +20,15 @@ endif()
 
 option(XW_USE_SQLITE3 "Link sqlite3 library and add compile XW_USE_SQLITE3 compile definition." OFF)
 if (${XW_USE_SQLITE3})
-    # Use sqlite3 driver.
-    add_compile_definitions(USE_SQLITE3)
-
     # Search for sqlite3
     find_library(
         SQLITE3 sqlite3 REQUIRED
         PATHS ${DEFAULT_INCLUDE_PATHS}
     )
     target_link_libraries(${LIBRARY_NAME} PUBLIC ${SQLITE3})
+
+    # Use sqlite3 driver.
+    add_compile_definitions(USE_SQLITE3)
 endif()
 
 # Link dependencies.

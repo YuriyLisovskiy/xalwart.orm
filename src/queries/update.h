@@ -23,7 +23,7 @@ class Update final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Update(
-		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder, bool in_transaction=false
+		IDatabaseConnection* connection, ISQLQueryBuilder* builder, bool in_transaction=false
 	) : AbstractQuery<ModelType>(connection, builder)
 	{
 		this->in_transaction = in_transaction;

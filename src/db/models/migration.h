@@ -27,6 +27,12 @@ public:
 
 	static constexpr const char* meta_table_name = "xalwart_migrations";
 
+	inline static const std::tuple meta_columns = {
+		make_pk_column_meta("id", &Migration::id),
+		make_column_meta("name", &Migration::name),
+		make_column_meta("applied", &Migration::applied)
+	};
+
 	Migration() = default;
 
 	inline explicit Migration(std::string name) :
@@ -35,28 +41,16 @@ public:
 	}
 
 	[[nodiscard]]
-	inline std::string __str__() const override
+	inline std::string to_string() const override
 	{
 		return this->is_null() ? "null" : (
 			"Migration " + this->name + " at " + this->applied.strftime(db::DEFAULT_DATETIME_FORMAT)
 		);
 	}
 
-	inline static const std::tuple meta_columns = {
-		make_pk_column_meta("id", &Migration::id),
-		make_column_meta("name", &Migration::name),
-		make_column_meta("applied", &Migration::applied)
-	};
-
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(Migration::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(Migration::meta_columns, attr_name);
+		this->__orm_set_column_data__(Migration::meta_columns, column_name, data);
 	}
 };
 

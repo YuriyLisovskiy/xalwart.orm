@@ -11,10 +11,6 @@
 // Module definitions.
 #include <xalwart.base/_def_.h>
 
-// xw::orm
-#define __ORM_BEGIN__ __MAIN_NAMESPACE_BEGIN__ namespace orm {
-#define __ORM_END__ } __MAIN_NAMESPACE_END__
-
 __ORM_BEGIN__
 
 namespace v

@@ -34,7 +34,7 @@ class Select final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Select(
-		abc::IDatabaseConnection* connection, abc::ISQLQueryBuilder* builder
+		IDatabaseConnection* connection, ISQLQueryBuilder* builder
 	) : AbstractQuery<ModelType>(connection, builder), q_distinct(false), q_limit(-1), q_offset(-1)
 	{
 		this->table_name = db::get_table_name<ModelType>();

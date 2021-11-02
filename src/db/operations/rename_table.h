@@ -53,7 +53,7 @@ public:
 	}
 
 	inline void forward(
-		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		const auto& new_table = to_state.get_table_addr(this->new_name());
@@ -64,7 +64,7 @@ public:
 	}
 
 	inline void backward(
-		const abc::ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
 	) const override
 	{
 		std::swap(this->new_table_name, this->table_name);

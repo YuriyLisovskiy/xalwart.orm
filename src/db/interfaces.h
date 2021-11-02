@@ -1,9 +1,9 @@
 /**
- * db/abc.h
+ * db/interfaces.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Abstract base classes for 'db' module.
+ * Interfaces for 'db' module.
  */
 
 #pragma once
@@ -18,7 +18,7 @@
 #include "./states.h"
 
 
-__ORM_DB_ABC_BEGIN__
+__ORM_DB_BEGIN__
 
 // TODO: docs for 'ISchemaEditor'
 class ISchemaEditor
@@ -68,4 +68,4 @@ public:
 	) const = 0;
 };
 
-__ORM_DB_ABC_END__
+__ORM_DB_END__

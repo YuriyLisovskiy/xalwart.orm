@@ -13,13 +13,13 @@
 #include <memory>
 
 // Base libraries.
-#include <xalwart.base/abc/orm.h>
+#include <xalwart.base/interfaces/orm.h>
 
 // Module definitions.
 #include "./_def_.h"
 
 // Orm libraries.
-#include "../abc.h"
+#include "../interfaces.h"
 #include "./operations/create_table.h"
 #include "./operations/drop_table.h"
 #include "./operations/rename_table.h"
@@ -38,15 +38,15 @@ __ORM_DB_BEGIN__
 class Migration
 {
 public:
-	inline explicit Migration(orm::abc::IBackend* backend, std::string identifier, bool initial=false) :
+	inline explicit Migration(orm::IBackend* backend, std::string identifier, bool initial=false) :
 		identifier(std::move(identifier)), is_initial(initial)
 	{
 		require_non_null(backend, ce<Migration>("", "driver is not initialized"));
-		this->sql_backend = dynamic_cast<orm::abc::ISQLBackend*>(backend);
+		this->sql_backend = dynamic_cast<orm::ISQLBackend*>(backend);
 		if (!this->sql_backend)
 		{
 			throw ValueError(
-				"'xw::orm::db::Migration' requires 'xw::orm::abc::ISQLBackend'-based backend", _ERROR_DETAILS_
+				"'xw::orm::db::Migration' requires 'xw::orm::ISQLBackend'-based backend", _ERROR_DETAILS_
 			);
 		}
 
@@ -64,13 +64,13 @@ public:
 
 	bool apply(
 		ProjectState& state,
-		const abc::ISchemaEditor* schema_editor,
+		const ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	bool rollback(
 		ProjectState& state,
-		const abc::ISchemaEditor* schema_editor,
+		const ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
@@ -89,15 +89,15 @@ public:
 	protected:
 	std::string identifier;
 
-	std::list<std::shared_ptr<abc::IOperation>> operations;
+	std::list<std::shared_ptr<IOperation>> operations;
 
 	// Mark transaction as initial.
 	bool is_initial = false;
 
 	// Database driver for running transactions.
-	orm::abc::ISQLBackend* sql_backend;
+	orm::ISQLBackend* sql_backend;
 
-	abc::ISchemaEditor* sql_schema_editor;
+	ISchemaEditor* sql_schema_editor;
 
 	// Operations.
 	void create_table(
@@ -140,21 +140,21 @@ public:
 
 protected:
 	void apply_unsafe(
-		orm::abc::IDatabaseConnection* connection,
+		orm::IDatabaseConnection* connection,
 		ProjectState& state,
-		const abc::ISchemaEditor* schema_editor,
+		const ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	void rollback_unsafe(
-		orm::abc::IDatabaseConnection* connection,
+		orm::IDatabaseConnection* connection,
 		ProjectState& state,
-		const abc::ISchemaEditor* schema_editor,
+		const ISchemaEditor* schema_editor,
 		const std::function<void()>& success_callback=nullptr
 	) const;
 
 	inline void rollback_and_release_connection(
-		const std::shared_ptr<orm::abc::IDatabaseConnection>& connection
+		const std::shared_ptr<orm::IDatabaseConnection>& connection
 	) const
 	{
 		connection->rollback_transaction();

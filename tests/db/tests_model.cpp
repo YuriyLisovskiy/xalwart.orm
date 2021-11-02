@@ -23,24 +23,11 @@ public:
 		orm::db::make_column_meta("info", &TestCase_Model_TestModel::info)
 	};
 
-	inline void __set_attr__(const char* attr_name, const void* data) override
+	inline void __orm_set_column__(const std::string& column_name, const char* data) override
 	{
-		this->set_attribute_to(TestCase_Model_TestModel::meta_columns, attr_name, data);
-	}
-
-	[[nodiscard]]
-	inline std::shared_ptr<const Object> __get_attr__(const char* attr_name) const override
-	{
-		return this->get_attribute_from(TestCase_Model_TestModel::meta_columns, attr_name);
+		this->__orm_set_column_data__(TestCase_Model_TestModel::meta_columns, column_name, data);
 	}
 };
-
-TEST(TestCase_Model, __cmp___throws_NotImplementedException)
-{
-	auto left = TestCase_Model_TestModel();
-	auto right = TestCase_Model_TestModel();
-	ASSERT_THROW(auto res = left.__cmp__(&right), NotImplementedException);
-}
 
 TEST(TestCase_Model, is_null_False)
 {
@@ -59,14 +46,7 @@ TEST(TestCase_Model, __str___NullModel)
 {
 	TestCase_Model_TestModel model;
 	model.mark_as_null();
-	ASSERT_EQ(model.__str__(), "null");
-}
-
-TEST(TestCase_Model, __repr___NullModel)
-{
-	TestCase_Model_TestModel model;
-	model.mark_as_null();
-	ASSERT_EQ(model.__repr__(), "null");
+	ASSERT_EQ(model.to_string(), "null");
 }
 
 TEST(TestCase_Model, meta_table_name_Default_IsNullptr)

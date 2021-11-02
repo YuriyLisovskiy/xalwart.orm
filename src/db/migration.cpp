@@ -10,7 +10,7 @@
 __ORM_DB_BEGIN__
 
 bool Migration::apply(
-	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
+	ProjectState& state, const ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
 	require_non_null(editor, ce<Migration>("apply", "schema editor is nullptr"));
@@ -35,7 +35,7 @@ bool Migration::apply(
 }
 
 bool Migration::rollback(
-	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
+	ProjectState& state, const ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
 	require_non_null(editor, ce<Migration>("rollback", "schema editor is nullptr"));
@@ -83,8 +83,8 @@ void Migration::create_table(
 }
 
 void Migration::apply_unsafe(
-	orm::abc::IDatabaseConnection* connection,
-	ProjectState& state, const abc::ISchemaEditor* editor, const std::function<void()>& success_callback
+	orm::IDatabaseConnection* connection,
+	ProjectState& state, const ISchemaEditor* editor, const std::function<void()>& success_callback
 ) const
 {
 	connection->begin_transaction();
@@ -104,13 +104,13 @@ void Migration::apply_unsafe(
 }
 
 void Migration::rollback_unsafe(
-	orm::abc::IDatabaseConnection* connection,
+	orm::IDatabaseConnection* connection,
 	ProjectState& state,
-	const abc::ISchemaEditor* editor,
+	const ISchemaEditor* editor,
 	const std::function<void()>& success_callback
 ) const
 {
-	std::list<std::tuple<std::shared_ptr<abc::IOperation>, ProjectState, ProjectState>> ops_to_run;
+	std::list<std::tuple<std::shared_ptr<IOperation>, ProjectState, ProjectState>> ops_to_run;
 	auto new_state = state;
 	for (const auto& operation : this->operations)
 	{
