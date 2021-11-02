@@ -40,6 +40,18 @@ Available drivers:
   ```cmake
   add_compile_definitions(USE_SQLITE3)
   ```
+* `libpq` 14.0 or later (`POSTGRESQL`):
+    ```bash
+    # Ubuntu
+    sudo apt-get install libpq-dev
+  
+    # macOS
+    brew install libpq
+    ```
+  Enable it in `CMakeLists.txt`:
+  ```cmake
+  add_compile_definitions(USE_POSTGRESQL)
+  ```
 
 ## Compile from Source
 * `BUILD_SHARED_LIBS`: build a shared or static library (`ON` by default).
@@ -49,6 +61,9 @@ Available drivers:
 * `XW_USE_DB_DRIVER_NAME`: the name of a driver that will be used in ORM.
   `DB_DRIVER_NAME` should be replaced by one of the available drivers shown
   in [dependencies](#dependencies), example: `XW_USE_SQLITE3`.
+
+PostgreSQL-specific arguments:
+* `PostgreSQL_ROOT`: root directory for PostgreSQL library in case of non-standard installation path.
 ```bash
 git clone https://github.com/YuriyLisovskiy/xalwart.orm.git
 cd xalwart.orm

@@ -1,33 +1,32 @@
 /**
- * sqlite3/backend.cpp
+ * postgresql/backend.cpp
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  */
 
 #include "./backend.h"
 
-#ifdef USE_SQLITE3
+#ifdef USE_POSTGRESQL
 
 // C++ libraries.
 #include <memory>
 
 // Base libraries.
-#include <xalwart.base/string_utils.h>
 #include <xalwart.base/interfaces/orm.h>
 
 // Orm libraries.
-#include "./connection.h"
 #include "./schema_editor.h"
 
 
-__ORM_SQLITE3_BEGIN__
+__ORM_POSTGRESQL_BEGIN__
 
-Backend::Backend(size_t pool_size, const char* filename) : DefaultSQLBackend(
-	pool_size, [filename]() -> std::shared_ptr<IDatabaseConnection>
-	{
-		return std::make_shared<SQLite3Connection>(filename);
-	}
-)
+Backend::Backend(size_t pool_size, const PostgreSQLCredentials& credentials) :
+	DefaultSQLBackend(
+		pool_size, [credentials]() -> std::shared_ptr<IDatabaseConnection>
+		{
+			return std::make_shared<PostgreSQLConnection>(credentials);
+		}
+	)
 {
 }
 
@@ -43,7 +42,8 @@ db::ISchemaEditor* Backend::schema_editor() const
 
 std::vector<std::string> Backend::get_table_names()
 {
-	std::string query = "SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%'";
+	std::string query =
+		"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';";
 	auto connection = this->get_connection();
 	if (!connection)
 	{
@@ -59,6 +59,6 @@ std::vector<std::string> Backend::get_table_names()
 	return tables;
 }
 
-__ORM_SQLITE3_END__
+__ORM_POSTGRESQL_END__
 
-#endif // USE_SQLITE3
+#endif // USE_POSTGRESQL

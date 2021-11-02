@@ -160,7 +160,7 @@ std::string DefaultSQLSchemaEditor::sql_create_table(
 			);
 		}
 	);
-	return "CREATE TABLE " + table.name + "(" + s_columns +
+	return "CREATE TABLE \"" + table.name + "\"(" + s_columns +
 		(s_constraints.empty() ? "" : ", " + s_constraints) + ")";
 }
 

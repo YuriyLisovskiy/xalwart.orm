@@ -16,6 +16,13 @@
 
 #endif // USE_SQLITE3
 
+#ifdef USE_POSTGRESQL
+
+// Orm libraries.
+#include "../postgresql/config/yaml.h"
+
+#endif // USE_POSTGRESQL
+
 
 __ORM_CONFIG_BEGIN__
 
@@ -51,9 +58,25 @@ void YAMLDatabasesComponent::handle_database(const std::string& dbms, const std:
 		{
 			this->backends.insert(std::make_pair(name, std::move(backend)));
 		}
+
 		return;
 	}
 #endif // USE_SQLITE3
+
+#ifdef USE_POSTGRESQL
+	if (dbms == "postgresql")
+	{
+		std::shared_ptr<IBackend> backend = nullptr;
+		auto component = postgresql::YAMLPostgreSQLComponent(backend);
+		component.initialize(node);
+		if (backend != nullptr)
+		{
+			this->backends.insert(std::make_pair(name, std::move(backend)));
+		}
+
+		return;
+	}
+#endif // USE_POSTGRESQL
 
 	// TODO: add custom database loading
 	throw ImproperlyConfigured("Unsupported database '" + dbms + "'", _ERROR_DETAILS_);
