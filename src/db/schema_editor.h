@@ -80,7 +80,7 @@ protected:
 	[[nodiscard]]
 	virtual inline std::string sql_drop_table(const std::string& name) const
 	{
-		return "DROP TABLE " + name + " CASCADE";
+		return "DROP TABLE " + this->quote_name(name) + " CASCADE";
 	}
 
 	[[nodiscard]]

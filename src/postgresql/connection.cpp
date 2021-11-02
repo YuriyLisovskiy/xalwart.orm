@@ -95,7 +95,7 @@ void PostgreSQLConnection::run_query_unsafe(
 					std::map<std::string, char*> result;
 					for (auto j = 0; j < fields_count; j++)
 					{
-						result[PQfname(res, i)] = PQgetvalue(res, i, j);
+						result[PQfname(res, j)] = PQgetvalue(res, i, j);
 					}
 
 					map_handler(result);
