@@ -42,10 +42,10 @@ void Repository::wrap(const std::function<void(Repository*)>& func)
 		func(this);
 		this->free_connection();
 	}
-	catch (const SQLError& exc)
+	catch (const std::exception& exc)
 	{
 		this->free_connection();
-		throw exc;
+		throw;
 	}
 }
 
