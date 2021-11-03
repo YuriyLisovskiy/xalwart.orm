@@ -11,7 +11,11 @@
 
 __ORM_SQLITE3_BEGIN__
 
-void SchemaEditor::drop_column(const db::TableState& table, const db::ColumnState& column) const
+void SchemaEditor::drop_column(
+	const db::TableState& table,
+	const db::ColumnState& column,
+	const IDatabaseConnection* connection
+) const
 {
 	auto table_copy = table;
 	table_copy.columns.erase(column.name);
@@ -26,11 +30,15 @@ void SchemaEditor::drop_column(const db::TableState& table, const db::ColumnStat
 		mapping[col.second.name] = this->quote_name(col.second.name);
 	}
 
-	this->recreate_table(table_copy, mapping);
+	this->recreate_table(table_copy, mapping, connection);
 }
 
 void SchemaEditor::alter_column(
-	const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
+	const db::TableState& table,
+	const db::ColumnState& old_column,
+	const db::ColumnState& new_column,
+	bool strict,
+	const IDatabaseConnection* connection
 ) const
 {
 	auto table_copy = table;
@@ -64,7 +72,7 @@ void SchemaEditor::alter_column(
 		table_copy.foreign_keys[new_column.name] = fk;
 	}
 
-	this->recreate_table(table_copy, mapping);
+	this->recreate_table(table_copy, mapping, connection);
 }
 
 std::string SchemaEditor::sql_column_constraints(const db::Constraints& cc, const std::string& default_value) const
@@ -121,7 +129,9 @@ std::string SchemaEditor::sql_type_string(db::SqlColumnType type) const
 }
 
 void SchemaEditor::recreate_table(
-	const db::TableState& table, const std::unordered_map<std::string, std::string>& mapping
+	const db::TableState& table,
+	const std::unordered_map<std::string, std::string>& mapping,
+	const IDatabaseConnection* connection
 ) const
 {
 	auto columns_definition = str::join(
@@ -155,7 +165,7 @@ void SchemaEditor::recreate_table(
 		" DROP TABLE " + table_name + ";"
 		" ALTER TABLE " + new_table_name + " RENAME TO " + table_name + ";"
 		" PRAGMA foreign_keys=on;";
-	this->execute(query);
+	this->execute(query, connection);
 }
 
 std::string SchemaEditor::sql_column(const db::ColumnState& column) const

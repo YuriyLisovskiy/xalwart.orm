@@ -9,9 +9,11 @@
 
 __ORM_DB_BEGIN__
 
-void MigrationRecorder::ensure_schema() const
+void MigrationRecorder::ensure_schema(const IDatabaseConnection* connection) const
 {
-	if (this->has_table())
+	auto wrapper = this->backend()->wrap_connection();
+	const IDatabaseConnection* db = connection ? connection : wrapper.connection();
+	if (this->has_table(db))
 	{
 		return;
 	}
@@ -23,7 +25,7 @@ void MigrationRecorder::ensure_schema() const
 	table.column<dt::Datetime>("applied");
 	ProjectState state;
 	table.update_state(state);
-	table.forward(editor, state, state);
+	table.forward(editor, state, state, db);
 }
 
 __ORM_DB_END__

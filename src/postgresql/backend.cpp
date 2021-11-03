@@ -34,20 +34,26 @@ db::ISchemaEditor* Backend::schema_editor() const
 {
 	if (!this->sql_schema_editor)
 	{
-		this->sql_schema_editor = std::make_shared<SchemaEditor>((IBackend*)this);
+		this->sql_schema_editor = std::make_shared<SchemaEditor>();
 	}
 
 	return this->sql_schema_editor.get();
 }
 
-std::vector<std::string> Backend::get_table_names()
+std::vector<std::string> Backend::get_table_names(const IDatabaseConnection* connection)
 {
 	std::string query =
 		"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';";
-	auto connection = this->get_connection();
+	std::shared_ptr<IDatabaseConnection> local_connection = nullptr;
 	if (!connection)
 	{
-		throw DatabaseError("Received nullptr connection", _ERROR_DETAILS_);
+		local_connection = this->get_connection();
+		if (!local_connection)
+		{
+			throw DatabaseError("Received nullptr connection", _ERROR_DETAILS_);
+		}
+
+		connection = local_connection.get();
 	}
 
 	std::vector<std::string> tables;
@@ -55,7 +61,12 @@ std::vector<std::string> Backend::get_table_names()
 	{
 		tables.emplace_back(data[0]);
 	});
-	this->release_connection(connection);
+
+	if (local_connection)
+	{
+		this->release_connection(local_connection);
+	}
+
 	return tables;
 }
 

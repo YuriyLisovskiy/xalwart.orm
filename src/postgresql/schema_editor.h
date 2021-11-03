@@ -24,7 +24,7 @@ __ORM_POSTGRESQL_BEGIN__
 class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
 public:
-	inline explicit SchemaEditor(IBackend* backend) : db::DefaultSQLSchemaEditor(backend)
+	inline explicit SchemaEditor() : db::DefaultSQLSchemaEditor()
 	{
 	}
 

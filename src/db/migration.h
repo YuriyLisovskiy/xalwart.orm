@@ -65,13 +65,13 @@ public:
 	bool apply(
 		ProjectState& state,
 		const ISchemaEditor* schema_editor,
-		const std::function<void()>& success_callback=nullptr
+		const std::function<void(const IDatabaseConnection*)>& success_callback=nullptr
 	) const;
 
 	bool rollback(
 		ProjectState& state,
 		const ISchemaEditor* schema_editor,
-		const std::function<void()>& success_callback=nullptr
+		const std::function<void(const IDatabaseConnection*)>& success_callback=nullptr
 	) const;
 
 	[[nodiscard]]
@@ -143,14 +143,14 @@ protected:
 		orm::IDatabaseConnection* connection,
 		ProjectState& state,
 		const ISchemaEditor* schema_editor,
-		const std::function<void()>& success_callback=nullptr
+		const std::function<void(const IDatabaseConnection*)>& success_callback=nullptr
 	) const;
 
 	void rollback_unsafe(
 		orm::IDatabaseConnection* connection,
 		ProjectState& state,
 		const ISchemaEditor* schema_editor,
-		const std::function<void()>& success_callback=nullptr
+		const std::function<void(const IDatabaseConnection*)>& success_callback=nullptr
 	) const;
 
 	inline void rollback_and_release_connection(

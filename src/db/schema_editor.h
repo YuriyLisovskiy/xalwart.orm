@@ -23,23 +23,22 @@ __ORM_DB_BEGIN__
 class DefaultSQLSchemaEditor : public ISchemaEditor
 {
 public:
-	inline explicit DefaultSQLSchemaEditor(orm::IBackend* backend) : backend(backend)
-	{
-		if (!this->backend)
-		{
-			throw NullPointerException("Database backend is nullptr", _ERROR_DETAILS_);
-		}
-	}
+	void create_table(
+		const TableState& table, const IDatabaseConnection* connection
+	) const override;
 
-	void create_table(const TableState& table) const override;
-
-	inline void drop_table(const std::string& name) const override
+	inline void drop_table(
+		const std::string& name, const IDatabaseConnection* connection
+	) const override
 	{
-		this->execute(this->sql_drop_table(name));
+		this->execute(this->sql_drop_table(name), connection);
 	}
 
 	inline void rename_table(
-		const TableState& table, const std::string& old_name, const std::string& new_name
+		const TableState& table,
+		const std::string& old_name,
+		const std::string& new_name,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		if (old_name == new_name)
@@ -49,26 +48,32 @@ public:
 			return;
 		}
 
-		this->execute(this->sql_rename_table(old_name, new_name));
+		this->execute(this->sql_rename_table(old_name, new_name), connection);
 	}
 
-	inline void create_column(const TableState& table, const ColumnState& column) const override
+	inline void create_column(
+		const TableState& table, const ColumnState& column, const IDatabaseConnection* connection
+	) const override
 	{
-		this->execute(this->sql_add_column(table, column));
+		this->execute(this->sql_add_column(table, column), connection);
 	}
 
-	inline void drop_column(const TableState& table, const ColumnState& column) const override
+	inline void drop_column(
+		const TableState& table, const ColumnState& column, const IDatabaseConnection* connection
+	) const override
 	{
-		this->execute(this->sql_drop_column(table, column));
+		this->execute(this->sql_drop_column(table, column), connection);
 	}
 
 	void alter_column(
-		const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
+		const TableState& table,
+		const ColumnState& old_column,
+		const ColumnState& new_column,
+		bool strict,
+		const IDatabaseConnection* connection
 	) const override;
 
 protected:
-	orm::IBackend* backend;
-
 	// SQL builders.
 	[[nodiscard]]
 	virtual std::string sql_create_table(
@@ -205,16 +210,14 @@ protected:
 		return false;
 	}
 
-	virtual void execute(const std::string& sql) const
+	virtual void execute(const std::string& sql, const IDatabaseConnection* connection) const
 	{
-		auto connection = this->backend->get_connection();
 		if (!connection)
 		{
 			throw NullPointerException("SQL backend is nullptr", _ERROR_DETAILS_);
 		}
 
 		connection->run_query(sql.ends_with(';') ? sql : (sql + ";"), nullptr, nullptr);
-		this->backend->release_connection(connection);
 	}
 
 	virtual void sql_column_autoincrement_check(SqlColumnType type, bool autoincrement, bool primary_key) const;
@@ -224,7 +227,9 @@ protected:
 		const std::string& name, SqlColumnType type, const std::optional<size_t>& max_len
 	) const;
 
-	virtual void delete_primary_key(const TableState& table, bool strict) const;
+	virtual void delete_primary_key(
+		const TableState& table, bool strict, const IDatabaseConnection* connection
+	) const;
 
 	[[nodiscard]]
 	virtual inline std::list<std::string> constraint_names(const TableState& table, bool primary_key) const

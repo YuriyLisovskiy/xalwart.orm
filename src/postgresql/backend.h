@@ -42,7 +42,7 @@ public:
 	db::ISchemaEditor* schema_editor() const override;
 
 	[[nodiscard]]
-	std::vector<std::string> get_table_names() override;
+	std::vector<std::string> get_table_names(const IDatabaseConnection* connection) override;
 };
 
 __ORM_POSTGRESQL_END__

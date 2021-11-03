@@ -53,22 +53,26 @@ public:
 	}
 
 	inline void forward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		const auto& new_table = to_state.get_table_addr(this->new_name());
 		const auto& old_table = from_state.get_table_addr(this->old_name());
 		require_non_null(
 			editor, ce<RenameTable>("forward/backward", "schema editor is nullptr")
-		)->rename_table(new_table, old_table.name, new_table.name);
+		)->rename_table(new_table, old_table.name, new_table.name, connection);
 	}
 
 	inline void backward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		std::swap(this->new_table_name, this->table_name);
-		this->forward(editor, from_state, to_state);
+		this->forward(editor, from_state, to_state, connection);
 		std::swap(this->new_table_name, this->table_name);
 	}
 };

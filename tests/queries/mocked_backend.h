@@ -58,7 +58,7 @@ public:
 		this->create_pool();
 	}
 
-	std::vector<std::string> get_table_names() override
+	std::vector<std::string> get_table_names(const orm::IDatabaseConnection*) override
 	{
 		return {};
 	}
