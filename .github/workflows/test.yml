@@ -97,7 +97,6 @@ jobs:
     name: '[linux test]'
     needs:
       - linux-build
-    if: github.ref != 'refs/heads/master'
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -144,7 +143,6 @@ jobs:
     name: '[macOS test]'
     needs:
       - macos-build
-    if: github.ref != 'refs/heads/master'
     runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
