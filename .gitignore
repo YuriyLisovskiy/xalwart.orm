@@ -39,12 +39,18 @@ CMakeSettings.json
 # CLion
 .idea/
 cmake-build-*
+build/
 
 # External libraries
 include/
 lib/
 
-# Additional stuff
-Dockerfile*
-.dockerignore
+# Manual testing stuff
+tests/tests.cpp
+tests/benchmark*
+
+# Other stuff
 Makefile
+
+# macOS files
+*.DS_Store
