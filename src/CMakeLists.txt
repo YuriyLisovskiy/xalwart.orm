@@ -18,19 +18,16 @@ if (NOT APPLE)
     target_link_libraries(${LIBRARY_NAME} PUBLIC stdc++fs)
 endif()
 
-option(XW_USE_SQLITE3 "Link sqlite3 library and add compile XW_USE_SQLITE3 compile definition." OFF)
+option(XW_USE_SQLITE3 "Search for SQLite3." OFF)
 if (${XW_USE_SQLITE3})
-    # Search for sqlite3
-    find_library(
-        SQLITE3 sqlite3 REQUIRED
-        PATHS ${DEFAULT_INCLUDE_PATHS}
-    )
-    target_link_libraries(${LIBRARY_NAME} PUBLIC ${SQLITE3})
+    find_package(SQLite3 3 REQUIRED)
+    include_directories(${SQLITE3_INCLUDE_DIRS})
+    target_link_libraries(${LIBRARY_NAME} ${SQLITE3_LIBRARIES})
     add_compile_definitions(USE_SQLITE3)
 endif()
 
+option(XW_USE_POSTGRESQL "Search for PostgreSQL." OFF)
 if (${XW_USE_POSTGRESQL})
-    # Search for PostgreSQL
     find_package(PostgreSQL REQUIRED)
     target_link_libraries(${LIBRARY_NAME} PUBLIC ${PostgreSQL_LIBRARIES})
     include_directories(${PostgreSQL_INCLUDE_DIRS})
