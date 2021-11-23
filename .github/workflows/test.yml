@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - master
 jobs:
   linux-build:
     name: '[Linux] Build the library'
@@ -44,6 +45,7 @@ jobs:
   linux-test:
     name: '[Linux] Testing [${{ matrix.os.name }}-${{ matrix.os.version }}] [${{ matrix.compiler }}-${{ matrix.compiler_version }}]'
     needs: [ linux-build ]
+    if: github.ref != 'refs/heads/master'
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -117,6 +119,7 @@ jobs:
   macos-test:
     name: '[macOS] Testing [${{ matrix.os_name }}-${{ matrix.os_version }}] [clang]'
     needs: [ macos-build ]
+    if: github.ref != 'refs/heads/master'
     runs-on: ${{ matrix.os_name }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
