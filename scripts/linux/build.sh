@@ -22,15 +22,23 @@ cd /app/build || exit 1
 
 # Build the library.
 if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
+  apk update && apk upgrade
+  apk add --update sqlite-libs sqlite-dev postgresql-libs postgresql-dev
+  ldconfig /etc/ld.so.conf.d
   cmake -D CMAKE_C_COMPILER="${CC_NAME}" \
         -D CMAKE_CXX_COMPILER="${CXX_NAME}" \
         -D CMAKE_BUILD_TYPE=Release \
+        -D XW_USE_POSTGRESQL=yes \
+        -D XW_USE_SQLITE3=yes \
         ..
 elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
+  apt-get install sqlite3 libsqlite3-dev libpq-dev
+  ldconfig
   cmake -D CMAKE_BUILD_TYPE=Release ..
 else
   echo "System is not supported: ${SYSTEM_NAME}" && exit 1
 fi
+
 make xalwart.orm && make install
 
 # Copy installed library to the result directory.
