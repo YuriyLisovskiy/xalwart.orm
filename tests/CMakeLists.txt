@@ -30,6 +30,14 @@ function(add_tests SUB_DIR SUB_NAME)
         add_compile_definitions(USE_SQLITE3)
     endif()
 
+    if (${XW_USE_POSTGRESQL})
+        # Search for PostgreSQL
+        find_package(PostgreSQL REQUIRED)
+        target_link_libraries(${FULL_BIN} PUBLIC ${PostgreSQL_LIBRARIES})
+        include_directories(${PostgreSQL_INCLUDE_DIRS})
+        add_compile_definitions(USE_POSTGRESQL)
+    endif()
+
     target_link_libraries(${FULL_BIN} PUBLIC ${XALWART_BASE} ${LIBRARY_NAME})
 endfunction()
 

@@ -27,7 +27,7 @@ class Delete final : public AbstractQuery<ModelType>
 {
 public:
 	inline explicit Delete(
-		IDatabaseConnection* connection, ISQLQueryBuilder* builder
+		const IDatabaseConnection* connection, ISQLQueryBuilder* builder
 	) : AbstractQuery<ModelType>(connection, builder)
 	{
 	}

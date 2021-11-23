@@ -22,7 +22,7 @@ SQLite3Connection::SQLite3Connection(const char* filename) : in_transaction(fals
 	if (sqlite3_open_v2(filename, &driver, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr))
 //	if (sqlite3_open(filename, &driver))
 	{
-		throw RuntimeError(
+		throw DatabaseError(
 			"error while opening sqlite3 database: " + std::string(sqlite3_errmsg(driver)),
 			_ERROR_DETAILS_
 		);
@@ -54,15 +54,10 @@ void SQLite3Connection::run_query(
 	{
 		this->run_query_unsafe(sql_query, row_handler, vector_handler);
 	}
-	catch (const BaseException& exc)
-	{
-		this->rollback_transaction();
-		throw exc;
-	}
 	catch (const std::exception& exc)
 	{
 		this->rollback_transaction();
-		throw exc;
+		throw;
 	}
 }
 

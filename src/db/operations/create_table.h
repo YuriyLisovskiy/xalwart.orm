@@ -43,23 +43,27 @@ public:
 	}
 
 	inline void forward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		auto table = to_state.get_table(this->name());
 		require_non_null(
 			editor, ce<CreateTable>("forward", "schema editor is nullptr")
-		)->create_table(table);
+		)->create_table(table, connection);
 	}
 
 	inline void backward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		auto table = from_state.get_table(this->name());
 		require_non_null(
 			editor, ce<CreateTable>("backward", "schema editor is nullptr")
-		)->drop_table(table.name);
+		)->drop_table(table.name, connection);
 	}
 
 	template <column_migration_type T>

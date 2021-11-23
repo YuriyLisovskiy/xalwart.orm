@@ -30,7 +30,7 @@ public:
 
 	// Appends model's pk to deletion list.
 	explicit AbstractQuery(
-		IDatabaseConnection* connection, ISQLQueryBuilder* builder
+		const IDatabaseConnection* connection, ISQLQueryBuilder* builder
 	) : db_connection(connection), query_builder(builder)
 	{
 		require_non_null(this->db_connection, "Database connection is nullptr", _ERROR_DETAILS_);
@@ -41,7 +41,7 @@ public:
 	virtual std::string to_sql() const = 0;
 
 protected:
-	IDatabaseConnection* db_connection = nullptr;
+	const IDatabaseConnection* db_connection = nullptr;
 	ISQLQueryBuilder* query_builder = nullptr;
 };
 

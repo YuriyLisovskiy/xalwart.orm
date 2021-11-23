@@ -8,9 +8,7 @@
 
 // STL libraries.
 #include <iostream>
-
-// ORM libraries.
-#include "./exceptions.h"
+#include <exception>
 
 
 __ORM_BEGIN__
@@ -26,10 +24,10 @@ void Repository::transaction(const std::function<void(Transaction&)>& func)
 			func(tr);
 			tr.rollback();
 		}
-		catch (const SQLError& exc)
+		catch (const std::exception& exc)
 		{
 			tr.rollback();
-			throw exc;
+			throw;
 		}
 	});
 }

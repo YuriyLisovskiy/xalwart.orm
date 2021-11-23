@@ -25,14 +25,22 @@ __ORM_SQLITE3_BEGIN__
 class SchemaEditor : public db::DefaultSQLSchemaEditor
 {
 public:
-	inline explicit SchemaEditor(IBackend* backend) : db::DefaultSQLSchemaEditor(backend)
+	inline explicit SchemaEditor() : db::DefaultSQLSchemaEditor()
 	{
 	}
 
-	void drop_column(const db::TableState& table, const db::ColumnState& column) const override;
+	void drop_column(
+		const db::TableState& table,
+		const db::ColumnState& column,
+		const IDatabaseConnection* connection
+	) const override;
 
 	inline void alter_column(
-		const db::TableState& table, const db::ColumnState& old_column, const db::ColumnState& new_column, bool strict
+		const db::TableState& table,
+		const db::ColumnState& old_column,
+		const db::ColumnState& new_column,
+		bool strict,
+		const IDatabaseConnection* connection
 	) const override;
 
 protected:
@@ -64,7 +72,9 @@ protected:
 	}
 
 	virtual void recreate_table(
-		const db::TableState& table, const std::unordered_map<std::string, std::string>& mapping
+		const db::TableState& table,
+		const std::unordered_map<std::string, std::string>& mapping,
+		const IDatabaseConnection* connection
 	) const;
 };
 

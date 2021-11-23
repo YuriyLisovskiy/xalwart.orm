@@ -37,23 +37,27 @@ public:
 	}
 
 	inline void forward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		const auto& table = from_state.get_table_addr(this->table_name());
 		require_non_null(
 			editor, ce<DropColumn>("forward", "schema editor is nullptr")
-		)->drop_column(table, table.get_column_addr(this->name()));
+		)->drop_column(table, table.get_column_addr(this->name()), connection);
 	}
 
 	inline void backward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		auto& table = to_state.get_table_addr(this->table_name());
 		require_non_null(
 			editor, ce<DropColumn>("backward", "schema editor is nullptr")
-		)->create_column(table, table.get_column_addr(this->name()));
+		)->create_column(table, table.get_column_addr(this->name()), connection);
 	}
 };
 

@@ -55,7 +55,9 @@ public:
 	}
 
 	inline void forward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
 		auto& to_table = to_state.get_table_addr(this->table_name());
@@ -63,15 +65,20 @@ public:
 		require_non_null(
 			editor, ce<AlterColumn<T>>("forward/backward", "schema editor is nullptr")
 		)->alter_column(
-			from_table, from_table.get_column_addr(this->name()), to_table.get_column_addr(this->name()), false
+			from_table,
+			from_table.get_column_addr(this->name()), to_table.get_column_addr(this->name()),
+			false,
+			connection
 		);
 	}
 
 	inline void backward(
-		const ISchemaEditor* editor, const ProjectState& from_state, const ProjectState& to_state
+		const ISchemaEditor* editor,
+		const ProjectState& from_state, const ProjectState& to_state,
+		const IDatabaseConnection* connection
 	) const override
 	{
-		this->forward(editor, from_state, to_state);
+		this->forward(editor, from_state, to_state, connection);
 	}
 };
 

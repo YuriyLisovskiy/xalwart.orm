@@ -9,7 +9,9 @@
 
 __ORM_DB_BEGIN__
 
-void DefaultSQLSchemaEditor::create_table(const TableState& table) const
+void DefaultSQLSchemaEditor::create_table(
+	const TableState& table, const IDatabaseConnection* connection
+) const
 {
 	std::list<ColumnState> columns;
 	for (const auto& col : table.columns)
@@ -23,17 +25,21 @@ void DefaultSQLSchemaEditor::create_table(const TableState& table) const
 		foreign_keys.emplace_back(fk.first, fk.second);
 	}
 
-	this->execute(this->sql_create_table(table, columns, foreign_keys));
+	this->execute(this->sql_create_table(table, columns, foreign_keys), connection);
 }
 
 void DefaultSQLSchemaEditor::alter_column(
-	const TableState& table, const ColumnState& old_column, const ColumnState& new_column, bool strict
+	const TableState& table,
+	const ColumnState& old_column,
+	const ColumnState& new_column,
+	bool strict,
+	const IDatabaseConnection* connection
 ) const
 {
 	// Was column renamed?
 	if (old_column.name != new_column.name)
 	{
-		this->execute(this->sql_rename_column(table, old_column, new_column));
+		this->execute(this->sql_rename_column(table, old_column, new_column), connection);
 	}
 
 	std::list<std::string> actions;
@@ -41,7 +47,12 @@ void DefaultSQLSchemaEditor::alter_column(
 	std::list<std::string> post_actions;
 
 	// Was type changed?
-	if (old_column.type != new_column.type)
+	if (
+		old_column.type != new_column.type || (
+			new_column.type == SqlColumnType::VarChar &&
+			old_column.constraints.max_len != new_column.constraints.max_len
+		)
+	)
 	{
 		auto [partial_sql, extra_actions] = this->partial_sql_alter_column_type(table, old_column, new_column);
 		actions.push_back(partial_sql);
@@ -97,18 +108,18 @@ void DefaultSQLSchemaEditor::alter_column(
 		// Apply actions.
 		for (const auto& partial_sql : actions)
 		{
-			this->execute(this->sql_alter_column(table, partial_sql));
+			this->execute(this->sql_alter_column(table, partial_sql), connection);
 		}
 
 		if (four_way_default_alteration)
 		{
 			// Update existing rows with default value.
-			this->execute(this->sql_update_with_default(table, new_column));
+			this->execute(this->sql_update_with_default(table, new_column), connection);
 
 			// Since we didn't run a NOT NULL change before we need to do it now.
 			for (const auto& partial_sql : null_actions)
 			{
-				this->execute(this->sql_alter_column(table, partial_sql));
+				this->execute(this->sql_alter_column(table, partial_sql), connection);
 			}
 		}
 	}
@@ -117,20 +128,20 @@ void DefaultSQLSchemaEditor::alter_column(
 	{
 		for (const auto& sql : post_actions)
 		{
-			this->execute(sql);
+			this->execute(sql, connection);
 		}
 	}
 
 	// If primary_key changed to False, delete the primary key constraint.
 	if (old_column.constraints.primary_key && !new_column.constraints.primary_key)
 	{
-		this->delete_primary_key(table, strict);
+		this->delete_primary_key(table, strict, connection);
 	}
 
 	// Added a unique?
 	if (this->unique_should_be_added(old_column, new_column))
 	{
-		this->execute(this->sql_create_unique(table, {new_column}));
+		this->execute(this->sql_create_unique(table, {new_column}), connection);
 	}
 
 	// TODO: implement logic for index.
@@ -160,7 +171,7 @@ std::string DefaultSQLSchemaEditor::sql_create_table(
 			);
 		}
 	);
-	return "CREATE TABLE " + table.name + "(" + s_columns +
+	return "CREATE TABLE " + this->quote_name(table.name) + "(" + s_columns +
 		(s_constraints.empty() ? "" : ", " + s_constraints) + ")";
 }
 
@@ -175,6 +186,28 @@ std::string DefaultSQLSchemaEditor::sql_create_unique(
 		table,
 		"ADD CONSTRAINT " + this->create_unique_name(table, cols, "_unique") +
 		" UNIQUE (" + str_columns + ")"
+	);
+}
+
+std::tuple<std::string, std::list<std::string>> DefaultSQLSchemaEditor::partial_sql_alter_column_type(
+	const TableState& table, const ColumnState& old_col, const ColumnState& new_col
+) const
+{
+	std::string type_string = this->sql_type_string(new_col.type);
+	if (new_col.type == SqlColumnType::VarChar)
+	{
+		if (new_col.constraints.max_len.has_value())
+		{
+			type_string += "(" + std::to_string(new_col.constraints.max_len.value()) + ")";
+		}
+		else
+		{
+			type_string = this->sql_type_string(SqlColumnType::Text);
+		}
+	}
+
+	return std::make_tuple<std::string, std::list<std::string>>(
+		"ALTER COLUMN " + this->quote_name(new_col.name) + " TYPE " + type_string, {}
 	);
 }
 
@@ -320,7 +353,9 @@ bool DefaultSQLSchemaEditor::sql_column_max_len_check(
 	return false;
 }
 
-void DefaultSQLSchemaEditor::delete_primary_key(const TableState& table, bool strict) const
+void DefaultSQLSchemaEditor::delete_primary_key(
+	const TableState& table, bool strict, const IDatabaseConnection* connection
+) const
 {
 	auto constraint_names = this->constraint_names(table, true);
 	auto cn_size = constraint_names.size();
@@ -335,7 +370,7 @@ void DefaultSQLSchemaEditor::delete_primary_key(const TableState& table, bool st
 
 	for (const auto& constraint_name : constraint_names)
 	{
-		this->execute(this->sql_delete_primary_key(table, constraint_name));
+		this->execute(this->sql_delete_primary_key(table, constraint_name), connection);
 	}
 }
 

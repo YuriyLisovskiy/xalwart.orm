@@ -26,9 +26,15 @@ if (${XW_USE_SQLITE3})
         PATHS ${DEFAULT_INCLUDE_PATHS}
     )
     target_link_libraries(${LIBRARY_NAME} PUBLIC ${SQLITE3})
-
-    # Use sqlite3 driver.
     add_compile_definitions(USE_SQLITE3)
+endif()
+
+if (${XW_USE_POSTGRESQL})
+    # Search for PostgreSQL
+    find_package(PostgreSQL REQUIRED)
+    target_link_libraries(${LIBRARY_NAME} PUBLIC ${PostgreSQL_LIBRARIES})
+    include_directories(${PostgreSQL_INCLUDE_DIRS})
+    add_compile_definitions(USE_POSTGRESQL)
 endif()
 
 # Link dependencies.

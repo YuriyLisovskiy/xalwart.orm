@@ -1,14 +1,14 @@
 /**
- * sqlite3/backend.h
+ * postgresql/backend.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
- * Common methods for accessing the 'sqlite3' database.
+ * Common methods for accessing the 'PostgreSQL' database.
  */
 
 #pragma once
 
-#ifdef USE_SQLITE3
+#ifdef USE_POSTGRESQL
 
 // C++ libraries.
 #include <string>
@@ -18,24 +18,25 @@
 #include "./_def_.h"
 
 // Orm libraries.
+#include "./connection.h"
 #include "../backend.h"
 
 
-__ORM_SQLITE3_BEGIN__
+__ORM_POSTGRESQL_BEGIN__
 
 // TESTME: Backend
 class Backend : public DefaultSQLBackend
 {
 public:
-	explicit Backend(size_t pool_size, const char* filename);
+	explicit Backend(size_t pool_size, const PostgreSQLCredentials& credentials);
 
 	[[nodiscard]]
 	inline std::string dbms_name() const override
 	{
-		return "sqlite";
+		return "postgresql";
 	}
 
-	// Instantiates SQLite3 schema editor if it was not
+	// Instantiates PostgreSQL schema editor if it was not
 	// done yet and returns it.
 	[[nodiscard]]
 	db::ISchemaEditor* schema_editor() const override;
@@ -44,6 +45,6 @@ public:
 	std::vector<std::string> get_table_names(const IDatabaseConnection* connection) override;
 };
 
-__ORM_SQLITE3_END__
+__ORM_POSTGRESQL_END__
 
-#endif // USE_SQLITE3
+#endif // USE_POSTGRESQL

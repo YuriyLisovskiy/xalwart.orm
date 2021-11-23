@@ -1,5 +1,5 @@
 /**
- * sqlite3/connection.h
+ * postgresql/connection.h
  *
  * Copyright (c) 2021 Yuriy Lisovskiy
  *
@@ -8,14 +8,14 @@
 
 #pragma once
 
-#ifdef USE_SQLITE3
+#ifdef USE_POSTGRESQL
 
 // C++ libraries.
 #include <string>
 #include <functional>
 
-// SQLite
-#include <sqlite3.h>
+// PostgreSQL
+#include <libpq-fe.h>
 
 // Base libraries.
 #include <xalwart.base/interfaces/orm.h>
@@ -24,22 +24,21 @@
 #include "./_def_.h"
 
 // Orm libraries.
+#include "./credentials.h"
 #include "../exceptions.h"
 
 
-__ORM_SQLITE3_BEGIN__
+__ORM_POSTGRESQL_BEGIN__
 
-class SQLite3Connection : public IDatabaseConnection
+class PostgreSQLConnection : public IDatabaseConnection
 {
 public:
-	explicit SQLite3Connection(const char* filename);
-
-	~SQLite3Connection() override;
+	explicit PostgreSQLConnection(const PostgreSQLCredentials& credentials);
 
 	[[nodiscard]]
 	inline std::string dbms_name() const final
 	{
-		return "sqlite";
+		return "postgresql";
 	}
 
 	// Acts like 'run_query_unsafe' but handles errors thrown during
@@ -59,8 +58,8 @@ public:
 	{
 		if (!this->in_transaction)
 		{
-			this->in_transaction = true;
 			this->run_query_unsafe("BEGIN TRANSACTION;", nullptr, nullptr);
+			this->in_transaction = true;
 		}
 	}
 
@@ -70,8 +69,8 @@ public:
 	{
 		if (this->in_transaction)
 		{
-			this->in_transaction = false;
 			this->run_query_unsafe("COMMIT TRANSACTION;", nullptr, nullptr);
+			this->in_transaction = false;
 		}
 	}
 
@@ -79,21 +78,21 @@ public:
 	{
 		if (this->in_transaction)
 		{
-			this->in_transaction = false;
 			this->run_query_unsafe("ROLLBACK TRANSACTION;", nullptr, nullptr);
+			this->in_transaction = false;
 		}
 	}
 
 protected:
 	mutable bool in_transaction;
 
-	::sqlite3* db = nullptr;
+	std::shared_ptr<PGconn> db = nullptr;
 
 	// Helper method which throws 'QueryError' with message and
 	// location for 'arg' argument name.
 	inline void throw_empty_arg(const std::string& arg, int line, const char* function, const char* file) const
 	{
-		throw DatabaseError(this->dbms_name() + ": '" + arg + "' is required", line, function, file);
+		throw QueryError(this->dbms_name() + ": '" + arg + "' is required", line, function, file);
 	}
 
 	// Executes SQL query which returns rows as a result.
@@ -109,6 +108,6 @@ protected:
 	) const;
 };
 
-__ORM_SQLITE3_END__
+__ORM_POSTGRESQL_END__
 
-#endif // USE_SQLITE3
+#endif // USE_POSTGRESQL

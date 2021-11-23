@@ -57,7 +57,7 @@ db::ISchemaEditor* DefaultSQLBackend::schema_editor() const
 {
 	if (!this->sql_schema_editor)
 	{
-		this->sql_schema_editor = std::make_shared<db::DefaultSQLSchemaEditor>((IBackend*)this);
+		this->sql_schema_editor = std::make_shared<db::DefaultSQLSchemaEditor>();
 	}
 
 	return this->sql_schema_editor.get();

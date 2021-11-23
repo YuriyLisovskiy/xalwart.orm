@@ -38,7 +38,7 @@ public:
 	) : YAMLSequenceComponent(
 		[this](const YAML::Node& node)
 		{
-			auto name = _parse_scalar("name", node);
+			auto name = _parse_scalar("instance", node);
 			auto dbms = _parse_scalar("dbms", node);
 			this->handle_database(dbms, name, node);
 		}

@@ -55,7 +55,7 @@ void MigrationExecutor::apply(const ISchemaEditor* editor, const std::string& to
 	// Skip all applied migrations and check for consistency.
 	bool all_are_applied = false;
 	bool apply_all = to_migration.empty();
-	decltype(migrations)::const_iterator m_it;
+	decltype(this->migrations)::const_iterator m_it;
 	auto am_it = applied_migrations.begin();
 	for (
 		m_it = this->migrations.begin();
@@ -92,9 +92,9 @@ void MigrationExecutor::apply(const ISchemaEditor* editor, const std::string& to
 		auto migration = *m_it++;
 		auto migration_name = migration->name();
 		this->log_progress(" Applying '" + migration_name + "'...", "");
-		bool applied = migration->apply(state, editor, [this, migration_name]()
+		bool applied = migration->apply(state, editor, [this, migration_name](auto* connection)
 		{
-			this->recorder.record_applied(migration_name);
+			this->recorder.record_applied(migration_name, connection);
 			this->log_progress(" DONE", "\n");
 		});
 		if (!applied)
@@ -181,9 +181,9 @@ void MigrationExecutor::rollback(const ISchemaEditor* editor, const std::string&
 		rolled_back_any = true;
 		this->log_progress(" Rolling back '" + migration_name + "'...", "");
 		bool rolled_back = (*migration)->rollback(
-			states[migration_name], editor, [this, migration_name]()
+			states[migration_name], editor, [this, migration_name](auto* connection)
 			{
-				this->recorder.record_rolled_back(migration_name);
+				this->recorder.record_rolled_back(migration_name, connection);
 				this->log_progress(" DONE", "\n");
 			}
 		);
