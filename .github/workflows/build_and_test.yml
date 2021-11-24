@@ -1,9 +1,10 @@
-name: Test
+name: Tests
 on:
   pull_request:
   push:
     branches:
       - master
+      - dev
 jobs:
   linux-build:
     name: '[linux build]'
@@ -15,7 +16,7 @@ jobs:
           - name: alpine
             version: 3.13
           - name: ubuntu
-            version: 18.04
+            version: 20.04
         compiler:
           - gcc
           - clang
@@ -31,7 +32,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow: test.yml
+          workflow: build_and_test.yml
           branch: ${{ steps.extract_branch.outputs.branch }}
           name: xalwart.base-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           path: xalwart.base-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
@@ -68,19 +69,20 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow: test.yml
+          workflow: build_and_test.yml
           branch: ${{ steps.extract_branch.outputs.branch }}
           name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
           repo: YuriyLisovskiy/xalwart.base
-      - name: Install SQLite3 and PostgreSQL libraries
-        run: |
-          brew install sqlite3
-          brew install libpq
       - name: Build the library
         run: |
           mkdir build && cd build
-          cmake -D CMAKE_BUILD_TYPE=Release ..
+          cmake -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_FIND_FRAMEWORK=NEVER \
+                -D XW_USE_POSTGRESQL=yes \
+                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.1 \
+                -D XW_USE_SQLITE3=yes \
+                ..
           sudo mkdir -p /usr/local/include && sudo mkdir -p /usr/local/lib
           make xalwart.orm && sudo make install
           cd && mkdir ~/target-build && cd ~/target-build
@@ -105,8 +107,6 @@ jobs:
           - name: alpine
             version: 3.13
           - name: ubuntu
-            version: 18.04
-          - name: ubuntu
             version: 20.04
         compiler:
           - clang
@@ -123,7 +123,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow: test.yml
+          workflow: build_and_test.yml
           branch: ${{ steps.extract_branch.outputs.branch }}
           name: xalwart.base-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           path: xalwart.base-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
@@ -166,10 +166,6 @@ jobs:
       - name: Install Google Test Framework
         run: |
           brew install googletest
-      - name: Install SQLite3 and PostgreSQL libraries
-        run: |
-          brew install sqlite3
-          brew install libpq
       - name: Create Target Directories
         run: |
           sudo mkdir -p /usr/local
@@ -177,7 +173,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow: test.yml
+          workflow: build_and_test.yml
           branch: ${{ steps.extract_branch.outputs.branch }}
           name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
@@ -191,8 +187,12 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_FIND_FRAMEWORK=NEVER \
                 -D XW_CONFIGURE_LIB=OFF \
                 -D XW_CONFIGURE_TESTS=ON \
+                -D XW_USE_POSTGRESQL=yes \
+                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.1 \
+                -D XW_USE_SQLITE3=yes \
                 ..
           make unittests-all
       - name: Run tests with Valgrind

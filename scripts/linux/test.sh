@@ -43,9 +43,12 @@ if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
         -D XW_CONFIGURE_TESTS=ON \
         ..
 elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
-  apt-get install sqlite3 libsqlite3-dev libpq-dev
+  apt-get update && apt-get -y upgrade
+  apt-get install -y sqlite3 libsqlite3-dev libpq-dev
   ldconfig
   cmake -D CMAKE_BUILD_TYPE=Release \
+        -D XW_USE_POSTGRESQL=yes \
+        -D XW_USE_SQLITE3=yes \
         -D XW_CONFIGURE_LIB=OFF \
         -D XW_CONFIGURE_TESTS=ON \
         ..

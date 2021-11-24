@@ -1,15 +1,17 @@
 ## xalwart.orm
 [![c++](https://img.shields.io/badge/c%2B%2B-20-6c85cf)](https://isocpp.org/)
-[![cmake](https://img.shields.io/badge/cmake-%3E=2.8.12-success)](https://cmake.org/)
+[![cmake](https://img.shields.io/badge/cmake-%3E=3.12-success)](https://cmake.org/)
 [![alpine](https://img.shields.io/badge/Alpine_Linux-0D597F?style=flat&logo=alpine-linux&logoColor=white)](https://alpinelinux.org/)
 [![ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 [![macOS](https://img.shields.io/badge/macOS-343D46?style=flat&logo=apple&logoColor=F0F0F0)](https://www.apple.com/macos)
 
-### Build Status
-| @ | Build |
+| @ | Status |
 |---|---|
-| Dev branch: | [![CI](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/test.yml/badge.svg?branch=dev)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/test.yml?query=branch%3Adev) |
-| Master branch: | [![CI](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/test.yml?query=branch%3Amaster) |
+| Dev branch: | [![Tests](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/build_and_test.yml/badge.svg?branch=dev)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/build_and_test.yml?query=branch%3Adev) |
+| Master branch: | [![Tests](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/build_and_test.yml/badge.svg?branch=master)](https://github.com/YuriyLisovskiy/xalwart.orm/actions/workflows/build_and_test.yml?query=branch%3Amaster) |
+
+> ATTENTION: this project still has [issues](https://github.com/YuriyLisovskiy/xalwart.orm/issues),
+> requires testing, documentation, and is not stable.
 
 ## Requirements
 The following compilers are tested with the CI system, and are known to work on:
@@ -40,7 +42,7 @@ Available drivers:
   ```cmake
   add_compile_definitions(USE_SQLITE3)
   ```
-* `libpq` 14.0 or later (`POSTGRESQL`):
+* `libpq` 12.0 or later (`POSTGRESQL`):
     ```bash
     # Ubuntu
     sudo apt-get install libpq-dev
@@ -64,6 +66,7 @@ Available drivers:
 
 PostgreSQL-specific arguments:
 * `PostgreSQL_ROOT`: root directory for PostgreSQL library in case of non-standard installation path.
+
 ```bash
 git clone https://github.com/YuriyLisovskiy/xalwart.orm.git
 cd xalwart.orm
@@ -73,6 +76,17 @@ cmake -D CMAKE_BUILD_TYPE=Release \
       ..
 make xalwart.orm && make install
 ```
+
+If you encountered a linker error like in this snippet:
+```text
+Undefined symbols for architecture x86_64:
+  "_sqlite3_close", referenced from:
+      ...
+ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+use `CMAKE_FIND_FRAMEWORK=NEVER` for cmake configurations to turn off searching
+for frameworks by `find_package` function.
 
 ## Testing
 ```bash
