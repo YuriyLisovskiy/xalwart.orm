@@ -3,6 +3,8 @@
 SYSTEM_NAME=$1
 CC_NAME=$2
 CC_VERSION=$3
+DATABASE=$4
+DATABASE_BUILD_OPTIONS=$5
 
 if [[ "${CC_NAME}" == "gcc" ]]; then
   CXX_NAME="g++"
@@ -28,16 +30,14 @@ if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
   cmake -D CMAKE_C_COMPILER="${CC_NAME}" \
         -D CMAKE_CXX_COMPILER="${CXX_NAME}" \
         -D CMAKE_BUILD_TYPE=Release \
-        -D XW_USE_POSTGRESQL=yes \
-        -D XW_USE_SQLITE3=yes \
+        "${DATABASE_BUILD_OPTIONS}" \
         ..
 elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
   apt-get update && apt-get -y upgrade
   apt-get install -y sqlite3 libsqlite3-dev libpq-dev
   ldconfig
   cmake -D CMAKE_BUILD_TYPE=Release \
-        -D XW_USE_POSTGRESQL=yes \
-        -D XW_USE_SQLITE3=yes \
+        "${DATABASE_BUILD_OPTIONS}" \
         ..
 else
   echo "System is not supported: ${SYSTEM_NAME}" && exit 1
@@ -46,7 +46,7 @@ fi
 make xalwart.orm && make install
 
 # Copy installed library to the result directory.
-BUILD_PATH=/app/xalwart.orm-"${SYSTEM_NAME}"-"${CC_NAME}"-"${CC_VERSION}"
+BUILD_PATH=/app/xalwart.orm-${DATABASE}-"${SYSTEM_NAME}"-"${CC_NAME}"-"${CC_VERSION}"
 cd /usr/local || exit 1
 mkdir -p "${BUILD_PATH}"/include
 mkdir -p "${BUILD_PATH}"/lib
