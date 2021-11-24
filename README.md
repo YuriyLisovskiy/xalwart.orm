@@ -55,11 +55,6 @@ Available drivers:
   add_compile_definitions(USE_POSTGRESQL)
   ```
 
-## Download
-Development build of the library can be downloaded from the latest
-[asset](https://github.com/YuriyLisovskiy/xalwart.orm/actions?query=branch%3Amaster)
-of action results.
-
 ## Compile from Source
 * `BUILD_SHARED_LIBS`: build a shared or static library (`ON` by default).
 * `LIBRARY_ROOT`: installation directory root (`/usr/local` by default).
