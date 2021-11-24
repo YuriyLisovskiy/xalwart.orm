@@ -76,6 +76,7 @@ jobs:
       - name: Install SQLite3
         run: |
           brew reinstall sqlite3
+          brew link sqlite3
       - name: Build the library
         run: |
           mkdir build && cd build
@@ -187,6 +188,7 @@ jobs:
       - name: Install SQLite3
         run: |
           brew reinstall sqlite3
+          brew link sqlite3
       - name: Build tests
         run: |
           mkdir build && cd build
