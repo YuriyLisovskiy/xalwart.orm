@@ -32,6 +32,7 @@ if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
         -D XW_USE_SQLITE3=yes \
         ..
 elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
+  apt-get update && apt-get -y upgrade
   apt-get install -y sqlite3 libsqlite3-dev libpq-dev
   ldconfig
   cmake -D CMAKE_BUILD_TYPE=Release \
