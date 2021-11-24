@@ -1,6 +1,6 @@
 ## xalwart.orm
 [![c++](https://img.shields.io/badge/c%2B%2B-20-6c85cf)](https://isocpp.org/)
-[![cmake](https://img.shields.io/badge/cmake-%3E=2.8.12-success)](https://cmake.org/)
+[![cmake](https://img.shields.io/badge/cmake-%3E=3.12-success)](https://cmake.org/)
 [![alpine](https://img.shields.io/badge/Alpine_Linux-0D597F?style=flat&logo=alpine-linux&logoColor=white)](https://alpinelinux.org/)
 [![ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 [![macOS](https://img.shields.io/badge/macOS-343D46?style=flat&logo=apple&logoColor=F0F0F0)](https://www.apple.com/macos)
