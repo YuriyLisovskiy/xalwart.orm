@@ -40,7 +40,7 @@ Available drivers:
   ```cmake
   add_compile_definitions(USE_SQLITE3)
   ```
-* `libpq` 14.0 or later (`POSTGRESQL`):
+* `libpq` 12.0 or later (`POSTGRESQL`):
     ```bash
     # Ubuntu
     sudo apt-get install libpq-dev

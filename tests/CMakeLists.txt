@@ -30,7 +30,7 @@ function(add_tests SUB_DIR SUB_NAME)
 
     option(XW_USE_POSTGRESQL "Search for PostgreSQL." OFF)
     if (${XW_USE_POSTGRESQL})
-        find_package(PostgreSQL REQUIRED)
+        find_package(PostgreSQL 12 REQUIRED)
         target_link_libraries(${FULL_BIN} PUBLIC ${PostgreSQL_LIBRARIES})
         include_directories(${PostgreSQL_INCLUDE_DIRS})
         add_compile_definitions(USE_POSTGRESQL)
