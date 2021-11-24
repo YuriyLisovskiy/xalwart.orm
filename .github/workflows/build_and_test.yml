@@ -70,6 +70,7 @@ jobs:
           - macos
         os_version:
           - 11
+        database:
           - name: sqlite
             build_options: '-D XW_USE_SQLITE3=yes'
           - name: postgresql
