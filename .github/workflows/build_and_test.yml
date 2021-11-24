@@ -70,10 +70,12 @@ jobs:
           - macos
         os_version:
           - 11
-        database:
-          - sqlite
-          - postgresql
-          - sqlite-postgresql
+          - name: sqlite
+            build_options: '-D XW_USE_SQLITE3=yes'
+          - name: postgresql
+            build_options: '-D XW_USE_POSTGRESQL=yes'
+          - name: sqlite-postgresql
+            build_options: '-D XW_USE_SQLITE3=yes -D XW_USE_POSTGRESQL=yes'
     steps:
       - uses: actions/checkout@v2
       - name: Extract branch name
@@ -127,7 +129,8 @@ jobs:
         compiler_version:
           - 10
         database:
-          - sqlite-postgresql
+          - name: sqlite-postgresql
+            build_options: '-D XW_USE_SQLITE3=yes -D XW_USE_POSTGRESQL=yes'
     steps:
       - uses: actions/checkout@v2
       - name: Extract branch name
@@ -171,7 +174,8 @@ jobs:
         os_version:
           - 11
         database:
-          - sqlite-postgresql
+          - name: sqlite-postgresql
+            build_options: '-D XW_USE_SQLITE3=yes -D XW_USE_POSTGRESQL=yes'
     steps:
       - uses: actions/checkout@v2
       - name: Extract branch name
