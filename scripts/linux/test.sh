@@ -3,6 +3,8 @@
 SYSTEM_NAME=$1
 CC_NAME=$2
 CC_VERSION=$3
+DATABASE=$4
+DATABASE_BUILD_OPTIONS=$5
 
 if [[ "${CC_NAME}" == "gcc" ]]; then
   CXX_NAME="g++"
@@ -23,7 +25,7 @@ function install_lib {
 install_lib "base"
 
 # Install orm library.
-install_lib "orm"
+install_lib "orm-${DATABASE}"
 
 # Update linker cache.
 ldconfig /etc/ld.so.conf.d
@@ -37,8 +39,7 @@ if [[ "${SYSTEM_NAME}" == "alpine"* ]]; then
   cmake -D CMAKE_C_COMPILER="${CC_NAME}" \
         -D CMAKE_CXX_COMPILER="${CXX_NAME}" \
         -D CMAKE_BUILD_TYPE=Release \
-        -D XW_USE_POSTGRESQL=yes \
-        -D XW_USE_SQLITE3=yes \
+        "${DATABASE_BUILD_OPTIONS}" \
         -D XW_CONFIGURE_LIB=OFF \
         -D XW_CONFIGURE_TESTS=ON \
         ..
@@ -47,8 +48,7 @@ elif [[ "${SYSTEM_NAME}" == "ubuntu"* ]]; then
   apt-get install -y sqlite3 libsqlite3-dev libpq-dev
   ldconfig
   cmake -D CMAKE_BUILD_TYPE=Release \
-        -D XW_USE_POSTGRESQL=yes \
-        -D XW_USE_SQLITE3=yes \
+        "${DATABASE_BUILD_OPTIONS}" \
         -D XW_CONFIGURE_LIB=OFF \
         -D XW_CONFIGURE_TESTS=ON \
         ..
