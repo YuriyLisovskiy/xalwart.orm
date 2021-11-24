@@ -23,9 +23,12 @@ jobs:
         compiler_version:
           - 10
         database:
-          - sqlite
-          - postgresql
-          - sqlite-postgresql
+          - name: sqlite
+            build_options: '-D XW_USE_SQLITE3=yes'
+          - name: postgresql
+            build_options: '-D XW_USE_POSTGRESQL=yes'
+          - name: sqlite-postgresql
+            build_options: '-D XW_USE_SQLITE3=yes -D XW_USE_POSTGRESQL=yes'
     steps:
       - uses: actions/checkout@v2
       - name: Extract branch name
@@ -49,13 +52,13 @@ jobs:
                           bash /app/scripts/linux/build.sh ${{ matrix.os.name }} \
                                                            ${{ matrix.compiler }} \
                                                            ${{ matrix.compiler_version }} \
-                                                           ${{ matrix.database }} \
-                                                           ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh
+                                                           ${{ matrix.database.name }} \
+                                                           ${{ matrix.database.build_options }}
       - name: Upload the artifact
         uses: actions/upload-artifact@v2
         with:
-          name: xalwart.orm-${{ matrix.database }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
-          path: xalwart.orm-${{ matrix.database }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
+          name: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
+          path: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
           retention-days: 90
   macos-build:
     name: '[macOS build]'
@@ -91,7 +94,7 @@ jobs:
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
                 -D CMAKE_FIND_FRAMEWORK=NEVER \
-                $(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }}) \
+                ${{ matrix.database.build_options }} \
                 ..
           sudo mkdir -p /usr/local/include && sudo mkdir -p /usr/local/lib
           make xalwart.orm && sudo make install
@@ -102,7 +105,7 @@ jobs:
       - name: Upload the artifact
         uses: actions/upload-artifact@v2
         with:
-          name: xalwart.orm-${{ matrix.database }}-${{ matrix.os_name }}-${{ matrix.os_version }}
+          name: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: ~/target-build
           retention-days: 60
   linux-test:
@@ -143,8 +146,8 @@ jobs:
       - name: Download the artifact
         uses: actions/download-artifact@v2
         with:
-          name: xalwart.orm-${{ matrix.database }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
-          path: xalwart.orm-${{ matrix.database }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
+          name: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
+          path: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os.name }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}
       - name: Build and run tests
         run: |
           sudo docker run -i \
@@ -153,8 +156,8 @@ jobs:
                           bash /app/scripts/linux/test.sh ${{ matrix.os.name }} \
                                                           ${{ matrix.compiler }} \
                                                           ${{ matrix.compiler_version }} \
-                                                          ${{ matrix.database }} \
-                                                          ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh
+                                                          ${{ matrix.database.name }} \
+                                                          ${{ matrix.database.build_options }}
   macos-test:
     name: '[macOS test]'
     needs:
@@ -199,7 +202,7 @@ jobs:
       - name: Download the artifact
         uses: actions/download-artifact@v2
         with:
-          name: xalwart.orm-${{ matrix.database }}-${{ matrix.os_name }}-${{ matrix.os_version }}
+          name: xalwart.orm-${{ matrix.database.name }}-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
       - name: Build tests
         run: |
@@ -208,7 +211,7 @@ jobs:
                 -D CMAKE_FIND_FRAMEWORK=NEVER \
                 -D XW_CONFIGURE_LIB=OFF \
                 -D XW_CONFIGURE_TESTS=ON \
-                $(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }}) \
+                ${{ matrix.database.build_options }} \
                 ..
           make unittests-all
       - name: Run tests with Valgrind
