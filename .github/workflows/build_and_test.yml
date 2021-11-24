@@ -50,7 +50,7 @@ jobs:
                                                            ${{ matrix.compiler }} \
                                                            ${{ matrix.compiler_version }} \
                                                            ${{ matrix.database }} \
-                                                           "$(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }})"
+                                                           $(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }})
       - name: Upload the artifact
         uses: actions/upload-artifact@v2
         with:
@@ -154,7 +154,7 @@ jobs:
                                                           ${{ matrix.compiler }} \
                                                           ${{ matrix.compiler_version }} \
                                                           ${{ matrix.database }} \
-                                                          "$(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }})"
+                                                          $(bash ${GITHUB_WORKSPACE}/scripts/get_database_build_options.sh ${{ matrix.database }})
   macos-test:
     name: '[macOS test]'
     needs:
