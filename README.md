@@ -64,6 +64,7 @@ Available drivers:
 
 PostgreSQL-specific arguments:
 * `PostgreSQL_ROOT`: root directory for PostgreSQL library in case of non-standard installation path.
+
 ```bash
 git clone https://github.com/YuriyLisovskiy/xalwart.orm.git
 cd xalwart.orm
@@ -73,6 +74,17 @@ cmake -D CMAKE_BUILD_TYPE=Release \
       ..
 make xalwart.orm && make install
 ```
+
+If you encountered a linker error like in this snippet:
+```text
+Undefined symbols for architecture x86_64:
+  "_sqlite3_close", referenced from:
+      ...
+ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+use `CMAKE_FIND_FRAMEWORK=NEVER` for cmake configurations to turn off searching
+for frameworks by `find_package` function.
 
 ## Testing
 ```bash

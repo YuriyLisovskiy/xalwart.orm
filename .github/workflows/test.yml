@@ -81,6 +81,7 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_FIND_FRAMEWORK=NEVER \
                 -D XW_USE_POSTGRESQL=yes \
                 -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.1 \
                 -D XW_USE_SQLITE3=yes \
@@ -193,6 +194,7 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_FIND_FRAMEWORK=NEVER \
                 -D XW_CONFIGURE_LIB=OFF \
                 -D XW_CONFIGURE_TESTS=ON \
                 -D XW_USE_POSTGRESQL=yes \
