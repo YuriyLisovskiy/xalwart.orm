@@ -15,7 +15,7 @@ jobs:
           - name: alpine
             version: 3.13
           - name: ubuntu
-            version: 18.04
+            version: 20.04
         compiler:
           - gcc
           - clang
@@ -73,16 +73,12 @@ jobs:
           name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
           repo: YuriyLisovskiy/xalwart.base
-      - name: Install SQLite3 and PostgreSQL libraries
-        run: |
-          brew install sqlite3
-          brew install libpq@14.0
       - name: Build the library
         run: |
           mkdir build && cd build
           cmake -D CMAKE_BUILD_TYPE=Release \
                 -D XW_USE_POSTGRESQL=yes \
-                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.0 \
+                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.1 \
                 -D XW_USE_SQLITE3=yes \
                 ..
           sudo mkdir -p /usr/local/include && sudo mkdir -p /usr/local/lib
@@ -108,8 +104,6 @@ jobs:
         os:
           - name: alpine
             version: 3.13
-          - name: ubuntu
-            version: 18.04
           - name: ubuntu
             version: 20.04
         compiler:
@@ -170,10 +164,6 @@ jobs:
       - name: Install Google Test Framework
         run: |
           brew install googletest
-      - name: Install SQLite3 and PostgreSQL libraries
-        run: |
-          brew install sqlite3
-          brew install libpq@14.0
       - name: Create Target Directories
         run: |
           sudo mkdir -p /usr/local
@@ -198,7 +188,7 @@ jobs:
                 -D XW_CONFIGURE_LIB=OFF \
                 -D XW_CONFIGURE_TESTS=ON \
                 -D XW_USE_POSTGRESQL=yes \
-                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.0 \
+                -D PostgreSQL_ROOT=/opt/homebrew/Cellar/libpq/14.1 \
                 -D XW_USE_SQLITE3=yes \
                 ..
           make unittests-all
