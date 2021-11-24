@@ -73,6 +73,9 @@ jobs:
           name: xalwart.base-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
           repo: YuriyLisovskiy/xalwart.base
+      - name: Install SQLite3
+        run: |
+          brew reinstall sqlite3
       - name: Build the library
         run: |
           mkdir build && cd build
@@ -181,6 +184,9 @@ jobs:
         with:
           name: xalwart.orm-${{ matrix.os_name }}-${{ matrix.os_version }}
           path: /usr/local
+      - name: Install SQLite3
+        run: |
+          brew reinstall sqlite3
       - name: Build tests
         run: |
           mkdir build && cd build
